@@ -10,13 +10,14 @@
 1. **Equilibrio**: ogni elemento serve, ogni eccesso fa danni. Se una popolazione arriva a zero, l'ecosistema collassa.
 2. **Subire**: il corallo non fa niente, subisce e basta. Il giocatore lo protegge in modo indiretto.
 3. **Real-time, ibrido griglia/spazio libero**: niente turni. **Coralli, alghe e nidi si piazzano su una griglia** (anche le alghe si espandono per celle). **Pesci e minacce si muovono liberi** con la fisica 2D di Godot e urtano le celle occupate.
+4. **Visuale quasi dall'alto**: la simulazione avviene in un piano logico visto dall'alto; quello che si vede a schermo è una sua proiezione leggermente inclinata, con angolo regolabile (§4.1).
 
 ## 2. Loop di gioco
 
 ```
 temperatura ↑ ──► alghe crescono più in fretta, più minacce, pesci più lenti
      ▲
-     │ (rallentata dai coralli vivi, mai fermata)
+     │ (rallentata dalle celle di corallo vivo, mai fermata)
      │
 inventario ──► piazzi corallo / alga / nido
 pesci ──► li mandi a mangiare alghe (o muoiono di fame) e a fecondare nidi
@@ -56,10 +57,30 @@ Fissa, non randomica, costruita a mano nella scena `levels/Level01.tscn`:
 Area di gioco delimitata da muri invisibili (StaticBody2D).
 
 ### Griglia
-- Celle da `cell_size` = 32 px. Area di gioco di **36 × 20 celle** (1152 × 640 px).
+- Celle logiche da `cell_size` = 32 unità. Area di gioco di **20 × 20 celle** (640 × 640 unità logiche; la dimensione a schermo dipende dall'inclinazione scelta).
+- Tutte le misure di questo documento (raggi, velocità, distanze) sono in **unità logiche**, non in pixel a schermo.
 - La griglia vale **solo per gli oggetti fermi** (coralli, alghe, nidi): ogni cella contiene al massimo uno di questi oggetti.
 - Pesci e minacce **non** usano la griglia: si muovono in coordinate libere.
 - Visualizzazione: una griglia leggera compare solo mentre stai piazzando un oggetto.
+
+### 4.1 Visuale (quasi dall'alto, proiezione obliqua)
+La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua. Il codice non dipende dall'angolo, quindi il designer può ritoccarlo in qualsiasi momento.
+
+- **Due livelli separati:**
+  - **Mondo logico** (`World`): piano visto dall'alto, celle quadrate. Qui stanno griglia, fisica 2D, collisioni, movimento, regole. Questo livello non viene disegnato (si vede solo nel debug overlay).
+  - **Vista** (`View`): sprite in un nodo con `y_sort_enabled`. Ogni sprite segue a ogni frame la proiezione della posizione del suo corpo logico.
+- **Stile scelto dal designer: proiezione obliqua** `/__/`. Il fondale è un parallelogramma: i bordi orizzontali restano orizzontali e piatti, quelli in profondità salgono verso destra a **45°**. Non è isometrico (niente rombi) e non è una semplice rotazione: è un **taglio obliquo** della griglia.
+- **Proiezione parametrica**, in un solo punto (`View.gd`): una trasformazione affine (`Transform2D`) definita da due vettori in `balance.tres`:
+  - `view_x_axis`: dove finisce a schermo un passo di 1 unità verso destra nel mondo. Default `(1, 0)`.
+  - `view_y_axis`: dove finisce a schermo un passo di 1 unità verso il basso nel mondo (verso chi guarda). Per `/__/` a 45°: `(−d, d)`, dove `d` è lo schiacciamento della profondità. Default `d = 0.5` (circa 0.71 unità di lunghezza a schermo).
+  - `screen = world.x × view_x_axis + world.y × view_y_axis` (moltiplicato per `pixels_per_unit`).
+  - Il mouse usa `affine_inverse()` (schermo → mondo → cella) per i clic e il piazzamento.
+  - La stessa formula copre anche le altre visuali, se il designer cambia idea: dall'alto puro `x=(1,0), y=(0,1)`; quasi dall'alto `x=(1,0), y=(0,0.8)`; isometrico `x=(1,0.5), y=(−1,0.5)`.
+- **Cosa cambia se si ritocca l'inclinazione**: solo i due vettori, le dimensioni degli sprite e la loro **base**. Regole, fisica, griglia, input e bilanciamento restano uguali.
+- **Convenzione per gli asset** (da concordare subito col designer, indipendentemente dall'angolo): ogni sprite ha il **punto di ancoraggio alla base**, cioè dove l'oggetto "tocca il fondale", al centro della cella o del corpo. Gli elementi alti (coralli) crescono verso l'alto dello schermo a partire da quel punto.
+- **Ordine di disegno**: Y-sort sulla coordinata a schermo del punto di ancoraggio. I coralli di più celle si disegnano **una cella alla volta**, così un pesce può passare davanti a una parte del corallo e dietro a un'altra. Più la visuale è dall'alto, meno questo problema si nota.
+- **Leggibilità**: se un pesce o il nido è coperto da un corallo, si vede la sua sagoma attraverso il corallo (shader di contorno). L'area di clic dei pesci è più grande dello sprite.
+- **Minacce**: hanno un'ombra a terra che mostra quali celle stanno toccando.
 
 ## 5. Elementi
 
@@ -79,7 +100,7 @@ Area di gioco delimitata da muri invisibili (StaticBody2D).
 - **Ossigeno** da 0 a 100. A 0 si **sgretola**: animazione, poi viene rimosso.
 - **Recupero lento**: `+coral_regen_per_sec` (0.5/s) sempre.
 - Danni (vedi tabella delle interazioni): alga che si espande addosso, CO2, busta, ciclone.
-- Rallenta la salita della temperatura (§6).
+- Rallenta la salita della temperatura **in proporzione alle celle che occupa** (§6): un corallo grande protegge di più dal caldo, ma blocca di più i pesci.
 
 ### 5.3 Alga
 - Occupa **1 cella**, ostacolo solido per i pesci (collisione quadrata a cella piena, quindi i muri di alghe non hanno buchi).
@@ -89,11 +110,11 @@ Area di gioco delimitata da muri invisibili (StaticBody2D).
      - **vuota** → nasce la nuova alga;
      - **corallo** → l'alga non nasce, il corallo perde `algae_coral_damage` ossigeno;
      - **qualsiasi altra cosa** (alga, nido, fuori mappa, pesce o minaccia sopra la cella) → riprova con un'altra cella adiacente, **al massimo 3 tentativi**, poi l'espansione fallisce.
-- Tetto massimo di alghe in gioco: `algae_max_count` (300), sia per le prestazioni sia per il bilanciamento.
+- Tetto massimo di alghe in gioco: `algae_max_count` (200), sia per le prestazioni sia per il bilanciamento.
 - Può essere mangiata dai pesci.
 
 ### 5.4 Pesce
-- CharacterBody2D, piccolo (raggio 10 px). **I pesci non si scontrano tra loro**, ma si scontrano con alghe, coralli e muri.
+- CharacterBody2D, piccolo (raggio 10 unità). **I pesci non si scontrano tra loro**, ma si scontrano con alghe, coralli e muri.
 - **Stati**:
   - `WANDER`: nuota a caso. Sceglie una direzione, nuota per un po', ne cambia. Se tocca un ostacolo, cambia direzione. **Non mangia e non feconda.**
   - `ORDERED`: il giocatore fa clic sinistro sul pesce per selezionarlo (area di clic più grande del pesce) e poi clic sinistro sul punto di arrivo. Il pesce **va dritto**; se tocca un ostacolo **si ferma**.
@@ -114,7 +135,8 @@ Area di gioco delimitata da muri invisibili (StaticBody2D).
 ## 6. Temperatura
 - Valore normalizzato `T` da 0 a 1 (mostrato come °C sul termometro in alto a destra).
 - **Sale sempre**: `dT/dt = temp_base_rate × (1 − coral_slowdown)`
-  - `coral_slowdown = min(coralli_vivi × temp_slow_per_coral, temp_max_slowdown)` con `temp_max_slowdown` = 0.6, quindi la temperatura **non si ferma mai e non scende mai**.
+  - `coral_slowdown = min(celle_di_corallo × temp_slow_per_cell, temp_max_slowdown)` con `temp_max_slowdown` = 0.6, quindi la temperatura **non si ferma mai e non scende mai**.
+  - `celle_di_corallo` = numero totale di celle occupate da coralli vivi, letto da `GridModel`. Default `temp_slow_per_cell` = 0.03, quindi il rallentamento massimo si raggiunge con 20 celle di corallo.
   - `temp_base_rate` è tarato in modo che, senza coralli, si arrivi a T=1 in circa 8 minuti.
 - Effetti (interpolazione lineare in base a T):
 
@@ -132,13 +154,13 @@ Area di gioco delimitata da muri invisibili (StaticBody2D).
 Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la griglia) ed entrano dal bordo della mappa. Colpiscono un oggetto fermo quando la loro forma si sovrappone a una delle sue celle. **2.5 s prima** compare un **avviso** sul bordo (freccia/icona lampeggiante che indica direzione e tipo). Quando escono dalla mappa vengono rimosse.
 
 ### 7.1 CO2
-- Nube (raggio 60 px), si muove **quasi dritta con curve casuali** (direzione + rumore sull'angolo).
+- Nube (raggio 60 unità), si muove **quasi dritta con curve casuali** (direzione + rumore sull'angolo).
 
 ### 7.2 Busta di plastica
 - Lenta, si muove in modo **più casuale** della CO2 (cambi di direzione più ampi e frequenti).
 
 ### 7.3 Ciclone marino
-- Raggio 40 px, veloce, va **dritto**.
+- Raggio 40 unità, veloce, va **dritto**.
 
 ## 8. Tabella delle interazioni
 
@@ -184,7 +206,8 @@ ideologia_marina/
 │   ├── ThreatSpawner.gd   # spawn + avvisi
 │   ├── InventorySystem.gd
 │   ├── PlacementController.gd
-│   └── GridModel.gd       # occupazione celle: Dictionary[Vector2i → entità], cell↔world, adiacenti
+│   ├── GridModel.gd       # occupazione celle: Dictionary[Vector2i → entità], cell↔world, adiacenti
+│   └── View.gd            # proiezione mondo↔schermo parametrica (Transform2D obliqua)
 ├── entities/
 │   ├── coral/  Coral.tscn  (StaticBody2D, layer CORAL)
 │   ├── algae/  Algae.tscn  (StaticBody2D, layer ALGAE)
@@ -205,12 +228,13 @@ ideologia_marina/
 - Espansione delle alghe e validità del piazzamento si leggono da `GridModel` (veloce, testabile senza scena). Solo il controllo "c'è un pesce o una minaccia sopra questa cella?" usa `PhysicsDirectSpaceState2D.intersect_shape`.
 - Gli oggetti fermi si registrano in `GridModel` quando nascono e si rimuovono quando muoiono; la loro collisione fisica è costruita a partire dalle celle che occupano.
 - Tutti i timer di gioco si basano sul `delta` del processo, così la pausa funziona con `get_tree().paused`.
+- Ogni entità è una scena con un corpo logico (in `World`) e un nodo visivo (in `View`). Lo script dell'entità crea il nodo visivo e lo distrugge quando l'entità muore. Il nodo visivo legge `View.to_screen(body.global_position)` in `_process`.
 
 ## 11. Tappe
 
 | # | Tappa | Risultato |
 |---|---|---|
-| M0 | Progetto (renderer Compatibility), Main, GridModel, Level01 fisso, muri, camera | scena vuota giocabile |
+| M0 | Progetto (renderer Compatibility), Main, GridModel, View (proiezione parametrica), World/View separati, Level01 fisso, muri, camera | scena vuota giocabile |
 | M1 | Corallo + alga: espansione, ossigeno, recupero, sgretolamento | equilibrio alghe/coralli |
 | M2 | Pesce: wander, selezione, ordine dritto, mangiare, fame | ciclo pesci–alghe |
 | M3 | Nido: fecondazione, schiusa, maturità | ciclo di vita |
