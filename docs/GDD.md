@@ -32,8 +32,16 @@ minacce ──► CO2, buste, cicloni (annunciati prima di entrare)
 ## 3. Condizioni di fine partita e punteggio
 
 - **Survival a punteggio, senza vittoria.**
-- **Game over** quando una di queste popolazioni **sulla mappa** arriva a 0: **coralli, alghe, pesci, nidi**.
-- Parametro `collapse_grace_seconds` (default MVP: `0` = sconfitta immediata). Serve per provare, durante i test, un conto alla rovescia di recupero.
+- Le popolazioni controllate sono quattro, contate **sulla mappa**: **coralli, alghe, pesci, nidi**.
+- **Timeout di collasso**: quando una popolazione arriva a 0 **non** si perde subito. Parte un conto alla rovescia di `collapse_grace_seconds` (**10 s**) solo per quella popolazione.
+  - Se la popolazione torna sopra 0 prima della scadenza, il conto alla rovescia si annulla. Se in seguito torna a 0, il conto riparte da capo.
+  - Se il conto arriva a 0 → **game over**.
+  - Ogni popolazione ha un suo conto alla rovescia indipendente; se ne scadono più di uno, il primo che scade fa perdere.
+  - Il tempo si ferma quando il gioco è in pausa.
+- Come ci si salva, per ogni popolazione:
+  - **Pesci**: un nido con uova che si schiudono entro il timeout (*sono morti tutti i pesci, ma le uova stanno per schiudersi → ti salvi*). I pesci non arrivano dall'inventario.
+  - **Alghe / coralli / nidi**: piazzandone uno dall'inventario, se c'è o se uno slot si ricarica in tempo.
+- Interfaccia: mentre è attivo un conto alla rovescia, al centro in alto compare un avviso rosso con l'icona della popolazione e i secondi rimasti. Il contatore di quella popolazione lampeggia. Per i pesci, se c'è un nido con uova, l'avviso mostra anche il tempo che manca alla schiusa, così il giocatore capisce subito se si salverà.
 - **Punteggio** = secondi sopravvissuti (MVP). Mostrato nell'interfaccia e nella schermata di game over.
 
 ## 4. Mappa iniziale
@@ -213,5 +221,5 @@ ideologia_marina/
 
 ## 12. Domande aperte
 - I parametri numerici sono solo un punto di partenza da verificare in playtest.
-- `collapse_grace_seconds`: 0 (sconfitta immediata) oppure qualche secondo di conto alla rovescia?
+- `collapse_grace_seconds` (10 s) rispetto a `hatch_seconds` (20 s): con questi valori le uova salvano solo se sono state deposte almeno 10 s prima della morte dell'ultimo pesce. Va verificato in playtest.
 - Il punteggio deve premiare i coralli vivi (es. punti/s = numero di coralli)?
