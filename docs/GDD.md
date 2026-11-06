@@ -9,7 +9,7 @@
 
 1. **Equilibrio**: ogni elemento serve, ogni eccesso fa danni. Se una popolazione arriva a zero, l'ecosistema collassa.
 2. **Subire**: il corallo non fa niente, subisce e basta. Il giocatore lo protegge in modo indiretto.
-3. **Real-time, spazio libero**: niente turni e niente caselle. Si usa la fisica 2D di Godot.
+3. **Real-time, ibrido griglia/spazio libero**: niente turni. **Coralli, alghe e nidi si piazzano su una griglia** (anche le alghe si espandono per celle). **Pesci e minacce si muovono liberi** con la fisica 2D di Godot e urtano le celle occupate.
 
 ## 2. Loop di gioco
 
@@ -47,6 +47,12 @@ Fissa, non randomica, costruita a mano nella scena `levels/Level01.tscn`:
 
 Area di gioco delimitata da muri invisibili (StaticBody2D).
 
+### Griglia
+- Celle da `cell_size` = 32 px. Area di gioco di **36 × 20 celle** (1152 × 640 px).
+- La griglia vale **solo per gli oggetti fermi** (coralli, alghe, nidi): ogni cella contiene al massimo uno di questi oggetti.
+- Pesci e minacce **non** usano la griglia: si muovono in coordinate libere.
+- Visualizzazione: una griglia leggera compare solo mentre stai piazzando un oggetto.
+
 ## 5. Elementi
 
 ### 5.1 Inventario
@@ -55,25 +61,26 @@ Area di gioco delimitata da muri invisibili (StaticBody2D).
   - Corallo: peso 50
   - Alga: peso 40
   - Nido: peso `nest_base_weight / (1 + nidi_in_mappa + nidi_in_inventario)` (base 20). Meno nidi hai, più è probabile che ne arrivi uno.
-- Piazzamento: clicchi lo slot e compare un'anteprima trasparente sotto il mouse: **verde** se il punto è libero, **rossa** se si sovrappone a qualcosa. Clic sinistro conferma, clic destro o Esc annulla.
-- Non si possono piazzare oggetti sopra altri oggetti o fuori dall'area di gioco.
+- Piazzamento: clicchi lo slot e sotto il mouse compare un'anteprima trasparente **agganciata alla cella**: **verde** se tutte le celle sono valide, **rossa** altrimenti. Clic sinistro conferma, clic destro o Esc annulla.
+- Una cella è valida se è dentro la mappa, se è vuota e se **nessun pesce o minaccia ci si trova sopra in quel momento** (così non si incastrano corpi dentro un ostacolo).
 
 ### 5.2 Corallo — *subisce*
-- Ha forme diverse (poligoni di collisione predefiniti, almeno 3 forme).
-- È un ostacolo solido per i pesci.
+- Ha forme diverse: **gruppi di celle** in stile polimino (es. 1×1, 2×1, L da 3, quadrato 2×2, T da 4). Nell'MVP la forma non si ruota.
+- È un ostacolo solido per i pesci: ogni cella ha una collisione quadrata.
+- L'ossigeno appartiene **al corallo intero**, non alla singola cella. Quando muore libera tutte le sue celle.
 - **Ossigeno** da 0 a 100. A 0 si **sgretola**: animazione, poi viene rimosso.
 - **Recupero lento**: `+coral_regen_per_sec` (0.5/s) sempre.
 - Danni (vedi tabella delle interazioni): alga che si espande addosso, CO2, busta, ciclone.
 - Rallenta la salita della temperatura (§6).
 
 ### 5.3 Alga
-- Corpo circolare (raggio `algae_radius` = 16 px), ostacolo solido per i pesci.
+- Occupa **1 cella**, ostacolo solido per i pesci (collisione quadrata a cella piena, quindi i muri di alghe non hanno buchi).
 - **Espansione**: ogni `algae_growth_interval` (con variazione casuale ±20%, ridotto dalla temperatura) l'alga prova a generarne una nuova:
-  1. sceglie una direzione a caso e un punto a distanza `algae_spawn_distance` (≈ 1.6 × raggio, così le alghe si sovrappongono un po' e i pesci non passano negli spazi tra loro);
-  2. controlla il punto con una query di forma fisica:
-     - **libero** → nasce la nuova alga;
+  1. sceglie a caso una delle **4 celle adiacenti** (sopra, sotto, sinistra, destra) non ancora provate;
+  2. controlla la cella:
+     - **vuota** → nasce la nuova alga;
      - **corallo** → l'alga non nasce, il corallo perde `algae_coral_damage` ossigeno;
-     - **qualsiasi altra cosa** (alga, pesce, nido, muro, fuori mappa) → riprova con un'altra direzione, **al massimo 3 tentativi**, poi l'espansione fallisce.
+     - **qualsiasi altra cosa** (alga, nido, fuori mappa, pesce o minaccia sopra la cella) → riprova con un'altra cella adiacente, **al massimo 3 tentativi**, poi l'espansione fallisce.
 - Tetto massimo di alghe in gioco: `algae_max_count` (300), sia per le prestazioni sia per il bilanciamento.
 - Può essere mangiata dai pesci.
 
@@ -92,7 +99,7 @@ Area di gioco delimitata da muri invisibili (StaticBody2D).
 - La velocità è ridotta dalla temperatura.
 
 ### 5.5 Nido
-- Area2D, i pesci possono passarci sopra.
+- Occupa **1 cella**. È un Area2D, quindi i pesci possono passarci sopra.
 - Stati: `EMPTY` → (fecondazione) → `EGGS` → dopo `hatch_seconds` (20 s) nascono `hatch_count` (3) pesci giovani → `EMPTY`.
 - Si ottiene dall'inventario con probabilità bassa (vedi §5.1).
 
@@ -114,7 +121,7 @@ Area di gioco delimitata da muri invisibili (StaticBody2D).
 
 ## 7. Minacce
 
-Tutte le minacce sono **Area2D** che entrano dal bordo della mappa. **2.5 s prima** compare un **avviso** sul bordo (freccia/icona lampeggiante che indica direzione e tipo). Quando escono dalla mappa vengono rimosse.
+Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la griglia) ed entrano dal bordo della mappa. Colpiscono un oggetto fermo quando la loro forma si sovrappone a una delle sue celle. **2.5 s prima** compare un **avviso** sul bordo (freccia/icona lampeggiante che indica direzione e tipo). Quando escono dalla mappa vengono rimosse.
 
 ### 7.1 CO2
 - Nube (raggio 60 px), si muove **quasi dritta con curve casuali** (direzione + rumore sull'angolo).
@@ -168,7 +175,8 @@ ideologia_marina/
 │   ├── TemperatureSystem.gd
 │   ├── ThreatSpawner.gd   # spawn + avvisi
 │   ├── InventorySystem.gd
-│   └── PlacementController.gd
+│   ├── PlacementController.gd
+│   └── GridModel.gd       # occupazione celle: Dictionary[Vector2i → entità], cell↔world, adiacenti
 ├── entities/
 │   ├── coral/  Coral.tscn  (StaticBody2D, layer CORAL)
 │   ├── algae/  Algae.tscn  (StaticBody2D, layer ALGAE)
@@ -186,14 +194,15 @@ ideologia_marina/
 **Regole tecniche**:
 - Nessun RigidBody: i pesci sono CharacterBody2D (`move_and_collide`), alghe e coralli sono StaticBody2D, nidi e minacce sono Area2D. Il comportamento resta controllabile.
 - Ogni entità si registra in un gruppo (`corals`, `algae`, `fish`, `nests`) e `GameState` conta i membri dei gruppi.
-- Espansione delle alghe e validità del piazzamento: `PhysicsDirectSpaceState2D.intersect_shape`.
+- Espansione delle alghe e validità del piazzamento si leggono da `GridModel` (veloce, testabile senza scena). Solo il controllo "c'è un pesce o una minaccia sopra questa cella?" usa `PhysicsDirectSpaceState2D.intersect_shape`.
+- Gli oggetti fermi si registrano in `GridModel` quando nascono e si rimuovono quando muoiono; la loro collisione fisica è costruita a partire dalle celle che occupano.
 - Tutti i timer di gioco si basano sul `delta` del processo, così la pausa funziona con `get_tree().paused`.
 
 ## 11. Tappe
 
 | # | Tappa | Risultato |
 |---|---|---|
-| M0 | Progetto, Main, Level01 fisso, muri, camera | scena vuota giocabile |
+| M0 | Progetto (renderer Compatibility), Main, GridModel, Level01 fisso, muri, camera | scena vuota giocabile |
 | M1 | Corallo + alga: espansione, ossigeno, recupero, sgretolamento | equilibrio alghe/coralli |
 | M2 | Pesce: wander, selezione, ordine dritto, mangiare, fame | ciclo pesci–alghe |
 | M3 | Nido: fecondazione, schiusa, maturità | ciclo di vita |
