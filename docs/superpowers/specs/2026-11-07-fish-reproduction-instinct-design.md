@@ -65,8 +65,9 @@ a hungry fish always prioritizes food.
   re-pathfound every frame.
 - When `FERTILIZING` finishes, the reproduction cooldown restarts. A cancelled
   fertilization (player order, nest lost) does **not** restart it.
-- The cooldown starts at its full value when the brain is created, so fish wait
-  before their first autonomous reproduction.
+- The cooldown starts at its full value when the brain is created, and restarts
+  when the fish matures, so a newly adult fish waits before its first autonomous
+  reproduction.
 - The brain receives the already-clamped cooldown from the `Fish` node. The
   effective value is
   `max(reproduce_cooldown_seconds, 2 × nest_hatch_seconds)`; with the defaults

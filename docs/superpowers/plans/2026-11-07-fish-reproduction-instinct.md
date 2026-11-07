@@ -136,6 +136,19 @@ func test_juvenile_never_seeks_nest() -> void:
 	assert_false(_make_brain(false, 0.0).wants_to_seek_nest())
 
 
+func test_newly_mature_waits_for_reproduce_cooldown() -> void:
+	var cfg2 := BalanceActors.new()
+	cfg2.starve_seconds = 60.0
+	cfg2.maturity_seconds = 5.0
+	cfg2.reproduce_cooldown_seconds = 20.0
+	var young := FishBrain.new(cfg2, false, 5.0)
+	young.tick(5.1) # cooldown expired while juvenile, then maturation resets it
+	assert_true(young.is_adult())
+	assert_false(young.wants_to_seek_nest(), "a new adult must wait before reproducing")
+	young.tick(5.1)
+	assert_true(young.wants_to_seek_nest())
+
+
 func test_hungry_adult_does_not_seek_nest() -> void:
 	var ready := _make_brain(true, 0.0)
 	ready.tick(30.0) # 30 / 45 = 67 % > seek_food_threshold
@@ -223,7 +236,7 @@ In `core/fish_brain.gd`:
 
 - Append `SEEKING_NEST` to the `State` enum.
 - Add `reproduce_cooldown_seconds`, `_reproduce_cooldown` and `_nest_seek_cooldown`.
-- In `_init`, resolve a negative third argument to `_cfg.reproduce_cooldown_seconds`, store it in `reproduce_cooldown_seconds`, and start `_reproduce_cooldown` at that value.
+- In `_init`, resolve a negative third argument to `_cfg.reproduce_cooldown_seconds`, store it in `reproduce_cooldown_seconds`, and start `_reproduce_cooldown` at that value. Reset `_reproduce_cooldown` to the same value when the fish matures.
 - Add `static func effective_reproduce_cooldown(cfg, hatch_seconds) -> float` returning `maxf(cfg.reproduce_cooldown_seconds, hatch_seconds * 2.0)`.
 - In `tick`: decrement both cooldowns; if the state is `SEEKING_NEST` and `hunger_ratio() >= _cfg.seek_food_threshold`, call `nest_lost()`.
 - `wants_to_move()` includes `SEEKING_NEST`.

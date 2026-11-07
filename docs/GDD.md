@@ -127,7 +127,7 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
   - `EATING`: dopo `eat_seconds` (3 s) l'alga viene rimossa e la fame si azzera. Poi torna a `WANDER`. *Un pesce circondato dalle alghe può uscirne mangiando.*
   - `FERTILIZING`: deve restare fermo sul nido `fertilize_seconds` (3 s). Se se ne va prima (nuovo ordine), la fecondazione non avviene. Se va a buon fine, il nido passa a `EGGS`, il cooldown di riproduzione riparte da capo e il pesce torna a `WANDER`, libero di andarsene. Se la fecondazione viene annullata, il cooldown non riparte.
 - **Fame**: da 0 a `starve_seconds` (45 s). Barra visibile sopra il pesce quando supera il 50%: è piena a fame 0 e si svuota man mano che il pesce si affama, come la barra di sazietà del predatore. Il colore va dal verde (pieno) al rosso (quasi vuoto); sopra il 75% compare un "!" lampeggiante. Al massimo il pesce muore.
-- **Età**: nasce giovane e diventa fecondo dopo `maturity_seconds` (60 s). Il pesce giovane si riconosce a vista (sprite più piccolo). Il cooldown di riproduzione parte dalla nascita del pesce.
+- **Età**: nasce giovane e diventa fecondo dopo `maturity_seconds` (60 s). Il pesce giovane si riconosce a vista (sprite più piccolo). Il cooldown di riproduzione parte dalla nascita e riparte quando il pesce diventa adulto: un pesce appena maturato aspetta prima di riprodursi.
 - La velocità è ridotta dalla temperatura.
 
 ### 5.5 Nido

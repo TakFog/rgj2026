@@ -131,6 +131,8 @@ func tick(delta: float) -> void:
 		age += delta
 		if age >= _cfg.maturity_seconds:
 			adult = true
+			# A newly mature fish waits a full cooldown before reproducing.
+			_reproduce_cooldown = reproduce_cooldown_seconds
 			matured.emit()
 	if state == State.SEEKING_NEST and hunger_ratio() >= _cfg.seek_food_threshold:
 		nest_lost()

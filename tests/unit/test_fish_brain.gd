@@ -241,6 +241,19 @@ func test_waits_for_reproduce_cooldown() -> void:
 	assert_true(ready.wants_to_seek_nest())
 
 
+func test_newly_mature_waits_for_reproduce_cooldown() -> void:
+	var cfg2 := BalanceActors.new()
+	cfg2.starve_seconds = 60.0
+	cfg2.maturity_seconds = 5.0
+	cfg2.reproduce_cooldown_seconds = 20.0
+	var young := FishBrain.new(cfg2, false, 5.0)
+	young.tick(5.1) # cooldown expired while juvenile, then maturation resets it
+	assert_true(young.is_adult())
+	assert_false(young.wants_to_seek_nest(), "a new adult must wait before reproducing")
+	young.tick(5.1)
+	assert_true(young.wants_to_seek_nest())
+
+
 func test_juvenile_never_seeks_nest() -> void:
 	assert_false(_make_brain(false, 0.0).wants_to_seek_nest())
 
