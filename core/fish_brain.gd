@@ -8,7 +8,7 @@ signal matured
 signal eat_finished(algae: Object)
 signal fertilize_finished(nest: Object)
 
-enum State { WANDER, ORDERED, EATING, FERTILIZING, IDLE, SEEKING_FOOD }
+enum State { WANDER, ORDERED, EATING, FERTILIZING, IDLE, SEEKING_FOOD, SEEKING_NEST }
 
 var state := State.WANDER
 ## Order destination in world units (meaningful while ORDERED).
@@ -23,16 +23,32 @@ var dead := false
 var food: Object = null
 ## Nest being fertilized while FERTILIZING, otherwise null.
 var nest: Object = null
+## Seconds between two autonomous fertilizations. A negative constructor
+## argument means "use cfg.reproduce_cooldown_seconds".
+var reproduce_cooldown_seconds: float
 
 var _cfg: BalanceActors
 var _timer := 0.0
 ## Seconds before a wandering hungry fish looks for food again.
 var _seek_cooldown := 0.0
+## Seconds before a wandering fish looks for an empty nest again.
+var _nest_seek_cooldown := 0.0
+## Seconds left before the fish may reproduce again.
+var _reproduce_cooldown := 0.0
 
 
-func _init(cfg: BalanceActors, p_adult: bool) -> void:
+func _init(cfg: BalanceActors, p_adult: bool, p_reproduce_cooldown_seconds := -1.0) -> void:
 	_cfg = cfg
 	adult = p_adult
+	reproduce_cooldown_seconds = p_reproduce_cooldown_seconds \
+		if p_reproduce_cooldown_seconds >= 0.0 else cfg.reproduce_cooldown_seconds
+	_reproduce_cooldown = reproduce_cooldown_seconds
+
+
+## Cooldown between autonomous fertilizations, never shorter than twice the
+## nest hatching time.
+static func effective_reproduce_cooldown(cfg: BalanceActors, hatch_seconds: float) -> float:
+	return maxf(cfg.reproduce_cooldown_seconds, hatch_seconds * 2.0)
 
 
 func is_adult() -> bool:
@@ -46,7 +62,8 @@ func hunger_ratio() -> float:
 ## True when the node should move this frame (wandering, following an order
 ## or swimming to food).
 func wants_to_move() -> bool:
-	return not dead and (state == State.WANDER or state == State.ORDERED or state == State.SEEKING_FOOD)
+	return not dead and (state == State.WANDER or state == State.ORDERED or state == State.SEEKING_FOOD \
+		or state == State.SEEKING_NEST)
 
 
 ## True when a wandering fish is hungry enough to look for food on its own.
@@ -69,6 +86,28 @@ func seek_failed() -> void:
 	_seek_cooldown = _cfg.seek_retry_seconds
 
 
+## True when a wandering adult fish is fed, off cooldown, and may look for an
+## empty nest on its own.
+func wants_to_seek_nest() -> bool:
+	return not dead and adult and state == State.WANDER \
+		and hunger_ratio() < _cfg.seek_food_threshold \
+		and _reproduce_cooldown <= 0.0 and _nest_seek_cooldown <= 0.0
+
+
+## The node found a reachable empty nest: swim to it. Only from WANDER, so an
+## order or another drive is never interrupted.
+func seek_nest(target: Object) -> void:
+	if dead or not adult or state != State.WANDER:
+		return
+	_enter(State.SEEKING_NEST)
+	nest = target
+
+
+## The node found no reachable empty nest: keep wandering, retry later.
+func nest_seek_failed() -> void:
+	_nest_seek_cooldown = _cfg.seek_retry_seconds
+
+
 ## Player order: swim straight to `destination`. Cancels eating/fertilizing.
 func order(destination: Vector2) -> void:
 	if dead:
@@ -82,6 +121,8 @@ func tick(delta: float) -> void:
 		return
 	hunger += delta
 	_seek_cooldown -= delta
+	_nest_seek_cooldown -= delta
+	_reproduce_cooldown -= delta
 	if hunger >= _cfg.starve_seconds:
 		dead = true
 		starved.emit()
@@ -91,6 +132,8 @@ func tick(delta: float) -> void:
 		if age >= _cfg.maturity_seconds:
 			adult = true
 			matured.emit()
+	if state == State.SEEKING_NEST and hunger_ratio() >= _cfg.seek_food_threshold:
+		nest_lost()
 	if state == State.EATING or state == State.FERTILIZING or state == State.IDLE:
 		_timer -= delta
 		if _timer <= 0.0:
@@ -113,6 +156,9 @@ func blocked_by_other() -> void:
 	elif state == State.SEEKING_FOOD:
 		_enter(State.WANDER)
 		seek_failed()
+	elif state == State.SEEKING_NEST:
+		_enter(State.WANDER)
+		nest_seek_failed()
 
 
 ## Sensor: the ordered fish reached its destination. `empty_nest` is the empty
@@ -128,6 +174,19 @@ func arrived(empty_nest: Object) -> void:
 		_go_idle()
 
 
+## Sensor: the nest-seeking fish reached the nest. `empty_nest` is the empty
+## nest under it, or null.
+func nest_reached(empty_nest: Object) -> void:
+	if state != State.SEEKING_NEST:
+		return
+	if empty_nest != null and adult:
+		_enter(State.FERTILIZING)
+		nest = empty_nest
+		_timer = _cfg.fertilize_seconds
+	else:
+		nest_lost()
+
+
 ## Sensor: the algae being eaten or swum to disappeared (eaten by another
 ## fish, cyclone...).
 func food_lost() -> void:
@@ -135,10 +194,14 @@ func food_lost() -> void:
 		_enter(State.WANDER)
 
 
-## Sensor: the nest being fertilized disappeared or is no longer empty.
+## Sensor: the nest being fertilized or swum to disappeared or is no longer
+## empty.
 func nest_lost() -> void:
 	if state == State.FERTILIZING:
 		_enter(State.WANDER)
+	elif state == State.SEEKING_NEST:
+		_enter(State.WANDER)
+		nest_seek_failed()
 
 
 func _finish_timed_state() -> void:
@@ -150,6 +213,7 @@ func _finish_timed_state() -> void:
 			eat_finished.emit(eaten_algae)
 		State.FERTILIZING:
 			var fertilized_nest := nest
+			_reproduce_cooldown = reproduce_cooldown_seconds
 			_enter(State.WANDER)
 			fertilize_finished.emit(fertilized_nest)
 		State.IDLE:

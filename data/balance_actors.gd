@@ -26,6 +26,9 @@ extends Resource
 @export var seek_food_threshold := 0.5
 ## Seconds a hungry fish waits before looking again when no algae is reachable.
 @export var seek_retry_seconds := 1.0
+## Minimum seconds between two autonomous fertilizations. The Fish node clamps
+## it to at least twice the nest hatching time.
+@export var reproduce_cooldown_seconds := 40.0
 
 @export_group("Predator")
 ## Feature flag: set to false to turn the carnivorous predator off entirely.
