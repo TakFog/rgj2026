@@ -10,6 +10,7 @@ func _init() -> void:
 	var events: Dictionary = AudioEvents.TAKES
 
 	print("Music: ", _track(settings))
+	print("Outro: ", _outro(settings))
 	print()
 	print("%-16s %-10s %8s %6s %10s %10s  %s" % [
 		"event", "in .tres", "gain", "pitch", "high-pass", "low-pass", "takes / bus"])
@@ -27,6 +28,16 @@ func _track(settings: AudioSettings) -> String:
 		settings.music_track.resource_path, loop, settings.music_track.get_length(),
 		settings.music_gain_db, settings.music_pitch,
 		_hz(settings.music_high_pass_hz), _hz(settings.music_low_pass_hz)]
+
+
+func _outro(settings: AudioSettings) -> String:
+	if settings.outro_track == null:
+		return "(none, a lost run goes quiet)"
+	var wav := settings.outro_track as AudioStreamWAV
+	var loop := "loop: NO" if wav == null or wav.loop_mode == AudioStreamWAV.LOOP_DISABLED else "loop: YES (should not loop!)"
+	return "%s (%s, %.1f s)  gain %+.1f dB" % [
+		settings.outro_track.resource_path, loop, settings.outro_track.get_length(),
+		settings.outro_gain_db]
 
 
 func _print_event(settings: AudioSettings, name: StringName, paths: Array) -> void:

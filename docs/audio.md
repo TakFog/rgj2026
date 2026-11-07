@@ -95,6 +95,10 @@ it, set `music_track` in `data/audio_settings.tres` (Music section): pick any
 available tracks are `game_loop.wav` and `game_loop_alt.wav` (currently used);
 `intro.wav` and `outro.wav` are kept for later.
 
+Losing the run (any population hits zero) stops the loop and plays
+`outro_track` once on the same Music bus: set it to `outro.wav`, or clear it for
+silence when you lose. Its level is `outro_gain_db`; it must not loop.
+
 Level, pitch and filters are `music_gain_db`, `music_pitch`,
 `music_high_pass_hz` and `music_low_pass_hz` in the same resource. The loop comes
 from the WAV import setting `edit/loop_mode` (`2` = forward) in the track's

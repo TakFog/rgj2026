@@ -67,4 +67,5 @@ func _setup_audio() -> void:
 	if dev_a != null:
 		audio.inventory = dev_a.get("inventory") as InventorySystem
 		audio.placement = dev_a.get("placement") as PlacementController
+	audio.monitor = get_node("PopulationMonitor") as PopulationMonitor
 	add_child(audio)

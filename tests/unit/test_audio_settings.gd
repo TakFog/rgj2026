@@ -36,6 +36,14 @@ func test_shipped_music_track_is_set_and_loops() -> void:
 	assert_true(wav.loop_mode != AudioStreamWAV.LOOP_DISABLED, "music track does not loop")
 
 
+func test_shipped_outro_is_set_and_does_not_loop() -> void:
+	var shipped: AudioSettings = load("res://data/audio_settings.tres")
+	assert_true(shipped.outro_track != null, "no outro track in data/audio_settings.tres")
+	if shipped.outro_track is AudioStreamWAV:
+		assert_eq((shipped.outro_track as AudioStreamWAV).loop_mode, AudioStreamWAV.LOOP_DISABLED,
+				"the outro must not loop")
+
+
 func test_placement_uses_the_item_kind_sound_when_it_has_one() -> void:
 	assert_eq(AudioEvents.placement_event(&"nest"), &"placement_nest")
 	assert_eq(AudioEvents.placement_event(&"algae"), &"placement_algae")

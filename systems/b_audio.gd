@@ -11,9 +11,12 @@ const VOICES := 6
 ## When null, the matching event stays silent.
 var inventory: InventorySystem
 var placement: PlacementController
+## Tells us when the run is lost (set by DevBSystems).
+var monitor: PopulationMonitor
 
 var _streams := {} # StringName -> Array[AudioStream]
 var _players: Array[AudioStreamPlayer] = []
+var _outro: AudioStreamPlayer
 var _next := 0
 var _rng := RandomNumberGenerator.new()
 
@@ -33,6 +36,17 @@ func _ready() -> void:
 		var player := AudioStreamPlayer.new()
 		add_child(player)
 		_players.append(player)
+
+	_outro = AudioStreamPlayer.new()
+	_outro.name = "Outro"
+	_outro.bus = Game.AUDIO_SETTINGS.music_bus()
+	_outro.volume_db = Game.AUDIO_SETTINGS.outro_gain_db
+	_outro.pitch_scale = Game.AUDIO_SETTINGS.music_pitch
+	# The game over screen pauses the tree right after this signal.
+	_outro.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_outro)
+	if monitor != null:
+		monitor.game_over.connect(_on_game_over)
 	if placement != null:
 		placement.placement_finished.connect(_on_placement_finished)
 	if inventory != null:
@@ -56,6 +70,17 @@ func play(name: StringName) -> void:
 	player.volume_db = gain_db
 	player.pitch_scale = Game.AUDIO_SETTINGS.event(name).random_pitch(_rng)
 	player.play()
+
+
+## Losing the run: the loop stops and the outro track plays once (GDD §3).
+func _on_game_over(_population: StringName, _score_seconds: float) -> void:
+	var music := get_tree().get_first_node_in_group(Groups.MUSIC) as AudioStreamPlayer
+	if music != null:
+		music.stop()
+	if Game.AUDIO_SETTINGS.outro_track == null:
+		return
+	_outro.stream = Game.AUDIO_SETTINGS.outro_track
+	_outro.play()
 
 
 ## Placing an item: its own sound when it has one (e.g. a nest), else the generic.
