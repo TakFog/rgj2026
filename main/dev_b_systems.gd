@@ -4,4 +4,6 @@ extends Node
 
 
 func _ready() -> void:
-	pass
+	var commander := FishCommander.new()
+	commander.name = "FishCommander"
+	add_child(commander)
