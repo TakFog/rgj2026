@@ -94,7 +94,7 @@ func _update_labels() -> void:
 
 	# --- Threats: kind + radius ---
 	for threat in get_tree().get_nodes_in_group(Groups.THREATS):
-		if not _alive(threat):
+		if not _alive(threat) or not (threat is Threat):
 			continue
 		var id := threat.get_instance_id()
 		var text := "%s r:%.0f" % [_threat_name(threat.kind), threat.radius]
