@@ -79,7 +79,8 @@ low/high-pass filters, per event). To add a new sound, follow [`docs/audio.md`](
 
 ## Contributing
 
-- Work on a feature branch named `<github-username>/<feature-name>`, never directly on `main`.
+- Work on your own feature branch named `<your-github-username>/<feature-name>` (the prefix is your account, not the
+  repository owner's or a teammate's), never directly on `main`.
 - Before merging, merge the latest `origin/main` into your branch and check that tests pass and the
   game runs without errors.
 - Commit messages and PRs are written in English.
