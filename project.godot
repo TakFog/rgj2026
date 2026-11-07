@@ -12,9 +12,9 @@ config_version=5
 
 config/name="BalanSea"
 run/main_scene="res://main/main.tscn"
-config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://icon.svg"
 config/quit_on_go_back=false
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="uid://bdkqt67e71etc"
 
 [audio]
 
