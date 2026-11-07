@@ -5,7 +5,7 @@ name: CD
 #
 # The itch.io push is skipped until both of these exist in the repository settings:
 #   secrets.BUTLER_API_KEY  - itch.io API key (https://itch.io/user/settings/api-keys)
-#   vars.ITCH_TARGET        - itch.io "user/game" slug, e.g. "someone/ideologia-marina"
+#   vars.ITCH_TARGET        - itch.io "user/game" slug, e.g. "someone/balansea"
 
 on:
   push:

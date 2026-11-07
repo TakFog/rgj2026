@@ -4,7 +4,7 @@ extends Control
 ## Draws per-entity debug numbers over everything in screen space:
 ## coral oxygen/life, nest hatch time, fish state + hunger, turtle state.
 ## A fixed panel also shows temperature-dependent rates, a manual
-## temperature slider and editable feature flags.
+## temperature slider, editable debug flags and debug spawn buttons.
 
 signal enabled_changed(enabled: bool)
 
@@ -13,12 +13,15 @@ signal enabled_changed(enabled: bool)
 var _labels: Dictionary = {} # Variant -> Label
 var _slider: HSlider
 var _panel_bg: ColorRect
-## Editable feature-flag toggle buttons, keyed by flag name.
+## Editable debug/feature toggle buttons, keyed by flag name.
 var _flag_buttons: Dictionary = {} # StringName -> Button
 ## Action buttons (threat spawns, Game Over), keyed by action name.
 var _spawn_buttons: Dictionary = {} # String -> Button
 
 const FONT_SIZE := 11
+## Debug text does not need 60 updates per second; 10 Hz keeps it readable and
+## avoids rebuilding every label (and formatting every string) each frame.
+const REFRESH_SECONDS := 0.1
 ## Pixels above the entity anchor so the text does not sit on the sprite.
 const OFFSET := Vector2(0, -14)
 ## Fixed panel padding from the bottom-right screen corner (the only corner
@@ -45,9 +48,18 @@ const COLOR_TURTLE := Color(0.4, 0.9, 0.6)
 const COLOR_TEMP := Color(1.0, 1.0, 1.0)
 const COLOR_DIM := Color(0.7, 0.7, 0.7)
 
+## Italian labels for the F3 panel's debug flags.
+const FLAG_NAMES := {
+	"co2_dies_on_coral": "CO2 muore sul corallo",
+	"predator_enabled": "Predatore attivo",
+	"turtle_enabled": "Tartaruga attiva",
+	"show_paths": "Mostra percorsi",
+}
+
 const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
 
 var _enabled := false
+var _elapsed := REFRESH_SECONDS
 var enabled:
 	get: return _enabled
 	set(value):
@@ -75,7 +87,7 @@ func _ready() -> void:
 	_slider.value_changed.connect(_on_temperature_slider_changed)
 	add_child(_slider)
 
-	# Editable feature-flag toggle buttons.
+	# Editable feature-flag and debug-view toggle buttons.
 	var co2 := _make_flag_button("co2_dies_on_coral", Game.actors.co2_dies_on_coral)
 	co2.pressed.connect(_toggle_co2_dies_on_coral)
 	add_child(co2)
@@ -91,33 +103,38 @@ func _ready() -> void:
 	add_child(turtle)
 	_flag_buttons["turtle_enabled"] = turtle
 
+	var paths := _make_flag_button("show_paths", Game.debug_show_paths)
+	paths.pressed.connect(_toggle_show_paths)
+	add_child(paths)
+	_flag_buttons["show_paths"] = paths
+
 	# Threat spawn buttons (debug only).
-	var spawn_co2 := _make_action_button("Spawn CO2")
+	var spawn_co2 := _make_action_button("Genera CO2")
 	spawn_co2.pressed.connect(_spawn_co2)
 	add_child(spawn_co2)
 	_spawn_buttons["co2"] = spawn_co2
 
-	var spawn_bag := _make_action_button("Spawn Bag")
+	var spawn_bag := _make_action_button("Genera busta")
 	spawn_bag.pressed.connect(_spawn_bag)
 	add_child(spawn_bag)
 	_spawn_buttons["bag"] = spawn_bag
 
-	var spawn_cyclone := _make_action_button("Spawn Cyclone")
+	var spawn_cyclone := _make_action_button("Genera ciclone")
 	spawn_cyclone.pressed.connect(_spawn_cyclone)
 	add_child(spawn_cyclone)
 	_spawn_buttons["cyclone"] = spawn_cyclone
 
-	var spawn_predator := _make_action_button("Spawn Predator")
+	var spawn_predator := _make_action_button("Genera predatore")
 	spawn_predator.pressed.connect(_spawn_predator)
 	add_child(spawn_predator)
 	_spawn_buttons["predator"] = spawn_predator
 
-	var spawn_turtle := _make_action_button("Spawn Turtle")
+	var spawn_turtle := _make_action_button("Genera tartaruga")
 	spawn_turtle.pressed.connect(_spawn_turtle)
 	add_child(spawn_turtle)
 	_spawn_buttons["turtle"] = spawn_turtle
 
-	var game_over := _make_action_button("Game Over")
+	var game_over := _make_action_button("Fine partita")
 	game_over.pressed.connect(_force_game_over)
 	add_child(game_over)
 	_spawn_buttons["game_over"] = game_over
@@ -126,6 +143,8 @@ func _ready() -> void:
 func _on_debug_mode_changed(value: bool) -> void:
 	enabled = value
 	visible = value
+	# Refresh immediately on enable instead of waiting for the next tick.
+	_elapsed = REFRESH_SECONDS
 	if not value:
 		Game.debug_temperature_manual = false
 		_clear_labels()
@@ -150,6 +169,11 @@ func _toggle_predator_enabled() -> void:
 ## Toggle the turtle-enabled feature flag.
 func _toggle_turtle_enabled() -> void:
 	Game.actors.turtle_enabled = not Game.actors.turtle_enabled
+
+
+## Toggle the planned-route overlay (see core/path_debug.gd).
+func _toggle_show_paths() -> void:
+	Game.debug_show_paths = not Game.debug_show_paths
 
 
 ## Spawn a CO2 cloud at a random edge of the visible seabed.
@@ -200,9 +224,13 @@ func _force_game_over() -> void:
 		monitor.force_game_over()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if not enabled:
 		return
+	_elapsed += delta
+	if _elapsed < REFRESH_SECONDS:
+		return
+	_elapsed = 0.0
 	_update_labels()
 	_sync_slider()
 
@@ -212,7 +240,7 @@ func _panel_height() -> float:
 	var rows := _flag_buttons.size() + _spawn_buttons.size()
 	return (LINE_HEIGHT + SLIDER_HEIGHT + ROW_GAP # temperature + slider
 		+ LINE_HEIGHT * 2.0 + ROW_GAP # rates
-		+ LINE_HEIGHT # "Feature flags:" header
+		+ LINE_HEIGHT # "Flag di gioco:" header
 		+ rows * (FLAG_ROW_HEIGHT + ROW_GAP) - ROW_GAP)
 
 
@@ -238,7 +266,7 @@ func _sync_slider() -> void:
 	_slider.size = Vector2(PANEL_WIDTH, SLIDER_HEIGHT)
 	_slider.value = Game.temperature
 
-	# Buttons sit below the rates section and the "Feature flags:" header.
+	# Buttons sit below the rates section and the "Flag di gioco:" header.
 	y += SLIDER_HEIGHT + ROW_GAP + LINE_HEIGHT * 2.0 + ROW_GAP + LINE_HEIGHT
 	for btn: Button in _flag_buttons.values() + _spawn_buttons.values():
 		btn.position = Vector2(x, y)
@@ -275,31 +303,39 @@ func _update_labels() -> void:
 	var y := origin.y
 
 	# --- Fixed panel: temperature ---
-	var temp_text := "T: %.2f" % Game.temperature
+	var temp_text := "Temp: %.2f" % Game.temperature
 	if Game.debug_temperature_manual:
-		temp_text += " (manual)"
+		temp_text += " (manuale)"
 	_set_label(&"_temp", temp_text, Vector2(x, y), COLOR_TEMP, wanted)
 	y += LINE_HEIGHT + SLIDER_HEIGHT + ROW_GAP
 
 	# --- Fixed panel: temperature-dependent rates ---
 	var regen := Game.by_temperature(Game.eco.coral_regen_per_sec, Game.eco.coral_regen_hot_per_sec)
-	_set_label(&"_regen", "Coral regen: %.2f/s" % regen, Vector2(x, y), COLOR_DIM, wanted)
+	_set_label(&"_regen", "Recupero corallo: %.2f/s" % regen, Vector2(x, y), COLOR_DIM, wanted)
 	y += LINE_HEIGHT
 
 	var egg_death := Game.by_temperature(Game.eco.egg_death_chance_cold, Game.eco.egg_death_chance_hot)
-	_set_label(&"_eggdeath", "Egg death: %.0f%%" % (egg_death * 100.0), Vector2(x, y), COLOR_DIM, wanted)
+	_set_label(&"_eggdeath", "Morte uova: %.0f%%" % (egg_death * 100.0), Vector2(x, y), COLOR_DIM, wanted)
 	y += LINE_HEIGHT + ROW_GAP
 
-	# --- Fixed panel: feature flags (editable, see _flag_buttons) ---
-	_set_label(&"_flags", "Feature flags:", Vector2(x, y), COLOR_TEMP, wanted)
+	# --- Fixed panel: debug flags (editable, see _flag_buttons) ---
+	_set_label(&"_flags", "Flag di gioco:", Vector2(x, y), COLOR_TEMP, wanted)
 
-	# Keep flag button labels in sync with current state.
+	# Keep flag button labels in sync with current state (only when they change).
 	for name in _flag_buttons.keys():
 		var btn := _flag_buttons[name] as Button
-		btn.text = _flag_label(name, _flag_value(name))
+		var flag_text := _flag_label(name, _flag_value(name))
+		if btn.text != flag_text:
+			btn.text = flag_text
+
+	# Query each group once per refresh instead of once per entity loop.
+	var corals := get_tree().get_nodes_in_group(Groups.CORALS)
+	var nests := get_tree().get_nodes_in_group(Groups.NESTS)
+	var fishes := get_tree().get_nodes_in_group(Groups.FISH)
+	var turtles := get_tree().get_nodes_in_group(Groups.TURTLES)
 
 	# --- Entities: coral oxygen / life ---
-	for coral in get_tree().get_nodes_in_group(Groups.CORALS):
+	for coral in corals:
 		if not _alive(coral):
 			continue
 		var id := coral.get_instance_id()
@@ -312,32 +348,32 @@ func _update_labels() -> void:
 		_set_label(id, text, pos + OFFSET, color, wanted)
 
 	# --- Entities: nest hatch time or empty ---
-	for nest in get_tree().get_nodes_in_group(Groups.NESTS):
+	for nest in nests:
 		if not _alive(nest):
 			continue
 		var id := nest.get_instance_id()
-		var text := "EMPTY"
+		var text := "VUOTO"
 		if nest.has_eggs():
-			text = "EGGS: %.1fs" % nest.eggs_time_left()
+			text = "UOVA: %.1fs" % nest.eggs_time_left()
 		var pos := _viewport_position(nest.global_position)
 		var color := COLOR_NEST if nest.has_eggs() else COLOR_NEST_EMPTY
 		_set_label(id, text, pos + OFFSET, color, wanted)
 
 	# --- Entities: fish state + hunger ---
-	for fish in get_tree().get_nodes_in_group(Groups.FISH):
+	for fish in fishes:
 		if not _alive(fish) or fish.brain == null:
 			continue
 		var id := fish.get_instance_id()
-		var text := "%s h:%d%%" % [_state_name(fish.brain.state), (fish.brain.hunger_ratio() * 100.0)]
+		var text := "%s fame %d%%" % [_state_name(fish.brain.state), (fish.brain.hunger_ratio() * 100.0)]
 		var pos := _viewport_position(fish.global_position)
 		_set_label(id, text, pos + OFFSET, COLOR_FISH, wanted)
 
 	# --- Entities: turtle state + algae eaten ---
-	for turtle in get_tree().get_nodes_in_group(Groups.TURTLES):
+	for turtle in turtles:
 		if not _alive(turtle) or turtle.brain == null:
 			continue
 		var id := turtle.get_instance_id()
-		var text := "%s a:%d" % [_turtle_state_name(turtle.brain.state), turtle.brain.algae_eaten]
+		var text := "%s alghe %d" % [_turtle_state_name(turtle.brain.state), turtle.brain.algae_eaten]
 		var pos := _viewport_position(turtle.global_position)
 		_set_label(id, text, pos + OFFSET, COLOR_TURTLE, wanted)
 
@@ -348,18 +384,19 @@ func _update_labels() -> void:
 			_labels.erase(id)
 
 
-## Returns the display text for a feature flag.
+## Returns the Italian display text for a debug flag.
 func _flag_label(name: String, value: bool) -> String:
-	var pretty := name.to_upper().replace("_", " ")
-	return "%s: %s" % [pretty, "ON" if value else "OFF"]
+	var pretty: String = FLAG_NAMES.get(name, name.to_upper().replace("_", " "))
+	return "%s: %s" % [pretty, "SÌ" if value else "NO"]
 
 
-## Returns the current value of a feature flag by name.
+## Returns the current value of a debug/feature flag by name.
 func _flag_value(name: StringName) -> bool:
 	match name:
 		"co2_dies_on_coral": return Game.actors.co2_dies_on_coral
 		"predator_enabled": return Game.actors.predator_enabled
 		"turtle_enabled": return Game.actors.turtle_enabled
+		"show_paths": return Game.debug_show_paths
 		_: return false
 
 
@@ -368,9 +405,12 @@ func _set_label(id: Variant, text: String, pos: Vector2, color: Color, wanted: D
 	wanted[id] = true
 	if _labels.has(id):
 		var label := _labels[id] as Label
-		label.text = text
-		label.position = pos
-		label.modulate = color
+		if label.text != text:
+			label.text = text
+		if label.position != pos:
+			label.position = pos
+		if label.modulate != color:
+			label.modulate = color
 	else:
 		var label := Label.new()
 		label.text = text
@@ -398,20 +438,20 @@ func _alive(entity: Object) -> bool:
 
 func _state_name(state: int) -> String:
 	match state:
-		FishBrain.State.WANDER: return "WANDER"
-		FishBrain.State.ORDERED: return "ORDERED"
-		FishBrain.State.EATING: return "EATING"
-		FishBrain.State.FERTILIZING: return "FERTILIZING"
-		FishBrain.State.IDLE: return "IDLE"
-		FishBrain.State.SEEKING_FOOD: return "SEEKING"
+		FishBrain.State.WANDER: return "VAGA"
+		FishBrain.State.ORDERED: return "ORDINE"
+		FishBrain.State.EATING: return "MANGIA"
+		FishBrain.State.FERTILIZING: return "FECONDA"
+		FishBrain.State.IDLE: return "FERMO"
+		FishBrain.State.SEEKING_FOOD: return "CERCA CIBO"
 		_: return "?"
 
 
 func _turtle_state_name(state: int) -> String:
 	match state:
-		TurtleBrain.State.HELPING: return "HELPING"
-		TurtleBrain.State.EATING: return "EATING"
-		TurtleBrain.State.LEAVING: return "LEAVING"
+		TurtleBrain.State.HELPING: return "AIUTA"
+		TurtleBrain.State.EATING: return "MANGIA"
+		TurtleBrain.State.LEAVING: return "SE NE VA"
 		_: return "?"
 
 

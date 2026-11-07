@@ -1,4 +1,4 @@
-# Ideologia Marina
+# BalanSea
 
 A real-time, top-down 2D reef-management game made for a game jam (theme: **SUBIRE**, "to endure").
 
@@ -23,7 +23,7 @@ The full game design document (in Italian) is in [`docs/GDD.md`](docs/GDD.md).
 | Left click | Select a fish, give it an order, confirm a placement |
 | Right click / Esc | Cancel placement / deselect |
 | Space / Esc | Pause (Esc pauses only when there is nothing to cancel) |
-| F3 | Debug overlay |
+| F3 | Debug overlay (SHOW PATHS draws planned fish/predator/turtle routes) |
 
 ## Requirements
 

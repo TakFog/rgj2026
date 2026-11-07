@@ -6,6 +6,7 @@ const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
 const PredatorSpawner := preload("res://systems/b_predator_spawner.gd")
 const TurtleSpawner := preload("res://systems/b_turtle_spawner.gd")
 const AudioSystem := preload("res://systems/b_audio.gd")
+const Juice := preload("res://core/juice.gd")
 const MainMenuScreen := preload("res://ui/b_main_menu.gd")
 const TutorialScreen := preload("res://ui/b_tutorial_screen.gd")
 
@@ -36,6 +37,8 @@ func _ready() -> void:
 
 	# P4: sound effects for gameplay events.
 	_setup_audio()
+	# Juice: particles, placement ripples and camera shake.
+	_setup_juice()
 
 
 ## B2: population monitor, HUD, pause and game over (GDD §3, §9).
@@ -139,3 +142,14 @@ func _setup_audio() -> void:
 		audio.placement = dev_a.get("placement") as PlacementController
 	audio.monitor = get_node("PopulationMonitor") as PopulationMonitor
 	add_child(audio)
+
+
+## Particles, placement ripples and camera shake (core/juice.gd). Lives in the
+## screen-space View so it uses the same projection as the entity visuals.
+func _setup_juice() -> void:
+	var juice := Juice.new()
+	juice.name = "Juice"
+	var dev_a := get_parent().get_node_or_null("DevASystems")
+	if dev_a != null:
+		juice.placement = dev_a.get("placement") as PlacementController
+	Game.view.add_child(juice)

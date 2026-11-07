@@ -12,6 +12,9 @@ extends CharacterBody2D
 signal destroyed
 ## Emitted when it bites a fish or a nest's eggs (the eat sound, GDD §7.4).
 signal ate
+## Emitted with the bitten prey position and whether it was a fish. The juice
+## system uses it to draw blood (fish) or an egg burst (nest).
+signal prey_eaten(world_position: Vector2, was_fish: bool)
 ## Used by the audio system (systems/b_audio.gd).
 signal left
 
@@ -101,6 +104,11 @@ func is_hunting() -> bool:
 	return brain != null and brain.state != PredatorBrain.State.LEAVING
 
 
+## Debug view only: the remaining planned route, in world units.
+func debug_path() -> PackedVector2Array:
+	return _path
+
+
 func destroy() -> void:
 	if is_queued_for_deletion():
 		return
@@ -123,7 +131,9 @@ func _try_bite() -> bool:
 	if global_position.distance_to(_target.global_position) > reach:
 		return false
 	var amount := _satisfaction_of(_target)
-	if _target is Fish:
+	var prey_position := _target.global_position
+	var was_fish := _target is Fish
+	if was_fish:
 		(_target as Fish).destroy()
 	else:
 		(_target as Nest).kill_eggs()
@@ -132,6 +142,7 @@ func _try_bite() -> bool:
 	_replan_timer = 0.0
 	brain.ate(amount)
 	ate.emit()
+	prey_eaten.emit(prey_position, was_fish)
 	return true
 
 
@@ -220,9 +231,10 @@ func _move(motion: Vector2, straight: Vector2) -> bool:
 
 
 ## Inside the visible seabed, grown so the predator leaves fully off screen.
+## The grown polygon is cached by Game: leaving runs this every physics frame.
 func _in_alive_area() -> bool:
-	var grown := Geometry2D.offset_polygon(Game.visible_world_polygon(), _cfg.predator_radius * 2.0 + EXIT_MARGIN)
-	return not grown.is_empty() and Geometry2D.is_point_in_polygon(global_position, grown[0])
+	var grown := Game.visible_world_polygon_grown(_cfg.predator_radius * 2.0 + EXIT_MARGIN)
+	return not grown.is_empty() and Geometry2D.is_point_in_polygon(global_position, grown)
 
 
 func _satisfaction_of(prey: Node2D) -> float:
