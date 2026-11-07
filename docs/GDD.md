@@ -218,7 +218,7 @@ Danni dal più debole al più forte: alga (10) < busta (35) < CO2 (50). Tutti i 
 ## 9. Interfaccia
 - **In alto a destra**: termometro.
 - **In alto al centro**: punteggio / tempo.
-- **In basso**: 4 slot dell'inventario, con il tempo di ricarica mostrato come radiale.
+- **In alto a sinistra**: 4 slot dell'inventario, con il tempo di ricarica mostrato come radiale.
 - **Pausa**: Spazio / Esc. Mentre sei in pausa non puoi piazzare oggetti.
 - **Tutorial**: al primo avvio, dopo Gioca, una schermata animata mostra tre reazioni della barriera (pesce/nido, CO2/alga, alga/corallo). Sempre riapribile da "Come si gioca".
 - **Debug overlay** (F3): tutti i valori di bilanciamento in tempo reale, raggi di collisione, stati dei pesci.
