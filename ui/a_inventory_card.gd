@@ -5,28 +5,30 @@ extends BaseButton
 ## a caption, and a radial refill ring while the slot is empty.
 ## Fully custom-drawn: no default Godot button styling.
 
-const CARD_SIZE := Vector2(108, 118)
-const CORNER_RADIUS := 16
-const CAPTION_HEIGHT := 24.0
-const CAPTION_FONT_SIZE := 15
-const ICON_PADDING := 12.0
+const CARD_SIZE := Vector2(104, 114)
+const CORNER_RADIUS := 14
+const CAPTION_HEIGHT := 22.0
+const CAPTION_FONT_SIZE := 14
+const ICON_PADDING := 10.0
 ## Radius of the keyboard-shortcut badge drawn in the top-left corner.
-const SHORTCUT_RADIUS := 11.0
-const SHORTCUT_FONT_SIZE := 13
+const SHORTCUT_RADIUS := 10.0
+const SHORTCUT_FONT_SIZE := 12
 ## Hover and selection lift the card, in pixels; eased toward the target.
-const HOVER_LIFT := 4.0
-const SELECTED_LIFT := 9.0
-const LIFT_SPEED := 14.0
-const POP_SECONDS := 0.25
+const HOVER_LIFT := 3.0
+const SELECTED_LIFT := 7.0
+const LIFT_SPEED := 12.0
+const POP_SECONDS := 0.2
 
-## Palette taken from the reef map: deep navy water, aqua rim, sand.
-const BG_COLOR := Color(0.03, 0.11, 0.19, 0.92)
-const BG_EMPTY_COLOR := Color(0.02, 0.06, 0.11, 0.78)
-const RIM_COLOR := Color(0.25, 0.85, 0.9)
-const SAND_COLOR := Color(1.0, 0.76, 0.16)
-const SHADOW_COLOR := Color(0.0, 0.02, 0.05, 0.6)
-const CAPTION_COLOR := Color(0.78, 0.95, 1.0)
-const SEABED_COLOR := Color(0.25, 0.85, 0.9, 0.1)
+## Palette sampled from the painted reef: deep teal water, sea-glass rim,
+## warm sand. Muted on purpose: the cards should sit under the reef, not
+## compete with it.
+const BG_COLOR := Color(0.045, 0.13, 0.155, 0.9)
+const BG_EMPTY_COLOR := Color(0.035, 0.09, 0.11, 0.72)
+const RIM_COLOR := Color(0.47, 0.8, 0.78)
+const SAND_COLOR := Color(0.98, 0.78, 0.45)
+const SHADOW_COLOR := Color(0.0, 0.03, 0.04, 0.5)
+const CAPTION_COLOR := Color(0.88, 0.94, 0.91)
+const SEABED_COLOR := Color(0.98, 0.78, 0.45, 0.06)
 
 const NAMES := {
 	InventoryModel.CORAL: "Corallo",
@@ -129,18 +131,24 @@ func _draw_shortcut() -> void:
 func _draw_frame() -> void:
 	var hovered := is_hovered() and not disabled
 	_style.bg_color = BG_EMPTY_COLOR if item.is_empty() else BG_COLOR
-	_style.set_border_width_all(4 if selected else 3)
+	_style.set_border_width_all(3 if selected else 2)
 	if selected:
 		_style.border_color = SAND_COLOR
-		_style.shadow_color = Color(SAND_COLOR, 0.45)
-		_style.shadow_size = 12
+		_style.shadow_color = Color(SAND_COLOR, 0.3)
+		_style.shadow_size = 9
+		_style.shadow_offset = Vector2.ZERO
+	elif hovered:
+		_style.border_color = Color(RIM_COLOR, 0.9)
+		_style.shadow_color = Color(RIM_COLOR, 0.18)
+		_style.shadow_size = 7
 		_style.shadow_offset = Vector2.ZERO
 	else:
-		var rim_alpha := 0.25 if item.is_empty() else (1.0 if hovered else 0.6)
-		_style.border_color = Color(RIM_COLOR, rim_alpha)
-		_style.shadow_color = Color(RIM_COLOR, 0.3) if hovered else SHADOW_COLOR
-		_style.shadow_size = 10 if hovered else 6
-		_style.shadow_offset = Vector2.ZERO if hovered else Vector2(0, 4)
+		_style.border_color = Color(RIM_COLOR, 0.18 if item.is_empty() else 0.45)
+		# No drop shadow at rest: the thin rim is enough, and avoids a heavy
+		# dashboard look over the bright reef.
+		_style.shadow_color = SHADOW_COLOR
+		_style.shadow_size = 0
+		_style.shadow_offset = Vector2.ZERO
 	draw_style_box(_style, Rect2(Vector2.ZERO, size))
 
 

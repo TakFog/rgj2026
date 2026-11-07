@@ -17,7 +17,7 @@ enum InputAction { NONE, NEXT, PRIMARY }
 const LOOP_SECONDS := TutorialStage.TIMELINE_SECONDS
 const SCREEN_MARGIN := 24.0
 const RIGHT_COLUMN_MIN_WIDTH := 340.0
-const CAPTION_FONT_SIZE := 24
+const CAPTION_FONT_SIZE := 22
 ## Theme entries SeaStyle sets on a button; chips share one copy of each look.
 const CHIP_STYLE_STATES: Array[StringName] = [
 	&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled", &"focus",
@@ -98,9 +98,7 @@ func _ready() -> void:
 
 	var intro := Label.new()
 	intro.text = "Scegli un'interazione per vederla."
-	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	intro.add_theme_font_size_override("font_size", 20)
-	intro.add_theme_color_override("font_color", SeaStyle.CAPTION_COLOR)
+	SeaStyle.style_body(intro)
 	box.add_child(intro)
 
 	var content := HBoxContainer.new()
@@ -142,7 +140,7 @@ func _ready() -> void:
 
 	var list_title := Label.new()
 	list_title.text = "Interazioni"
-	list_title.add_theme_font_size_override("font_size", 24)
+	list_title.add_theme_font_size_override("font_size", 20)
 	list_title.add_theme_color_override("font_color", SeaStyle.SAND_COLOR)
 	right.add_child(list_title)
 
@@ -151,6 +149,7 @@ func _ready() -> void:
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	right.add_child(_scroll)
+	SeaStyle.style_scrollbar(_scroll.get_v_scroll_bar())
 
 	_chip_normal = _chip_look(false)
 	_chip_highlighted = _chip_look(true)
@@ -317,15 +316,15 @@ func _build_group(group: Dictionary) -> Control:
 
 	var label := Label.new()
 	label.text = group["label"]
-	label.add_theme_font_size_override("font_size", 19)
+	label.add_theme_font_size_override("font_size", 17)
 	label.add_theme_color_override("font_color", group.get("color", SeaStyle.SAND_COLOR))
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header.add_child(label)
 
 	var chips := HFlowContainer.new()
 	chips.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	chips.add_theme_constant_override("h_separation", 6)
-	chips.add_theme_constant_override("v_separation", 6)
+	chips.add_theme_constant_override("h_separation", 5)
+	chips.add_theme_constant_override("v_separation", 5)
 	chips.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	section.add_child(chips)
 
@@ -342,11 +341,11 @@ func _build_chip(row: Dictionary, index: int) -> Button:
 	chip.tooltip_text = "%s → %s: %s" % [row["agent"], row["target"], row["short"]]
 	chip.icon = TutorialIcons.texture(StringName(row["target_id"]))
 	chip.expand_icon = true
-	chip.add_theme_constant_override("icon_max_width", 26)
-	chip.custom_minimum_size = Vector2(196, 46)
+	chip.add_theme_constant_override("icon_max_width", 24)
+	chip.custom_minimum_size = Vector2(184, 42)
 	chip.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	chip.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	chip.add_theme_font_size_override("font_size", 15)
+	chip.add_theme_font_size_override("font_size", 14)
 	chip.focus_mode = Control.FOCUS_NONE
 	chip.pressed.connect(_on_chip_pressed.bind(index))
 	chip.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
