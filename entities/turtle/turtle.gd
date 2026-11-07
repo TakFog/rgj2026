@@ -128,7 +128,7 @@ func _try_touch() -> bool:
 
 
 func _finish_algae() -> void:
-	if _target is Algae and _is_valid_target(_target):
+	if _is_valid_target(_target) and _target is Algae:
 		(_target as Algae).destroy()
 	_target = null
 	_path.clear()
