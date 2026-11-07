@@ -44,6 +44,9 @@ const SILENCE_DB := -80.0
 ## Applied to every effect, on top of the per-event gain. The takes peak around
 ## -10 dBFS, well under the music, hence the default boost (~+8 dB).
 @export_range(-80.0, 24.0, 0.1) var effects_gain_db := 8.0
+## Seconds the cyclone wind takes to fade in when a cyclone enters the screen
+## and to fade out when it leaves.
+@export_range(0.0, 8.0, 0.05) var cyclone_wind_fade_seconds := 1.0
 ## One entry per event in AudioEvents.TAKES: level, pitch and filters.
 ## An event missing here plays at the neutral defaults.
 @export var events: Dictionary[StringName, AudioEvent] = {

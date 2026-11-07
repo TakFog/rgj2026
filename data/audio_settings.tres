@@ -54,7 +54,7 @@ gain_db = -12.0
 ; A cyclone on screen (loops while it is visible) and its impact, very quiet.
 [sub_resource type="Resource" id="AudioEvent_cyclone_wind"]
 script = ExtResource("2_audio_event")
-gain_db = 4.0
+gain_db = -8.0
 
 [sub_resource type="Resource" id="AudioEvent_cyclone_hit"]
 script = ExtResource("2_audio_event")
@@ -80,6 +80,8 @@ arp_gain_db = -4.0
 ; Half arp with 1-5 hostiles, full from 6 on.
 arp_full_hostiles = 6
 music_gain_db = 3.0
+; The cyclone wind fades in when a cyclone enters the screen and out when it leaves.
+cyclone_wind_fade_seconds = 1.0
 ; Played once when the run is lost (the loop above stops first).
 outro_track = ExtResource("9_outro_track")
 outro_gain_db = -6.0
