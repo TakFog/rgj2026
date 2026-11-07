@@ -27,6 +27,30 @@ extends Resource
 ## Seconds a hungry fish waits before looking again when no algae is reachable.
 @export var seek_retry_seconds := 1.0
 
+@export_group("Predator")
+## Feature flag: set to false to turn the carnivorous predator off entirely.
+@export var predator_enabled := true
+## Seconds between two predator arrivals (at most predator_max_count at once).
+@export var predator_interval := 70.0
+@export var predator_max_count := 1
+## Bigger than half a cell, so one-cell corridors between corals keep it out.
+@export var predator_radius := 22.0
+@export var predator_speed := 45.0
+@export var predator_turn_radius := 24.0
+## Satiety needed before it leaves the island.
+@export var predator_satiety := 6.0
+## Satisfaction per prey. Eggs are worth juvenile × eggs that would hatch.
+@export var predator_juvenile_satisfaction := 1.0
+@export var predator_adult_satisfaction := 2.0
+## Leaves after this many seconds on the island even if not sated.
+@export var predator_hunt_seconds := 45.0
+## Pause after each bite.
+@export var predator_bite_pause_seconds := 1.0
+## How often it re-picks its prey and re-plans the route (prey moves).
+@export var predator_replan_seconds := 0.5
+## Extra distance beyond touching at which a bite lands.
+@export var predator_bite_margin := 4.0
+
 @export_group("Collapse")
 @export var collapse_grace_seconds := 10.0
 
