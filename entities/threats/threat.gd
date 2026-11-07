@@ -10,11 +10,18 @@ signal destroyed
 const EXIT_MARGIN := 32.0
 ## Screen pixels the threat body floats above its ground shadow.
 const HOVER_PX := 18.0
+## Max radians per second the heading is pulled toward the island center while
+## outside the playable area, on top of the (reduced) drift noise. This forces
+## the movement vector to point back inside instead of drifting away.
+const INWARD_STEER := 4.0
 
 var kind: int = ThreatSchedule.Type.CO2
 var radius := 16.0
 var speed := 40.0
 var turn_noise := 0.0
+## Fraction of the turn noise applied while outside the playable island. Below
+## 1.0 the threat crosses the open seabed almost straight.
+var outside_turn_scale := 1.0
 var color := Color.WHITE
 var heading := 0.0
 
@@ -51,10 +58,33 @@ func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	if _drift:
-		heading = _drift.step(heading, delta)
+		heading = _drift.step(heading, delta, _turn_scale())
+		heading = _steer_inward(heading, delta)
 	position += Vector2.from_angle(heading) * speed * delta
 	if not _in_alive_area():
 		destroy()
+
+
+## Dampens the drift noise over the non-playable open seabed.
+func _turn_scale() -> float:
+	if outside_turn_scale >= 1.0:
+		return 1.0
+	var island := Rect2(Vector2.ZERO, Game.grid.world_size())
+	return 1.0 if island.has_point(position) else outside_turn_scale
+
+
+## Pulls the heading back toward the island center while outside the playable
+## area, so the threat always heads inside instead of drifting off the seabed.
+## A no-op once the threat is inside the island grid.
+func _steer_inward(heading: float, delta: float) -> float:
+	var island := Rect2(Vector2.ZERO, Game.grid.world_size())
+	if island.has_point(position):
+		return heading
+	var center := island.position + island.size * 0.5
+	var target := (center - position).angle()
+	var diff := wrapf(target - heading, -PI, PI)
+	var step := clampf(diff, -INWARD_STEER * delta, INWARD_STEER * delta)
+	return heading + step
 
 
 ## Inside the visible seabed, grown so threats spawn and leave fully off screen.

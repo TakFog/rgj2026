@@ -30,6 +30,9 @@ extends Resource
 @export var co2_speed := 40.0
 ## Max random heading change in radians per second.
 @export var co2_turn_noise := 0.6
+## Fraction of `co2_turn_noise` applied while the cloud is outside the playable
+## island, so it crosses the open seabed almost straight.
+@export_range(0.0, 1.0) var co2_outside_turn_scale := 0.1
 @export var co2_interval_cold := 30.0
 @export var co2_interval_hot := 8.0
 @export var co2_coral_damage := 50.0

@@ -17,10 +17,14 @@ func _init(p_turn_noise: float, rng: RandomNumberGenerator) -> void:
 	_rng = rng
 
 
-## Returns the heading after `delta` seconds. Never turns more than turn_noise * delta.
-func step(heading: float, delta: float) -> float:
-	if turn_noise <= 0.0:
+## Returns the heading after `delta` seconds. Never turns more than
+## turn_noise * scale * delta. `scale` 0 makes the path perfectly straight (e.g.
+## while a threat crosses the open seabed outside the playable island).
+func step(heading: float, delta: float, scale := 1.0) -> float:
+	var noise := turn_noise * maxf(scale, 0.0)
+	if noise <= 0.0:
+		_turn_rate = 0.0
 		return heading
-	var change := _rng.randf_range(-1.0, 1.0) * turn_noise * RATE_CHANGE * delta
-	_turn_rate = clampf(_turn_rate + change, -turn_noise, turn_noise)
+	var change := _rng.randf_range(-1.0, 1.0) * noise * RATE_CHANGE * delta
+	_turn_rate = clampf(_turn_rate + change, -noise, noise)
 	return heading + _turn_rate * delta

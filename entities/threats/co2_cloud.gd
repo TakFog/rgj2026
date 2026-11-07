@@ -8,4 +8,5 @@ func _init() -> void:
 	radius = Game.actors.co2_radius
 	speed = Game.actors.co2_speed
 	turn_noise = Game.actors.co2_turn_noise
+	outside_turn_scale = Game.actors.co2_outside_turn_scale
 	color = Color(0.6, 0.6, 0.65, 0.75)

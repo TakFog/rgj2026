@@ -160,6 +160,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 
 ### 7.1 CO2
 - Nube (raggio 60 unità), si muove **quasi dritta con curve casuali** (direzione + rumore sull'angolo).
+- Fuori dall'isola (fondale aperto) il rumore è ridotto (`co2_outside_turn_scale`, 10%) e la direzione viene forzata verso il centro dell'isola: la nube attraversa il fondale quasi in linea retta e punta sempre verso la zona giocabile, iniziando a curvare solo una volta dentro.
 
 ### 7.2 Busta di plastica
 - Lenta, si muove in modo **più casuale** della CO2 (cambi di direzione più ampi e frequenti).
