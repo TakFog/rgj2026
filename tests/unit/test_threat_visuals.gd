@@ -17,6 +17,7 @@ func test_setup_does_not_advance_the_spawn_rng() -> void:
 	spawn_rng.seed = 42
 	var before := spawn_rng.state
 	var bag := PlasticBag.new()
+	autofree(bag)
 	bag.setup(_entry(), spawn_rng)
 	assert_eq(spawn_rng.state, before)
 
@@ -26,7 +27,9 @@ func test_bag_visual_is_the_body_alone() -> void:
 	var previous := Game.projection
 	Game.projection = ViewProjection.from_settings(Game.VIEW_SETTINGS)
 	var bag := PlasticBag.new()
+	autofree(bag)
 	var visual := bag._make_visual()
+	autofree(visual)
 	Game.projection = previous
 	assert_eq(visual.get_child_count(), 1, "bag visual must have no shadow")
 	assert_true(visual.get_child(0) is Sprite2D)
@@ -39,7 +42,9 @@ func test_cyclone_visual_keeps_its_shadow() -> void:
 	var previous := Game.projection
 	Game.projection = ViewProjection.from_settings(Game.VIEW_SETTINGS)
 	var cyclone := Cyclone.new()
+	autofree(cyclone)
 	var visual := cyclone._make_visual()
+	autofree(visual)
 	Game.projection = previous
 	assert_eq(visual.get_child_count(), 2, "shadow plus body")
 	assert_true(cyclone._body is Sprite2D)
@@ -47,6 +52,7 @@ func test_cyclone_visual_keeps_its_shadow() -> void:
 
 func test_bag_without_setup_does_not_crash_when_animating() -> void:
 	var bag := PlasticBag.new()
-	bag._make_visual()
+	autofree(bag)
+	autofree(bag._make_visual())
 	bag._animate_body(0.1)
 	assert_true(true, "reached without a script error")
