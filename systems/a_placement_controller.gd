@@ -14,6 +14,10 @@ signal placement_failed
 
 const VALID_COLOR := Color(0.3, 1.0, 0.4, 0.45)
 const INVALID_COLOR := Color(1.0, 0.25, 0.25, 0.45)
+## Re-check the preview at 10 Hz instead of every physics frame. Otherwise a
+## stationary mouse would run physics shape queries for every footprint cell
+## 60 times per second, even though only the actors moving over them change.
+const GHOST_REFRESH_SECONDS := 0.1
 
 var inventory: InventorySystem
 var active_slot := -1
@@ -21,6 +25,7 @@ var active_slot := -1
 var _ghost: Node2D
 var _ghost_cells: Array[Vector2i] = []
 var _ghost_valid := false
+var _ghost_elapsed := GHOST_REFRESH_SECONDS
 
 
 func _ready() -> void:
@@ -36,6 +41,7 @@ func begin(slot: int) -> void:
 	if not inventory.model.is_ready(slot):
 		return
 	active_slot = slot
+	_ghost_elapsed = GHOST_REFRESH_SECONDS # show the preview immediately
 	Game.placing = true
 	placement_started.emit()
 
@@ -86,9 +92,13 @@ func try_place_at(origin: Vector2i) -> bool:
 	return true
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if active_slot < 0:
 		return
+	_ghost_elapsed += delta
+	if _ghost_elapsed < GHOST_REFRESH_SECONDS:
+		return
+	_ghost_elapsed = 0.0
 	_ghost_cells = footprint(Game.grid.world_to_cell(Game.mouse_world()))
 	_ghost_valid = can_place(_ghost_cells)
 	_ghost.queue_redraw()

@@ -19,6 +19,9 @@ var _flag_buttons: Dictionary = {} # StringName -> Button
 var _spawn_buttons: Dictionary = {} # String -> Button
 
 const FONT_SIZE := 11
+## Debug text does not need 60 updates per second; 10 Hz keeps it readable and
+## avoids rebuilding every label (and formatting every string) each frame.
+const REFRESH_SECONDS := 0.1
 ## Pixels above the entity anchor so the text does not sit on the sprite.
 const OFFSET := Vector2(0, -14)
 ## Fixed panel padding from the bottom-right screen corner (the only corner
@@ -48,6 +51,7 @@ const COLOR_DIM := Color(0.7, 0.7, 0.7)
 const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
 
 var _enabled := false
+var _elapsed := REFRESH_SECONDS
 var enabled:
 	get: return _enabled
 	set(value):
@@ -121,6 +125,8 @@ func _ready() -> void:
 func _on_debug_mode_changed(value: bool) -> void:
 	enabled = value
 	visible = value
+	# Refresh immediately on enable instead of waiting for the next tick.
+	_elapsed = REFRESH_SECONDS
 	if not value:
 		Game.debug_temperature_manual = false
 		_clear_labels()
@@ -188,9 +194,13 @@ func _spawn_turtle() -> void:
 	Game.factory.spawn_turtle(entry)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if not enabled:
 		return
+	_elapsed += delta
+	if _elapsed < REFRESH_SECONDS:
+		return
+	_elapsed = 0.0
 	_update_labels()
 	_sync_slider()
 
@@ -281,13 +291,21 @@ func _update_labels() -> void:
 	# --- Fixed panel: feature flags (editable, see _flag_buttons) ---
 	_set_label(&"_flags", "Feature flags:", Vector2(x, y), COLOR_TEMP, wanted)
 
-	# Keep flag button labels in sync with current state.
+	# Keep flag button labels in sync with current state (only when they change).
 	for name in _flag_buttons.keys():
 		var btn := _flag_buttons[name] as Button
-		btn.text = _flag_label(name, _flag_value(name))
+		var flag_text := _flag_label(name, _flag_value(name))
+		if btn.text != flag_text:
+			btn.text = flag_text
+
+	# Query each group once per refresh instead of once per entity loop.
+	var corals := get_tree().get_nodes_in_group(Groups.CORALS)
+	var nests := get_tree().get_nodes_in_group(Groups.NESTS)
+	var fishes := get_tree().get_nodes_in_group(Groups.FISH)
+	var turtles := get_tree().get_nodes_in_group(Groups.TURTLES)
 
 	# --- Entities: coral oxygen / life ---
-	for coral in get_tree().get_nodes_in_group(Groups.CORALS):
+	for coral in corals:
 		if not _alive(coral):
 			continue
 		var id := coral.get_instance_id()
@@ -300,7 +318,7 @@ func _update_labels() -> void:
 		_set_label(id, text, pos + OFFSET, color, wanted)
 
 	# --- Entities: nest hatch time or empty ---
-	for nest in get_tree().get_nodes_in_group(Groups.NESTS):
+	for nest in nests:
 		if not _alive(nest):
 			continue
 		var id := nest.get_instance_id()
@@ -312,7 +330,7 @@ func _update_labels() -> void:
 		_set_label(id, text, pos + OFFSET, color, wanted)
 
 	# --- Entities: fish state + hunger ---
-	for fish in get_tree().get_nodes_in_group(Groups.FISH):
+	for fish in fishes:
 		if not _alive(fish) or fish.brain == null:
 			continue
 		var id := fish.get_instance_id()
@@ -321,7 +339,7 @@ func _update_labels() -> void:
 		_set_label(id, text, pos + OFFSET, COLOR_FISH, wanted)
 
 	# --- Entities: turtle state + algae eaten ---
-	for turtle in get_tree().get_nodes_in_group(Groups.TURTLES):
+	for turtle in turtles:
 		if not _alive(turtle) or turtle.brain == null:
 			continue
 		var id := turtle.get_instance_id()
@@ -356,9 +374,12 @@ func _set_label(id: Variant, text: String, pos: Vector2, color: Color, wanted: D
 	wanted[id] = true
 	if _labels.has(id):
 		var label := _labels[id] as Label
-		label.text = text
-		label.position = pos
-		label.modulate = color
+		if label.text != text:
+			label.text = text
+		if label.position != pos:
+			label.position = pos
+		if label.modulate != color:
+			label.modulate = color
 	else:
 		var label := Label.new()
 		label.text = text

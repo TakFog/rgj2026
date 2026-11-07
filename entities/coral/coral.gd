@@ -16,6 +16,10 @@ const SUFFOCATED_COLOR := Color(0.45, 0.42, 0.42, FOOTPRINT_ALPHA)
 const CORAL_HEALTHY_TINT := Color(1.6, 0.25, 0.25)
 const CORAL_SUFFOCATED_TINT := Color.WHITE
 const CRUMBLE_SECONDS := 0.6
+## Oxygen ratio change needed before the cell tint is refreshed. Regen is slow,
+## so updating the tint (which queues a redraw of every cell) each frame is
+## wasted work; 1 % is invisible to the player and damage jumps past it at once.
+const TINT_STEP := 0.01
 ## Rock the corals grow on (never tinted) and the grayscale corals drawn over it.
 const BASE_TEXTURE := preload("res://assets/sprites/coral_base.png")
 const CORAL_TEXTURE := preload("res://assets/sprites/coral.png")
@@ -32,6 +36,7 @@ var _visuals: Array[PlaceholderShape] = []
 var _sprites: Array[Sprite2D] = []
 var _followers: Array[ViewFollower] = []
 var _dead := false
+var _shown_ratio := -1.0
 
 
 func setup(p_shape_id: StringName, p_origin_cell: Vector2i) -> void:
@@ -72,10 +77,14 @@ func _process(delta: float) -> void:
 	_oxygen.tick(delta)
 	if _dead:
 		return
-	var tint := SUFFOCATED_COLOR.lerp(HEALTHY_COLOR, _oxygen.ratio())
+	var ratio := _oxygen.ratio()
+	if absf(ratio - _shown_ratio) < TINT_STEP:
+		return
+	_shown_ratio = ratio
+	var tint := SUFFOCATED_COLOR.lerp(HEALTHY_COLOR, ratio)
 	for visual in _visuals:
 		visual.color = tint
-	var sprite_tint := CORAL_SUFFOCATED_TINT.lerp(CORAL_HEALTHY_TINT, _oxygen.ratio())
+	var sprite_tint := CORAL_SUFFOCATED_TINT.lerp(CORAL_HEALTHY_TINT, ratio)
 	for sprite in _sprites:
 		sprite.modulate = sprite_tint
 

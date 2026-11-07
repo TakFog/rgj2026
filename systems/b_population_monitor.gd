@@ -11,11 +11,18 @@ signal countdown_cancelled(population: StringName)
 signal game_over(population: StringName, score_seconds: float)
 
 const POPULATIONS: Array[StringName] = [Groups.CORALS, Groups.ALGAE, Groups.FISH, Groups.NESTS]
+## Group scans are cheap but not free; four of them every frame add up. The
+## collapse countdown still ticks every frame, so a 0.1 s sampling delay is
+## invisible to the player.
+const COUNT_INTERVAL := 0.1
 
 var tracker: CollapseTracker
 var counts: Dictionary = {} # StringName -> int
 var score_seconds := 0.0
 var is_over := false
+
+var _count_elapsed := COUNT_INTERVAL
+var _last_score_second := -1
 
 
 ## Smallest positive eggs_time_left() among `nests`, or -1.0 if no nest has eggs.
@@ -39,7 +46,20 @@ func _process(delta: float) -> void:
 	if is_over:
 		return
 	score_seconds += delta
-	score_changed.emit(score_seconds)
+	# The HUD shows whole seconds: no need to format and redraw it 60 times/s.
+	var whole_second := floori(score_seconds)
+	if whole_second != _last_score_second:
+		_last_score_second = whole_second
+		score_changed.emit(score_seconds)
+	_count_elapsed += delta
+	if _count_elapsed >= COUNT_INTERVAL:
+		_count_elapsed = fmod(_count_elapsed, COUNT_INTERVAL)
+		_sample_counts()
+	tracker.tick(delta)
+
+
+## Refreshes the four population counts and reports them to the collapse tracker.
+func _sample_counts() -> void:
 	var new_counts := {}
 	for population in POPULATIONS:
 		var count := get_tree().get_nodes_in_group(population).size()
@@ -48,7 +68,6 @@ func _process(delta: float) -> void:
 	if new_counts != counts:
 		counts = new_counts
 		counts_changed.emit(counts)
-	tracker.tick(delta)
 
 
 ## Seconds until the first nest hatches, or -1.0 (fish-rescue hint, contract #10).

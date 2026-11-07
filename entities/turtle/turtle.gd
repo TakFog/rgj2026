@@ -246,9 +246,10 @@ func _move(motion: Vector2, straight: Vector2) -> bool:
 
 
 ## Inside the visible seabed, grown so the turtle leaves fully off screen.
+## The grown polygon is cached by Game: leaving runs this every physics frame.
 func _in_alive_area() -> bool:
-	var grown := Geometry2D.offset_polygon(Game.visible_world_polygon(), _cfg.turtle_radius * 2.0 + EXIT_MARGIN)
-	return not grown.is_empty() and Geometry2D.is_point_in_polygon(global_position, grown[0])
+	var grown := Game.visible_world_polygon_grown(_cfg.turtle_radius * 2.0 + EXIT_MARGIN)
+	return not grown.is_empty() and Geometry2D.is_point_in_polygon(global_position, grown)
 
 
 ## Straight-line range within which a threat makes the turtle drop its algae.

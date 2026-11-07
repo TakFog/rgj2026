@@ -35,6 +35,8 @@ var state: int:
 var _cycle: NestCycle
 var _visual: PlaceholderShape
 var _sprite: Sprite2D
+## Last state drawn: the nest only redraws when eggs appear, hatch or die.
+var _shown_eggs := false
 
 
 func setup(p_cell: Vector2i) -> void:
@@ -55,6 +57,8 @@ func _ready() -> void:
 	_cycle.eggs_died.connect(func() -> void: eggs_died.emit())
 	_visual = PlaceholderShape.cell(position, EMPTY_COLOR)
 	_sprite = _visual.add_sprite(EMPTY_TEXTURE, SPRITE_HEIGHT_CELLS)
+	_shown_eggs = has_eggs()
+	_visual.color = EGGS_COLOR if _shown_eggs else EMPTY_COLOR
 	_update_sprite()
 	# Ground cover: drawn below the y-sorted actors (fish, corals, threats) so
 	# they always swim over the nest, even when the nest sprite overlaps them.
@@ -68,8 +72,11 @@ func _process(delta: float) -> void:
 			Game.eco.egg_death_chance_cold, Game.eco.egg_death_chance_hot), 0.0, 1.0)
 		hazard = NestCycle.hazard_from_chance(death_chance, _cycle.hatch_seconds)
 	_cycle.tick(delta, hazard)
-	_visual.color = EGGS_COLOR if has_eggs() else EMPTY_COLOR
-	_update_sprite()
+	var eggs := has_eggs()
+	if eggs != _shown_eggs:
+		_shown_eggs = eggs
+		_visual.color = EGGS_COLOR if eggs else EMPTY_COLOR
+		_update_sprite()
 
 
 func _update_sprite() -> void:

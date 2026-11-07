@@ -11,6 +11,9 @@ extends Node
 
 ## Below this many hostiles the arp stays silent.
 const ARP_HALF_MIN := 1
+## Hostiles change slowly; 4 scans per second are plenty for the arp mix and
+## avoid a scene-tree group query on every frame.
+const HOSTILE_REFRESH_SECONDS := 0.25
 
 var _drums: Array[AudioStreamPlayer] = []
 var _half: Array[AudioStreamPlayer] = []
@@ -25,6 +28,8 @@ var _drum_index := 0
 var _half_pick := 0
 var _full_pick := 0
 var _rng := RandomNumberGenerator.new()
+var _hostile_elapsed := HOSTILE_REFRESH_SECONDS
+var _hostile_count := 0
 
 
 ## 0 = no arp, 1 = half, 2 = full. `full_at` is the hostile count for full.
@@ -136,7 +141,11 @@ func _on_loop_boundary() -> void:
 ## Fades every stem toward its target volume for the current state.
 func _mix(delta: float) -> void:
 	var settings := Game.AUDIO_SETTINGS
-	var level := arp_level(get_tree().get_nodes_in_group(Groups.THREATS).size(), settings.arp_full_hostiles)
+	_hostile_elapsed += delta
+	if _hostile_elapsed >= HOSTILE_REFRESH_SECONDS:
+		_hostile_elapsed = 0.0
+		_hostile_count = get_tree().get_nodes_in_group(Groups.THREATS).size()
+	var level := arp_level(_hostile_count, settings.arp_full_hostiles)
 	for i in _drums.size():
 		_fade(_drums[i], 1.0 if i == _drum_index else 0.0, delta, settings.drum_fade_seconds)
 		_apply(_drums[i], settings.drums_gain_db)

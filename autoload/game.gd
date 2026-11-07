@@ -51,12 +51,20 @@ var debug_temperature_value := 0.0:
 
 var _actions_registered := false
 
+## Cached visible world area and its grown variants. The viewport and camera do
+## not move during a run, so re-projecting four corners and running
+## Geometry2D.offset_polygon on every threat every physics frame is wasted work.
+var _visible_polygon := PackedVector2Array()
+var _visible_polygon_valid := false
+var _grown_polygons: Dictionary = {} # float margin -> PackedVector2Array
+
 
 func _ready() -> void:
 	if not _actions_registered:
 		InputActions.register()
 		_actions_registered = true
 	reset()
+	get_viewport().size_changed.connect(invalidate_view_cache)
 
 
 ## Fresh state for a new run. Called by Main._ready (also after a restart).
@@ -66,6 +74,7 @@ func reset() -> void:
 	placing = false
 	temperature = 0.0
 	get_tree().paused = false
+	invalidate_view_cache()
 
 
 ## Mouse position in logical world coordinates.
@@ -80,9 +89,35 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+## Drops the cached visible-area polygons (restart or viewport resize).
+func invalidate_view_cache() -> void:
+	_visible_polygon_valid = false
+	_grown_polygons.clear()
+
+
 ## The world area currently on screen (viewport corners projected back to the
 ## logical world, camera included). A parallelogram under the oblique view.
+## Cached: callers read it many times per frame (threats, spawners, debug).
 func visible_world_polygon() -> PackedVector2Array:
+	if not _visible_polygon_valid:
+		_visible_polygon = _compute_visible_world_polygon()
+		_visible_polygon_valid = true
+	return _visible_polygon
+
+
+## `visible_world_polygon()` grown outward by `margin`, cached per margin.
+## Threats use it every physics frame to decide when they have left the screen;
+## offsetting the polygon every frame for every threat is the expensive part.
+func visible_world_polygon_grown(margin: float) -> PackedVector2Array:
+	if not _visible_polygon_valid:
+		visible_world_polygon()
+	if not _grown_polygons.has(margin):
+		var grown := Geometry2D.offset_polygon(_visible_polygon, margin)
+		_grown_polygons[margin] = grown[0] if not grown.is_empty() else PackedVector2Array()
+	return _grown_polygons[margin]
+
+
+func _compute_visible_world_polygon() -> PackedVector2Array:
 	var to_canvas := view.get_global_transform_with_canvas().affine_inverse()
 	var rect := view.get_viewport_rect()
 	var corners := [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]
