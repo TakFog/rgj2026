@@ -5,10 +5,15 @@ extends ColorRect
 ## screen, Credits bottom right, Exit bottom left (Exit hidden in web builds).
 ## Works while the tree is paused; clicking Play unpauses and hides the menu.
 
-const BUTTON_SIZE := Vector2(180.0, 60.0)
+const BUTTON_SIZE := SeaStyle.BUTTON_SIZE
 const SCREEN_MARGIN := 24.0
 const TITLE_HEIGHT := 80.0
 const TITLE_Y_FRACTION := 0.25
+
+## Player-facing name and credits, kept in one place so the title screen and
+## the credits panel cannot drift apart.
+const GAME_TITLE := "Ideologia Marina"
+const CREDITS_TEXT := "Un gestionale di barriera corallina.\nTema del game jam: SUBIRE.\n\nRealizzato con Godot 4.7.2."
 
 signal play_pressed
 signal exit_pressed
@@ -27,7 +32,7 @@ var _settings_panel: SettingsPanel
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	color = Color(0.02, 0.05, 0.1, 0.85)
+	color = SeaStyle.OVERLAY_COLOR
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	visible = true
@@ -78,10 +83,9 @@ func _build_menu_panel() -> Control:
 
 	# Title across the full width, vertically centred on 1/4 of the screen.
 	var title := Label.new()
-	title.text = "BalanSea"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.text = GAME_TITLE
+	SeaStyle.style_title(title, SeaStyle.HERO_TITLE_FONT_SIZE)
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 48)
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(title)
 	title.anchor_left = 0.0
@@ -105,14 +109,13 @@ func _build_menu_panel() -> Control:
 
 	# Settings, just below Play.
 	var settings_btn := _button("Impostazioni")
-	settings_btn.add_theme_font_size_override("font_size", 22)
 	settings_btn.pressed.connect(_on_settings_pressed)
 	panel.add_child(settings_btn)
 	settings_btn.set_anchors_preset(Control.PRESET_CENTER)
 	settings_btn.offset_left = -BUTTON_SIZE.x * 0.5
 	settings_btn.offset_right = BUTTON_SIZE.x * 0.5
-	settings_btn.offset_top = BUTTON_SIZE.y * 0.5 + 16.0
-	settings_btn.offset_bottom = BUTTON_SIZE.y * 1.5 + 16.0
+	settings_btn.offset_top = BUTTON_SIZE.y * 0.5 + SeaStyle.MENU_SEPARATION
+	settings_btn.offset_bottom = BUTTON_SIZE.y * 1.5 + SeaStyle.MENU_SEPARATION
 
 	# Exit, bottom left of the screen.
 	var exit_btn := _button("Esci")
@@ -150,17 +153,28 @@ func _build_credits_panel() -> Control:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.add_child(center)
 
+	# Credits use the same sea card as pause, settings and game over.
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", SeaStyle.panel_box())
+	center.add_child(card)
+
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 16)
-	center.add_child(box)
+	box.add_theme_constant_override("separation", SeaStyle.MENU_SEPARATION)
+	card.add_child(box)
+
+	var title := Label.new()
+	title.text = GAME_TITLE
+	SeaStyle.style_title(title)
+	box.add_child(title)
+	box.add_child(SeaStyle.divider())
 
 	var credits := Label.new()
-	credits.text = "BalanSea\n\nUn gestionale di barriera corallina.\nTema del game jam: SUBIRE.\n\nRealizzato con Godot 4.7.2."
-	credits.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	credits.add_theme_font_size_override("font_size", 24)
+	credits.text = CREDITS_TEXT
+	SeaStyle.style_body(credits)
 	box.add_child(credits)
 
 	var back_btn := _button("Indietro")
+	back_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	back_btn.pressed.connect(_on_back_pressed)
 	box.add_child(back_btn)
 
@@ -168,12 +182,7 @@ func _build_credits_panel() -> Control:
 
 
 func _button(text: String) -> Button:
-	var btn := Button.new()
-	btn.text = text
-	btn.custom_minimum_size = BUTTON_SIZE
-	btn.add_theme_font_size_override("font_size", 28)
-	SeaStyle.style_button(btn)
-	return btn
+	return SeaStyle.menu_button(text)
 
 
 func _on_play_pressed() -> void:
