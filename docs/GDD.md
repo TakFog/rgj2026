@@ -16,9 +16,9 @@
 
 ```
 temperatura ↑ ──► alghe crescono più in fretta, più minacce, pesci più lenti
-     ▲
-     │ (rallentata dalle celle di corallo vivo, mai fermata)
-     │
+	 ▲
+	 │ (rallentata dalle celle di corallo vivo, mai fermata)
+	 │
 inventario ──► piazzi corallo / alga / nido
 pesci ──► li mandi a mangiare alghe (o muoiono di fame) e a fecondare nidi
 alghe ──► si espandono, soffocano i coralli
@@ -107,8 +107,8 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 - **Espansione**: ogni `algae_growth_interval` (con variazione casuale ±20%, ridotto dalla temperatura) l'alga prova a generarne una nuova:
   1. prova le **4 celle adiacenti** (sopra, sotto, sinistra, destra) in **ordine casuale**;
   2. controlla la cella:
-     - **vuota** → nasce la nuova alga;
-     - **corallo** → l'alga non nasce, il corallo perde `algae_coral_damage` ossigeno;
+	 - **vuota** → nasce la nuova alga;
+	 - **corallo** → l'alga non nasce, il corallo perde `algae_coral_damage` ossigeno;
      - **qualsiasi altra cosa** (alga, nido, fuori mappa, pesce o minaccia sopra la cella) → passa alla cella adiacente successiva.
   3. Se **nessuna** delle 4 celle è utilizzabile, l'espansione si ferma. Al prossimo intervallo l'alga riprova, perché nel frattempo una cella potrebbe essersi liberata (es. un pesce ha mangiato un'alga vicina).
 - Tetto massimo di alghe in gioco: `algae_max_count` (200), sia per le prestazioni sia per il bilanciamento.
@@ -119,9 +119,9 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 - **Stati**:
   - `WANDER`: nuota a caso. Sceglie una direzione, nuota per un po', ne cambia. Se tocca un ostacolo, cambia direzione. **Non mangia e non feconda.**
   - `ORDERED`: il giocatore fa clic sinistro sul pesce per selezionarlo (area di clic più grande del pesce) e poi clic sinistro sul punto di arrivo. Il pesce **va dritto**; se tocca un ostacolo **si ferma**.
-    - Se si è fermato contro un'**alga** → `EATING`.
-    - Se arriva sopra un **nido vuoto** ed è adulto → `FERTILIZING`.
-    - Altrimenti resta fermo `idle_after_order_seconds` (2 s) e poi torna a `WANDER`.
+	- Se si è fermato contro un'**alga** → `EATING`.
+	- Se arriva sopra un **nido vuoto** ed è adulto → `FERTILIZING`.
+	- Altrimenti resta fermo `idle_after_order_seconds` (2 s) e poi torna a `WANDER`.
   - `EATING`: dopo `eat_seconds` (3 s) l'alga viene rimossa e la fame si azzera. Poi torna a `WANDER`. *Un pesce circondato dalle alghe può uscirne mangiando.*
   - `FERTILIZING`: deve restare fermo sul nido `fertilize_seconds` (3 s). Se se ne va prima (nuovo ordine), la fecondazione non avviene. Se va a buon fine, il nido passa a `EGGS` e il pesce torna a `WANDER`, libero di andarsene.
 - **Fame**: da 0 a `starve_seconds` (60 s). Barra visibile sopra il pesce quando supera il 50%. Al massimo il pesce muore.
