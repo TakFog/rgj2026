@@ -1,16 +1,16 @@
-[gd_resource type="Resource" script_class="BalanceEcosystem" format=3]
+[gd_resource type="Resource" script_class="BalanceEcosystem" format=3 uid="uid://f2i3x15pcw25"]
 
-[ext_resource type="Script" path="res://data/balance_ecosystem.gd" id="1"]
+[ext_resource type="Script" uid="uid://cv1wl27hi2nfa" path="res://data/balance_ecosystem.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
 coral_regen_per_sec = 0.3
-nest_hatch_count = 2
-slot_refill_seconds = 14.0
-weight_coral = 40.0
-temp_base_rate = 0.0033333334
-temp_max_slowdown = 0.45
 coral_regen_hot_per_sec = -1.5
 algae_growth_interval_cold = 20.0
 algae_growth_interval_hot = 8.0
 algae_max_count = 120
+nest_hatch_count = 2
+slot_refill_seconds = 14.0
+weight_coral = 40.0
+temp_base_rate = 0.02
+temp_max_slowdown = 0.45
