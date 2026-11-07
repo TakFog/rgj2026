@@ -12,6 +12,9 @@ extends CharacterBody2D
 signal destroyed
 ## Emitted when it bites a fish or a nest's eggs (the eat sound, GDD §7.4).
 signal ate
+## Emitted with the bitten prey position and whether it was a fish. The juice
+## system uses it to draw blood (fish) or an egg burst (nest).
+signal prey_eaten(world_position: Vector2, was_fish: bool)
 ## Used by the audio system (systems/b_audio.gd).
 signal left
 
@@ -128,7 +131,9 @@ func _try_bite() -> bool:
 	if global_position.distance_to(_target.global_position) > reach:
 		return false
 	var amount := _satisfaction_of(_target)
-	if _target is Fish:
+	var prey_position := _target.global_position
+	var was_fish := _target is Fish
+	if was_fish:
 		(_target as Fish).destroy()
 	else:
 		(_target as Nest).kill_eggs()
@@ -137,6 +142,7 @@ func _try_bite() -> bool:
 	_replan_timer = 0.0
 	brain.ate(amount)
 	ate.emit()
+	prey_eaten.emit(prey_position, was_fish)
 	return true
 
 

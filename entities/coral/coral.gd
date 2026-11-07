@@ -20,6 +20,9 @@ const CRUMBLE_SECONDS := 0.6
 ## so updating the tint (which queues a redraw of every cell) each frame is
 ## wasted work; 1 % is invisible to the player and damage jumps past it at once.
 const TINT_STEP := 0.01
+## Brief white-red flash and wobble when the coral takes a hit.
+const DAMAGE_FLASH_SECONDS := 0.18
+const WOBBLE_DEGREES := 4.0
 ## Rock the corals grow on (never tinted) and the grayscale corals drawn over it.
 const BASE_TEXTURE := preload("res://assets/sprites/coral_base.png")
 const CORAL_TEXTURE := preload("res://assets/sprites/coral.png")
@@ -37,6 +40,8 @@ var _sprites: Array[Sprite2D] = []
 var _followers: Array[ViewFollower] = []
 var _dead := false
 var _shown_ratio := -1.0
+var _damage_flash := 0.0
+var _was_flashing := false
 
 
 func setup(p_shape_id: StringName, p_origin_cell: Vector2i) -> void:
@@ -77,14 +82,23 @@ func _process(delta: float) -> void:
 	_oxygen.tick(delta)
 	if _dead:
 		return
+	_damage_flash = maxf(_damage_flash - delta / DAMAGE_FLASH_SECONDS, 0.0)
 	var ratio := _oxygen.ratio()
-	if absf(ratio - _shown_ratio) < TINT_STEP:
+	var ratio_changed := absf(ratio - _shown_ratio) >= TINT_STEP
+	var flashing := _damage_flash > 0.0
+	# Update when the oxygen tint moves, while flashing, and once more when the
+	# flash ends so the coral returns to its normal tint.
+	if not ratio_changed and not flashing and not _was_flashing:
 		return
 	_shown_ratio = ratio
+	_was_flashing = flashing
 	var tint := SUFFOCATED_COLOR.lerp(HEALTHY_COLOR, ratio)
+	var sprite_tint := CORAL_SUFFOCATED_TINT.lerp(CORAL_HEALTHY_TINT, ratio)
+	if flashing:
+		tint = tint.lerp(Color(1.0, 0.9, 0.85, FOOTPRINT_ALPHA), _damage_flash * 0.7)
+		sprite_tint = sprite_tint.lerp(Color(2.2, 1.4, 1.2), _damage_flash * 0.85)
 	for visual in _visuals:
 		visual.color = tint
-	var sprite_tint := CORAL_SUFFOCATED_TINT.lerp(CORAL_HEALTHY_TINT, ratio)
 	for sprite in _sprites:
 		sprite.modulate = sprite_tint
 
@@ -95,6 +109,22 @@ func apply_oxygen_damage(amount: float) -> void:
 		return
 	damaged.emit()
 	_oxygen.damage(amount)
+	if _dead:
+		return
+	# Juice: a short bright flash and a wobble of every occupied cell.
+	_damage_flash = 1.0
+	_wobble()
+
+
+## Brief cosmetic wobble of each cell's screen-space follower on damage.
+func _wobble() -> void:
+	for follower in _followers:
+		if not is_instance_valid(follower):
+			continue
+		var tween := follower.create_tween()
+		tween.tween_property(follower, "rotation", deg_to_rad(WOBBLE_DEGREES), 0.05)
+		tween.tween_property(follower, "rotation", deg_to_rad(-WOBBLE_DEGREES * 0.75), 0.08)
+		tween.tween_property(follower, "rotation", 0.0, 0.05)
 
 
 ## Dies immediately for gameplay (group, grid, collisions), then crumbles visually.
