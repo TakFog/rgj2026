@@ -1,14 +1,14 @@
 class_name MainMenuScreen
 extends ColorRect
 ## Main menu overlay shown at game start (GDD §9, roadmap: title screen).
-## Title top centre, Play centred under it, Credits bottom right, Exit bottom
-## left (Exit hidden in web builds). Works while the tree is paused; clicking
-## Play unpauses the game and hides the menu.
+## Title at one quarter of the screen height, Play at the centre of the
+## screen, Credits bottom right, Exit bottom left (Exit hidden in web builds).
+## Works while the tree is paused; clicking Play unpauses and hides the menu.
 
 const BUTTON_SIZE := Vector2(180.0, 60.0)
 const SCREEN_MARGIN := 24.0
-const TITLE_TOP := 70.0
-const PLAY_TOP := 170.0
+const TITLE_HEIGHT := 80.0
+const TITLE_Y_FRACTION := 0.25
 
 signal play_pressed
 signal exit_pressed
@@ -44,26 +44,32 @@ func _build_menu_panel() -> Control:
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Title across the top centre.
+	# Title across the full width, vertically centred on 1/4 of the screen.
 	var title := Label.new()
 	title.text = "BalanSea"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 48)
 	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(title)
-	title.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	title.offset_top = TITLE_TOP
-	title.offset_bottom = TITLE_TOP + 80
+	title.anchor_left = 0.0
+	title.anchor_right = 1.0
+	title.anchor_top = TITLE_Y_FRACTION
+	title.anchor_bottom = TITLE_Y_FRACTION
+	title.offset_left = 0.0
+	title.offset_right = 0.0
+	title.offset_top = -TITLE_HEIGHT * 0.5
+	title.offset_bottom = TITLE_HEIGHT * 0.5
 
-	# Play, centred horizontally under the title.
+	# Play, centred both horizontally and vertically.
 	var play_btn := _button("Gioca")
 	play_btn.pressed.connect(_on_play_pressed)
 	panel.add_child(play_btn)
-	play_btn.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	play_btn.set_anchors_preset(Control.PRESET_CENTER)
 	play_btn.offset_left = -BUTTON_SIZE.x * 0.5
 	play_btn.offset_right = BUTTON_SIZE.x * 0.5
-	play_btn.offset_top = PLAY_TOP
-	play_btn.offset_bottom = PLAY_TOP + BUTTON_SIZE.y
+	play_btn.offset_top = -BUTTON_SIZE.y * 0.5
+	play_btn.offset_bottom = BUTTON_SIZE.y * 0.5
 
 	# Exit, bottom left of the screen.
 	var exit_btn := _button("Esci")
