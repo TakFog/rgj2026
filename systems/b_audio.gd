@@ -59,6 +59,7 @@ func _ready() -> void:
 	_wind.pitch_scale = Game.AUDIO_SETTINGS.event(&"cyclone_wind").pitch
 	add_child(_wind)
 	if placement != null:
+		placement.placement_started.connect(func() -> void: play(&"item_hover"))
 		placement.placement_finished.connect(_on_placement_finished)
 	if inventory != null:
 		inventory.model.item_available.connect(func(_index: int) -> void: play(&"item_available"))

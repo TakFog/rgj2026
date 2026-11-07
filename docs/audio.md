@@ -23,6 +23,7 @@ so the mix can be rebalanced without touching a script. The rules below apply to
 | `placement_algae` | placing an algae | `assets/audio/alga/` |
 | `placement` | placing a coral (or any kind without its own event) | `assets/audio/corallo/` |
 | `predator_ate` | a predator bites a fish or a nest's eggs | `assets/audio/eat/` |
+| `item_hover` | clicking an inventory item to start placing it | `assets/audio/item/` |
 | `item_available` | an inventory slot refills | `assets/audio/item/` |
 | `cyclone_wind` | loops while a cyclone is on screen (the take must loop) | `assets/audio/wind/` |
 | `cyclone_hit` | a cyclone destroys something (fish, coral, algae, nest...) | `assets/audio/` |

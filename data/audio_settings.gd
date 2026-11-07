@@ -51,6 +51,7 @@ const SILENCE_DB := -80.0
 	&"placement_nest": AudioEvent.new(),
 	&"placement_algae": AudioEvent.new(),
 	&"predator_ate": AudioEvent.new(),
+	&"item_hover": AudioEvent.new(),
 	&"item_available": AudioEvent.new(),
 	&"cyclone_wind": AudioEvent.new(),
 	&"cyclone_hit": AudioEvent.new(),

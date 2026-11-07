@@ -40,6 +40,12 @@ gain_db = 4.0
 script = ExtResource("2_audio_event")
 gain_db = -12.0
 
+; Clicking an inventory item to place it, and a slot refilling (assets/audio/item).
+[sub_resource type="Resource" id="AudioEvent_item_hover"]
+script = ExtResource("2_audio_event")
+gain_db = -8.0
+high_pass_hz = 400.0
+
 ; An inventory slot refills (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_available"]
 script = ExtResource("2_audio_event")
@@ -83,6 +89,7 @@ events = Dictionary[StringName, ExtResource("2_audio_event")]({
 &"placement_nest": SubResource("AudioEvent_placement_nest"),
 &"placement_algae": SubResource("AudioEvent_placement_algae"),
 &"predator_ate": SubResource("AudioEvent_predator_ate"),
+&"item_hover": SubResource("AudioEvent_item_hover"),
 &"item_available": SubResource("AudioEvent_item_available"),
 &"cyclone_wind": SubResource("AudioEvent_cyclone_wind"),
 &"cyclone_hit": SubResource("AudioEvent_cyclone_hit"),

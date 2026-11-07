@@ -20,6 +20,9 @@ const TAKES := {
 	&"predator_ate": [ # a predator bites a fish or a nest's eggs
 		"res://assets/audio/eat/eat.wav",
 	],
+	&"item_hover": [ # clicking an inventory item to start placing it
+		"res://assets/audio/item/item_hover.wav",
+	],
 	&"item_available": [ # an inventory slot refills
 		"res://assets/audio/item/i0.wav",
 		"res://assets/audio/item/i1.wav",
