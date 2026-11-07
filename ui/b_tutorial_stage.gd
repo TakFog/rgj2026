@@ -15,12 +15,13 @@ const CONTENT_CENTER := Vector2(3.7, 2.0)
 const NEST_HEIGHT := 130.0
 const ALGAE_HEIGHT := 105.0
 const CORAL_HEIGHT := 140.0
-## Nests are ground cover; predators and other agents draw above them.
+## Ground actors stay above the stage background (positive z); predators and the
+## other creatures draw above the nest without disappearing behind the seabed.
 const Z_BY_ID := {
-	&"nest": -1,
-	&"nest_eggs": -1,
-	&"coral": 0,
-	&"algae": 0,
+	&"nest": 1,
+	&"nest_eggs": 1,
+	&"coral": 2,
+	&"algae": 2,
 	&"fish": 5,
 	&"bag": 8,
 	&"co2": 10,

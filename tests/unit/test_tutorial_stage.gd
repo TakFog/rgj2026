@@ -43,6 +43,7 @@ func test_predator_draws_above_nest() -> void:
 			predator_z = sprite.z_index
 		elif sprite.texture == Nest.EGGS_TEXTURE:
 			nest_z = sprite.z_index
+	assert_true(nest_z > 0, "nest must stay above the seabed, got z %d" % nest_z)
 	assert_true(predator_z > nest_z, "predator %d, nest %d" % [predator_z, nest_z])
 	stage.free()
 
