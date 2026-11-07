@@ -31,6 +31,11 @@ gain_db = -12.0
 script = ExtResource("2_audio_event")
 gain_db = 4.0
 
+; A predator eats a fish or a nest's eggs (assets/audio/eat).
+[sub_resource type="Resource" id="AudioEvent_predator_ate"]
+script = ExtResource("2_audio_event")
+gain_db = -12.0
+
 ; An inventory slot refills (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_available"]
 script = ExtResource("2_audio_event")
@@ -53,6 +58,7 @@ events = Dictionary[StringName, ExtResource("2_audio_event")]({
 &"placement": SubResource("AudioEvent_placement"),
 &"placement_nest": SubResource("AudioEvent_placement_nest"),
 &"placement_algae": SubResource("AudioEvent_placement_algae"),
+&"predator_ate": SubResource("AudioEvent_predator_ate"),
 &"item_available": SubResource("AudioEvent_item_available"),
 &"bag_destroyed": SubResource("AudioEvent_bag_destroyed")
 })
