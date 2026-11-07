@@ -14,13 +14,13 @@
 ; Placing an inventory item (assets/audio/corallo). Slightly high-passed.
 [sub_resource type="Resource" id="AudioEvent_placement"]
 script = ExtResource("2_audio_event")
-gain_db = -3.0
-high_pass_hz = 350.0
+gain_db = -6.0
+high_pass_hz = 400.0
 
 ; An inventory slot refills (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_available"]
 script = ExtResource("2_audio_event")
-gain_db = -3.0
+gain_db = -6.0
 
 ; A plastic bag pops (assets/audio/busta).
 [sub_resource type="Resource" id="AudioEvent_bag_destroyed"]

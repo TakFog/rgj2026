@@ -9,7 +9,8 @@ so the mix can be rebalanced without touching a script. The rules below apply to
 | File | What it is |
 |---|---|
 | `assets/audio/` | The audio assets. One folder per sound: `corallo/` (placing an item), `item/` (an inventory slot refills), `busta/` (a plastic bag pops). `game_loop.wav` is the music. |
-| `systems/b_audio.gd` | The SFX node. Its `EVENTS` dictionary maps an event name to the **takes** (file paths) played at random, one per play. |
+| `core/audio_events.gd` | `AudioEvents.TAKES`: event name -> **takes** (file paths), one of which is played at random per play. |
+| `systems/b_audio.gd` | The SFX node that plays those events (pool of voices, one bus per event). |
 | `data/audio_event.gd` | One event's `gain_db`, `pitch`, `pitch_jitter`, `high_pass_hz` and `low_pass_hz` (an `AudioEvent` resource). |
 | `data/audio_settings.gd` / `.tres` | It all comes together here: the music settings, a global effects level, and one `AudioEvent` per event. **Tune in `data/audio_settings.tres`** (open it in the inspector); its entries are named after the events (`AudioEvent_placement`, ...) and the file starts with a short legend. |
 | `autoload/game.gd` | Exposes the resource as `Game.AUDIO_SETTINGS`. |
@@ -22,8 +23,8 @@ level and is added to every event; each event's `gain_db` then balances it
 against the others. The quiet effect takes (peaking around -10 dBFS) rely on the
 default `effects_gain_db = 8.0` to sit under the music.
 
-Shipped tuning: `item_available` sits at `-3.0` dB, `placement` at `-3.0` dB and
-`bag_destroyed` at `0.0`.
+The current tuning lives in `data/audio_settings.tres` — run `tools/audio.sh` to
+see the resolved values without opening the game.
 
 ## Pitch
 
@@ -43,8 +44,8 @@ filters never affect the other sounds; the music has its own `Music` bus. The
 buses are created at startup from the settings — nothing to set up by hand in
 the Audio panel.
 
-Shipped tuning: the placement sound is slightly high-passed at `350` Hz
-(`placement`).
+The placement sound is the one that ships with a filter (a gentle high-pass, so
+it cuts less through the music).
 
 ## Adding a sound
 
@@ -52,7 +53,7 @@ Shipped tuning: the placement sound is slightly high-passed at `350` Hz
    `assets/audio/busta/b1.wav`. More than one file in an event means a random
    one is played each time. Let Godot import them (open the editor once, or run
    `tools/smoke.sh`, which imports automatically).
-2. Add the event to `EVENTS` in `systems/b_audio.gd`:
+2. Add the event to `AudioEvents.TAKES` in `core/audio_events.gd`:
    ```gdscript
    &"bag_destroyed": [
        "res://assets/audio/busta/b0.wav",
@@ -68,7 +69,8 @@ Shipped tuning: the placement sound is slightly high-passed at `350` Hz
    from the settings, so this stays enforced.
 4. Call `play(&"event_name")` from wherever the game event happens, e.g. in
    `b_audio.gd` `_ready()` when wiring signals.
-5. Run `tools/test.sh` and `tools/smoke.sh`.
+5. Run `tools/test.sh` and `tools/smoke.sh`, or `tools/audio.sh` to print what the
+   game actually resolves (track, gain, pitch, filters, takes found).
 
 ## Music
 

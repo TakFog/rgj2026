@@ -14,8 +14,7 @@ func test_defaults_boost_the_quiet_effect_takes() -> void:
 
 
 func test_every_shipped_event_is_configured() -> void:
-	var script: GDScript = load("res://systems/b_audio.gd")
-	var events: Dictionary = script.get_script_constant_map()["EVENTS"]
+	var events: Dictionary = AudioEvents.TAKES
 	var shipped: AudioSettings = load("res://data/audio_settings.tres")
 	assert_false(events.is_empty())
 	for name: StringName in events:

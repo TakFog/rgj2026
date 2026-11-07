@@ -1,26 +1,10 @@
 extends Node
 ## Plays sound effects for gameplay events (GDD §9). Missing files are silent,
 ## and events with several takes pick one at random.
-## Files: res://assets/audio/<folder>/<take>.wav (see EVENTS).
+## Events and their takes: AudioEvents.TAKES (core/audio_events.gd).
 ## Level, pitch and filters come from Game.AUDIO_SETTINGS (data/audio_settings.tres).
-## Every event added here needs an entry there too (see docs/audio.md).
+## Every event needs an entry there too (see docs/audio.md).
 
-const EVENTS := {
-	&"placement": [
-		"res://assets/audio/corallo/c0.wav",
-		"res://assets/audio/corallo/c1.wav",
-		"res://assets/audio/corallo/c2.wav",
-		"res://assets/audio/corallo/c3.wav",
-	],
-	&"item_available": [
-		"res://assets/audio/item/i0.wav",
-		"res://assets/audio/item/i1.wav",
-		"res://assets/audio/item/i2.wav",
-	],
-	&"bag_destroyed": [
-		"res://assets/audio/busta/b0.wav",
-	],
-}
 const VOICES := 6
 
 ## Dev A's systems (set by DevBSystems before this node enters the tree).
@@ -36,9 +20,9 @@ var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_rng.randomize()
-	for event: StringName in EVENTS:
+	for event: StringName in AudioEvents.TAKES:
 		var takes: Array[AudioStream] = []
-		for path: String in EVENTS[event]:
+		for path: String in AudioEvents.TAKES[event]:
 			if ResourceLoader.exists(path):
 				takes.append(load(path))
 		if not takes.is_empty():
