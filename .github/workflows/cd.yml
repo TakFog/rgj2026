@@ -1,16 +1,14 @@
 name: CD
 
-# Builds the Web (single-threaded) export and pushes it to itch.io.
-# Runs only after CI has passed on main, or manually.
+# Runs the full test suite, then builds the Web (single-threaded) export.
+# The export (and the itch.io push) only happen if every test passes.
 #
-# Required repository settings:
+# The itch.io push is skipped until both of these exist in the repository settings:
 #   secrets.BUTLER_API_KEY  - itch.io API key (https://itch.io/user/settings/api-keys)
 #   vars.ITCH_TARGET        - itch.io "user/game" slug, e.g. "someone/ideologia-marina"
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  push:
     branches: [main]
   workflow_dispatch:
 
@@ -24,27 +22,14 @@ env:
 
 jobs:
   deploy:
-    name: Web export and itch.io push
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'push')
+    name: Test, Web export and itch.io push
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    env:
+      BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      ITCH_TARGET: ${{ vars.ITCH_TARGET }}
     steps:
-      - name: Check itch.io configuration
-        env:
-          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-          ITCH_TARGET: ${{ vars.ITCH_TARGET }}
-        run: |
-          if [ -z "$BUTLER_API_KEY" ] || [ -z "$ITCH_TARGET" ]; then
-            echo "::error::Set secret BUTLER_API_KEY and variable ITCH_TARGET (user/game) in the repository settings."
-            exit 1
-          fi
-
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Cache Godot
         id: cache-godot
@@ -62,6 +47,12 @@ jobs:
           unzip -q /tmp/godot.zip -d ~/godot
           mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
           chmod +x ~/godot/godot
+
+      - name: Unit tests
+        run: GODOT=~/godot/godot tools/test.sh
+
+      - name: Smoke test
+        run: GODOT=~/godot/godot tools/smoke.sh
 
       - name: Cache Web export template
         id: cache-templates
@@ -101,6 +92,7 @@ jobs:
           retention-days: 7
 
       - name: Install butler
+        if: env.BUTLER_API_KEY != '' && env.ITCH_TARGET != ''
         run: |
           mkdir -p ~/butler
           curl -fsSL -o /tmp/butler.zip \
@@ -110,9 +102,11 @@ jobs:
           ~/butler/butler -V
 
       - name: Push to itch.io
-        env:
-          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
-          ITCH_TARGET: ${{ vars.ITCH_TARGET }}
+        if: env.BUTLER_API_KEY != '' && env.ITCH_TARGET != ''
         run: |
           ~/butler/butler push build/web "${ITCH_TARGET}:${ITCH_CHANNEL}" \
             --userversion "$(git rev-parse --short HEAD)"
+
+      - name: Note skipped itch.io push
+        if: env.BUTLER_API_KEY == '' || env.ITCH_TARGET == ''
+        run: echo "::notice::itch.io push skipped - set secret BUTLER_API_KEY and variable ITCH_TARGET to enable it."
