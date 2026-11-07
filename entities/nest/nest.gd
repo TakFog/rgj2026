@@ -14,13 +14,16 @@ signal eggs_died
 const FOOTPRINT_ALPHA := 0.3
 const EMPTY_COLOR := Color(0.95, 0.85, 0.4, FOOTPRINT_ALPHA)
 const EGGS_COLOR := Color(1.0, 0.55, 0.2, FOOTPRINT_ALPHA)
-## Temporary art, until the designer's nest sprites are ready.
-const EMPTY_TEXTURE := preload("res://assets/sprites/temp/nest_empty.png")
-const EGGS_TEXTURE := preload("res://assets/sprites/temp/nest_eggs.png")
-## Row (texture px, measured on the art) where each nest touches the ground:
-## it is placed on the cell centre so the nest sits on its tile.
-const EMPTY_FOOT_Y := 165.0
-const EGGS_FOOT_Y := 185.0
+## Designer's nest sprites: empty and full of eggs.
+const EMPTY_TEXTURE := preload("res://assets/sprites/nest_empty.png")
+const EGGS_TEXTURE := preload("res://assets/sprites/nest_eggs.png")
+## Row (texture px, measured on the art) where each nest touches the ground.
+## Used to keep the base consistent when the state swaps the texture.
+const EMPTY_FOOT_Y := 158.0
+const EGGS_FOOT_Y := 158.0
+## Height every nest texture is drawn at, in grid cells. Both textures are
+## wider than tall, so the sprite is rescaled when the state swaps the texture.
+const SPRITE_HEIGHT_CELLS := 0.9
 ## Juveniles appear around the nest centre, this far apart (world units).
 const HATCH_SPREAD := 8.0
 
@@ -51,7 +54,7 @@ func _ready() -> void:
 	_cycle.hatched.connect(_on_hatched)
 	_cycle.eggs_died.connect(func() -> void: eggs_died.emit())
 	_visual = PlaceholderShape.cell(position, EMPTY_COLOR)
-	_sprite = _visual.add_sprite(EMPTY_TEXTURE, 0.9)
+	_sprite = _visual.add_sprite(EMPTY_TEXTURE, SPRITE_HEIGHT_CELLS)
 	_update_sprite()
 	ViewFollower.attach(self, _visual)
 
@@ -70,7 +73,14 @@ func _process(delta: float) -> void:
 func _update_sprite() -> void:
 	var eggs := has_eggs()
 	_sprite.texture = EGGS_TEXTURE if eggs else EMPTY_TEXTURE
-	_sprite.offset = Vector2(0.0, _sprite.texture.get_height() * 0.5 - (EGGS_FOOT_Y if eggs else EMPTY_FOOT_Y))
+	var world_height := Game.grid.cell_size * SPRITE_HEIGHT_CELLS * Game.VIEW_SETTINGS.pixels_per_unit
+	_sprite.scale = Vector2.ONE * world_height / _sprite.texture.get_height()
+	var foot_y := EGGS_FOOT_Y if eggs else EMPTY_FOOT_Y
+	var half_height := _sprite.texture.get_height() * 0.5
+	_sprite.offset = Vector2(0.0, half_height - foot_y)
+	# Centre the texture on the base cell, so the nest sits on the footprint
+	# instead of hanging above it with only the cell centre under its base.
+	_sprite.position = Vector2(0.0, (foot_y - half_height) * _sprite.scale.y)
 
 
 func is_empty() -> bool:
