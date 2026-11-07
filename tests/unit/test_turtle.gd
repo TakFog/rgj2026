@@ -6,6 +6,7 @@ func test_world_vertical_headings_are_projected_to_screen() -> void:
 	var previous := Game.projection
 	Game.projection = ViewProjection.from_settings(Game.VIEW_SETTINGS)
 	var turtle := Turtle.new()
+	autofree(turtle)
 
 	turtle._heading = Vector2.DOWN
 	var down := turtle._screen_heading()

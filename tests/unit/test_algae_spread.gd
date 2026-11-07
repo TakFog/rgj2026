@@ -75,3 +75,18 @@ func test_next_interval_stays_within_jitter() -> void:
 	for i in 50:
 		var value := AlgaeSpread.next_interval(10.0, 0.2, rng)
 		assert_true(value >= 8.0 and value <= 12.0, str(value))
+
+
+func test_cap_blocks_spawn() -> void:
+	var result := AlgaeSpread.attempt(Vector2i(2, 2), grid, rng, _is_coral, _never_covered)
+	assert_eq(result["outcome"], AlgaeSpread.Outcome.SPAWN)
+	assert_eq(AlgaeSpread.apply_cap(result, true)["outcome"], AlgaeSpread.Outcome.BLOCKED)
+	assert_eq(AlgaeSpread.apply_cap(result, false)["outcome"], AlgaeSpread.Outcome.SPAWN)
+
+
+func test_cap_still_damages_coral() -> void:
+	_block([Vector2i(2, 1), Vector2i(1, 2), Vector2i(3, 2)])
+	grid.occupy([Vector2i(2, 3)], coral)
+	var result := AlgaeSpread.apply_cap(AlgaeSpread.attempt(Vector2i(2, 2), grid, rng, _is_coral, _never_covered), true)
+	assert_eq(result["outcome"], AlgaeSpread.Outcome.DAMAGE_CORAL)
+	assert_eq(result["target"], coral)

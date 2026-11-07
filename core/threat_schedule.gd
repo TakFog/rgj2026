@@ -27,12 +27,18 @@ func interval(kind: Type, temperature: float) -> float:
 
 
 ## Advances every timer and returns the threat types that are due now.
-## A type can appear more than once if `delta` spans several intervals.
+## Each type appears at most once per tick: a huge `delta` (hitch, debug skip)
+## drops the extra spawns instead of releasing a burst. An interval <= 0
+## disables that type (it is never due).
 func tick(delta: float, temperature: float) -> Array[int]:
 	var due: Array[int] = []
 	for kind in _progress.keys():
-		_progress[kind] += delta / interval(kind, temperature)
-		while _progress[kind] >= 1.0:
-			_progress[kind] -= 1.0
+		var seconds := interval(kind, temperature)
+		if seconds <= 0.0:
+			continue
+		var progress: float = _progress[kind] + delta / seconds
+		if progress >= 1.0:
+			progress = fmod(progress - 1.0, 1.0)
 			due.append(kind)
+		_progress[kind] = progress
 	return due

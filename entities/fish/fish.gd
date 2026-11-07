@@ -62,7 +62,7 @@ func _ready() -> void:
 	rng.randomize()
 	_wander = WanderSteering.new(rng, Game.actors.fish_wander_min_seconds, Game.actors.fish_wander_max_seconds)
 	_heading = _wander.heading
-	_pathfinder = ReefPathfinder.new(Game.grid, _blocks_fish, Game.actors.fish_radius)
+	_pathfinder = ReefPathfinder.new(Game.grid, _blocks_fish, Game.actors.fish_radius, &"fish")
 
 	_visual = FishVisual.new()
 	_visual.radius_world = Game.actors.fish_radius

@@ -264,7 +264,8 @@ func _sync_slider() -> void:
 	var y := origin.y + LINE_HEIGHT
 	_slider.position = Vector2(x, y)
 	_slider.size = Vector2(PANEL_WIDTH, SLIDER_HEIGHT)
-	_slider.value = Game.temperature
+	# No signal: only a real drag may switch the temperature to manual mode.
+	_slider.set_value_no_signal(Game.temperature)
 
 	# Buttons sit below the rates section and the "Flag di gioco:" header.
 	y += SLIDER_HEIGHT + ROW_GAP + LINE_HEIGHT * 2.0 + ROW_GAP + LINE_HEIGHT

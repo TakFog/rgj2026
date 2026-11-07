@@ -15,6 +15,11 @@ const CONTENT_CENTER := Vector2(3.7, 2.0)
 const NEST_HEIGHT := 130.0
 const ALGAE_HEIGHT := 105.0
 const CORAL_HEIGHT := 140.0
+## Every vignette starts fading out at FADE_START and is gone after FADE_SECONDS;
+## TIMELINE_SECONDS covers the whole animation, so the screen can loop on it.
+const FADE_START := 5.2
+const FADE_SECONDS := 0.5
+const TIMELINE_SECONDS := FADE_START + FADE_SECONDS + 0.1
 ## Ground actors stay above the stage background (positive z); predators and the
 ## other creatures draw above the nest without disappearing behind the seabed.
 const Z_BY_ID := {
@@ -48,6 +53,9 @@ var _agent: Node2D
 var _target: Node2D
 ## The row currently being shown; its agent_end/target_end drive the outcome.
 var _data: Dictionary = {}
+## Stage origin the current vignette was built around; on resize the visual
+## layer is shifted by the difference instead of rebuilding mid-animation.
+var _origin := Vector2.ZERO
 
 
 func _init(x_axis := Vector2(1, 0), y_axis := Vector2(-0.5, 0.5)) -> void:
@@ -55,6 +63,8 @@ func _init(x_axis := Vector2(1, 0), y_axis := Vector2(-0.5, 0.5)) -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Actors sliding out of the vignette must not draw over the side column.
+	clip_contents = true
 	_projection = ViewProjection.new(x_axis, y_axis, CELL_PX)
 
 
@@ -76,12 +86,19 @@ func _ready() -> void:
 	move_child(seabed, 0)
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and _layer != null:
+		_layer.position = _stage_origin() - _origin
+
+
 ## Builds and (when in the scene tree) animates the selected interaction.
 ## The three core reactions keep their hand-made vignettes; everything else uses
 ## a generic agent-to-target diagram.
 func show_interaction(data: Dictionary) -> void:
 	_clear()
 	_data = data
+	_origin = _stage_origin()
+	_visual_layer().position = Vector2.ZERO
 	var id: StringName = data.get("id", &"")
 	match id:
 		&"fish_nest": _build_nest()
@@ -115,11 +132,15 @@ func _visual_layer() -> Node2D:
 	return _layer
 
 
-## Cell coordinates to stage pixels, using the same oblique tilt as the game.
-func _pos(cell: Vector2) -> Vector2:
+func _stage_origin() -> Vector2:
 	var stage_size := size if size.x > 0.0 else STAGE_SIZE
-	var origin := Vector2(stage_size.x * 0.5, stage_size.y * 0.72)
-	return origin + _projection.to_screen(cell - CONTENT_CENTER) - _projection.to_screen(Vector2.ZERO)
+	return Vector2(stage_size.x * 0.5, stage_size.y * 0.72)
+
+
+## Cell coordinates to stage pixels, using the same oblique tilt as the game.
+## Positions are relative to the build-time origin (see _origin).
+func _pos(cell: Vector2) -> Vector2:
+	return _origin + _projection.to_screen(cell - CONTENT_CENTER) - _projection.to_screen(Vector2.ZERO)
 
 
 func _sprite(texture: Texture2D, height_px: float, cell: Vector2, tint := Color.WHITE) -> Sprite2D:
@@ -284,6 +305,9 @@ func _generic_visual(id: StringName, cell: Vector2) -> Node2D:
 				return null
 			var tint := Coral.CORAL_HEALTHY_TINT if id == &"coral" else Color.WHITE
 			visual = _sprite(texture, TutorialIcons.height(id), cell, tint)
+	# The turtle art faces left; the generic agent swims right, so mirror it.
+	if id == &"turtle" and visual is Sprite2D:
+		(visual as Sprite2D).scale.x = -absf((visual as Sprite2D).scale.x)
 	visual.z_index = Z_BY_ID.get(id, 0)
 	return visual
 
@@ -310,13 +334,21 @@ func _animate_nest(tween: Tween) -> void:
 		ring.visible = true
 	).set_delay(1.8)
 	tween.tween_property(ring, "ratio", 1.0, 1.6).set_delay(1.8)
+	tween.tween_callback(func() -> void:
+		_hatch_nest(nest)
+	).set_delay(3.4)
 	for i in 2:
 		var juvenile := _fish(Vector2(5.0, 2.0), false, Vector2.LEFT if i == 0 else Vector2.RIGHT)
 		juvenile.modulate.a = 0.0
 		var target := Vector2(3.8, 1.5) if i == 0 else Vector2(6.2, 1.5)
 		tween.tween_property(juvenile, "modulate:a", 1.0, 0.2).set_delay(3.4)
 		tween.tween_property(juvenile, "position", _pos(target), 1.4).set_delay(3.4)
-	tween.tween_method(_fade_all, 0.0, 1.0, 0.5).set_delay(5.2)
+	tween.tween_method(_fade_all, 0.0, 1.0, FADE_SECONDS).set_delay(FADE_START)
+
+
+## Eggs hatched: the nest is empty again.
+func _hatch_nest(nest: Sprite2D) -> void:
+	_fit(nest, Nest.EMPTY_TEXTURE, NEST_HEIGHT)
 
 
 func _animate_co2(tween: Tween) -> void:
@@ -333,7 +365,7 @@ func _animate_co2(tween: Tween) -> void:
 		grow.tween_property(second, "scale", target, 0.5) \
 				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	).set_delay(2.0)
-	tween.tween_method(_fade_all, 0.0, 1.0, 0.5).set_delay(5.2)
+	tween.tween_method(_fade_all, 0.0, 1.0, FADE_SECONDS).set_delay(FADE_START)
 
 
 func _animate_coral(tween: Tween) -> void:
@@ -344,7 +376,7 @@ func _animate_coral(tween: Tween) -> void:
 	tween.tween_property(_coral_sprite, "modulate", Color(2.0, 0.6, 0.6), 0.3).set_delay(1.0)
 	tween.tween_property(_coral_sprite, "modulate", Coral.CORAL_HEALTHY_TINT, 0.3).set_delay(1.3)
 	tween.tween_property(_oxygen_bar, "ratio", 0.8, 0.4).set_delay(1.2)
-	tween.tween_method(_fade_all, 0.0, 1.0, 0.5).set_delay(5.2)
+	tween.tween_method(_fade_all, 0.0, 1.0, FADE_SECONDS).set_delay(FADE_START)
 
 
 ## Generic vignette: the agent slides into the target, then the row's
@@ -364,7 +396,7 @@ func _animate_generic(tween: Tween) -> void:
 		_apply_end(agent, agent_end, Vector2.RIGHT)
 		_apply_end(target, target_end, Vector2.RIGHT)
 	).set_delay(1.2)
-	tween.tween_method(_fade_all, 0.0, 1.0, 0.5).set_delay(5.0)
+	tween.tween_method(_fade_all, 0.0, 1.0, FADE_SECONDS).set_delay(FADE_START)
 
 
 ## Applies one outcome to an actor: stay, vanish, leave, pass, damage, empty.

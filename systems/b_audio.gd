@@ -94,12 +94,15 @@ func _fade_wind(delta: float) -> void:
 		return
 	var seconds := Game.AUDIO_SETTINGS.cyclone_wind_fade_seconds
 	_wind_gain = _wind_target if seconds <= 0.0 else move_toward(_wind_gain, _wind_target, delta / seconds)
+	var volume_db := AudioSettings.SILENCE_DB
 	if _wind_gain <= 0.0:
 		if _wind.playing:
 			_wind.stop()
-		_wind.volume_db = AudioSettings.SILENCE_DB
 	else:
-		_wind.volume_db = Game.AUDIO_SETTINGS.effect_gain_db(&"cyclone_wind") + linear_to_db(_wind_gain)
+		volume_db = Game.AUDIO_SETTINGS.effect_gain_db(&"cyclone_wind") + linear_to_db(_wind_gain)
+	# Settled (usually silent): skip the redundant write to the audio server.
+	if not is_equal_approx(_wind.volume_db, volume_db):
+		_wind.volume_db = volume_db
 
 
 ## Plays a random take of `event` on the next voice in the ring.

@@ -8,6 +8,10 @@ const ECOSYSTEM: BalanceEcosystem = preload("res://data/balance_ecosystem.tres")
 const ACTORS: BalanceActors = preload("res://data/balance_actors.tres")
 const VIEW_SETTINGS: ViewSettings = preload("res://data/view_settings.tres")
 const AUDIO_SETTINGS: AudioSettings = preload("res://data/audio_settings.tres")
+## Longest time step (seconds) game logic may advance in one frame. After a
+## hitch or a hidden browser tab the first delta can be tens of seconds, which
+## would expire countdowns, refill the inventory and burst threats at once.
+const MAX_FRAME_STEP := 0.1
 
 var eco: BalanceEcosystem = ECOSYSTEM
 var actors: BalanceActors = ACTORS
@@ -81,8 +85,17 @@ func reset() -> void:
 	projection = ViewProjection.from_settings(VIEW_SETTINGS)
 	placing = false
 	temperature = 0.0
+	# A manual temperature from the F3 slider must not leak into the next run
+	# (debug_mode itself may persist).
+	debug_temperature_manual = false
+	debug_temperature_value = 0.0
 	get_tree().paused = false
 	invalidate_view_cache()
+
+
+## `delta` capped to MAX_FRAME_STEP, for the game-logic _process of systems.
+func frame_step(delta: float) -> float:
+	return minf(delta, MAX_FRAME_STEP)
 
 
 ## Mouse position in logical world coordinates.
@@ -105,6 +118,8 @@ func invalidate_view_cache() -> void:
 
 ## The world area currently on screen (viewport corners projected back to the
 ## logical world, camera included). A parallelogram under the oblique view.
+## The camera's screen-shake offset is left out: the result is cached for the
+## whole run, so it must describe the resting camera.
 ## Cached: callers read it many times per frame (threats, spawners, debug).
 func visible_world_polygon() -> PackedVector2Array:
 	if not _visible_polygon_valid:
@@ -127,11 +142,15 @@ func visible_world_polygon_grown(margin: float) -> PackedVector2Array:
 
 func _compute_visible_world_polygon() -> PackedVector2Array:
 	var to_canvas := view.get_global_transform_with_canvas().affine_inverse()
+	# Camera2D.offset (juice screen shake) shifts the canvas by that many view
+	# units; undo it. View sits untransformed under Screen, like the camera.
+	var camera := view.get_viewport().get_camera_2d()
+	var shake := camera.offset if camera != null else Vector2.ZERO
 	var rect := view.get_viewport_rect()
 	var corners := [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]
 	var polygon := PackedVector2Array()
 	for corner: Vector2 in corners:
-		polygon.append(projection.to_world(to_canvas * corner))
+		polygon.append(projection.to_world(to_canvas * corner - shake))
 	return polygon
 
 

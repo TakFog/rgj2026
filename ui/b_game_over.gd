@@ -24,6 +24,7 @@ var _time: Label
 var _cause: Label
 var _record: Label
 var _counts: Label
+var _restart: Button
 
 
 func _ready() -> void:
@@ -66,6 +67,7 @@ func _ready() -> void:
 	SeaStyle.style_highlighted_button(restart)
 	restart.pressed.connect(_on_restart_pressed)
 	box.add_child(restart)
+	_restart = restart
 
 
 func show_result(population: StringName, score_seconds: float, counts: Dictionary = {}) -> void:
@@ -79,6 +81,8 @@ func show_result(population: StringName, score_seconds: float, counts: Dictionar
 	_counts.text = format_counts(counts)
 	_counts.visible = not _counts.text.is_empty()
 	visible = true
+	# Keyboard/gamepad players can restart without the mouse.
+	_restart.grab_focus.call_deferred()
 
 
 ## Player-facing reason for a collapse, keyed by the population at zero.

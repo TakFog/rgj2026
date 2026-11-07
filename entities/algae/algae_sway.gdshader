@@ -5,7 +5,8 @@ shader_type canvas_item;
 //  * `vertex()` leans the whole plant from its rooted base (the quad's top
 //    corners move while the bottom edge stays put);
 //  * `fragment()` warps the UVs so single fronds ripple against each other.
-// `phase` is set per algae so neighbouring plants do not move in lockstep.
+// The phase comes from the sprite's canvas position, so neighbouring plants
+// do not move in lockstep while all algae share one material (batching).
 // Web-safe: Compatibility renderer / WebGL2, no screen texture.
 
 // Whole-plant lean at the tip, as a fraction of the texture width.
@@ -19,8 +20,13 @@ uniform float sway_frequency : hint_range(0.0, 20.0) = 4.5;
 uniform float ripple_frequency : hint_range(0.0, 40.0) = 9.0;
 // Bottom fraction of the sprite that is rooted and never moves.
 uniform float base_height : hint_range(0.0, 1.0) = 0.4;
-// Per-instance offset (radians) so the algae sway independently.
+// Phase (radians) per screen pixel of the sprite's position: about 0.73 rad
+// per cell along x and 1.21 rad per cell along y with the default view.
+uniform vec2 phase_per_pixel = vec2(0.018, 0.079);
+// Extra offset (radians) for a material that is not shared (e.g. the tutorial).
 uniform float phase = 0.0;
+
+varying float position_phase;
 
 
 // 0 at the rooted base, 1 at the tips.
@@ -32,15 +38,16 @@ float tip_weight(vec2 uv) {
 
 
 void vertex() {
-	float lean = sin(TIME * sway_speed + phase);
+	position_phase = phase + dot(MODEL_MATRIX[3].xy, phase_per_pixel);
+	float lean = sin(TIME * sway_speed + position_phase);
 	VERTEX.x += lean * lean_strength * tip_weight(UV) / TEXTURE_PIXEL_SIZE.x;
 }
 
 
 void fragment() {
 	float height = tip_weight(UV);
-	float wave = sin(TIME * sway_speed + phase + UV.y * sway_frequency + UV.x * ripple_frequency);
-	float ripple = sin(TIME * sway_speed * 0.63 + phase * 1.7 + UV.y * sway_frequency * 0.6);
+	float wave = sin(TIME * sway_speed + position_phase + UV.y * sway_frequency + UV.x * ripple_frequency);
+	float ripple = sin(TIME * sway_speed * 0.63 + position_phase * 1.7 + UV.y * sway_frequency * 0.6);
 	float offset = (wave * 0.7 + ripple * 0.3) * sway_strength * height;
 
 	vec2 uv = UV;

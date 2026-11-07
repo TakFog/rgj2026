@@ -3,7 +3,10 @@ extends RefCounted
 ## GDD §8 interaction table for threats, as pure data. Every damage is instant
 ## on contact. Combinations not listed here do nothing.
 
-enum Target { NONE, CORAL, ALGAE, FISH, NEST, THREAT }
+## CYCLONE is a cyclone touched by another threat: nothing reacts to it (GDD §8
+## lists only CO2, bags and predators as removed by a cyclone), so two crossing
+## cyclones both survive.
+enum Target { NONE, CORAL, ALGAE, FISH, NEST, THREAT, CYCLONE }
 enum Effect { NOTHING, DAMAGE_CORAL, DESTROY, ABSORB_CO2, KILL_EGGS }
 
 
@@ -60,5 +63,7 @@ static func target_of(node: Node) -> int:
 	if node.is_in_group(Groups.NESTS):
 		return Target.NEST
 	if node.is_in_group(Groups.THREATS):
+		if node is Threat and (node as Threat).kind == ThreatSchedule.Type.CYCLONE:
+			return Target.CYCLONE
 		return Target.THREAT
 	return Target.NONE

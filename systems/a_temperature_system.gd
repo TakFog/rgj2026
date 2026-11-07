@@ -22,11 +22,12 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	_cell_elapsed += delta
+	var step := Game.frame_step(delta)
+	_cell_elapsed += step
 	if _cell_elapsed >= CELL_SAMPLE_SECONDS:
 		_cell_elapsed = 0.0
 		_coral_cells = Game.grid.count_cells(_is_coral)
-	model.tick(delta, _coral_cells)
+	model.tick(step, _coral_cells)
 	# Debug override: the F3 temperature slider takes over (roadmap contract
 	# #1: only Game writes Game.temperature, conditionally here).
 	Game.temperature = Game.debug_temperature_value if Game.debug_temperature_manual else model.value

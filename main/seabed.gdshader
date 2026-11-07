@@ -19,6 +19,8 @@ uniform float caustic_speed = 0.3;
 uniform float caustic_strength : hint_range(0.0, 2.0) = 0.45;
 // Sand detection in the map art (red minus blue): caustics fade in across this range.
 uniform vec2 sand_threshold = vec2(0.1, 0.35);
+// Off for the untextured seabed fill: it has no sand, so caustics never show there.
+uniform bool caustics_enabled = true;
 // Large dark/light patches, like uneven depth (canvas px).
 uniform float depth_scale = 600.0;
 uniform float depth_strength : hint_range(0.0, 1.0) = 0.15;
@@ -86,9 +88,12 @@ void fragment() {
 	float depth = value_noise(world_pos / depth_scale + vec2(TIME * 0.02, 0.0));
 	color.rgb *= 1.0 - depth_strength * depth;
 
-	vec2 seabed_pos = mat2(to_world_x, to_world_y) * world_pos;
-	float light = caustics(seabed_pos, TIME * caustic_speed + 23.0);
-	color.rgb += caustic_color * light * caustic_strength * sand;
+	// Caustics only light the sand: skip the costly loop wherever there is none.
+	if (caustics_enabled && sand > 0.0) {
+		vec2 seabed_pos = mat2(to_world_x, to_world_y) * world_pos;
+		float light = caustics(seabed_pos, TIME * caustic_speed + 23.0);
+		color.rgb += caustic_color * light * caustic_strength * sand;
+	}
 
 	vec2 from_top = (SCREEN_UV - vec2(0.5, 0.0)) * vec2(1.0, 0.8);
 	color.rgb *= 1.0 - vignette_strength * smoothstep(0.35, 1.0, length(from_top));

@@ -16,6 +16,10 @@ var _music_slider: HSlider
 var _effects_slider: HSlider
 var _music_value: Label
 var _effects_value: Label
+## Slider values last loaded or written, so close() only writes real changes
+## (user:// is IndexedDB on web).
+var _saved_music := -1.0
+var _saved_effects := -1.0
 
 
 func _ready() -> void:
@@ -106,6 +110,8 @@ func _reload() -> void:
 		return
 	_music_slider.set_value_no_signal(UserSettings.percent_from_db(UserSettings.music_db()))
 	_effects_slider.set_value_no_signal(UserSettings.percent_from_db(UserSettings.effects_db()))
+	_saved_music = _music_slider.value
+	_saved_effects = _effects_slider.value
 	_update_labels()
 	_apply()
 
@@ -132,6 +138,10 @@ func _apply() -> void:
 func _save() -> void:
 	if _music_slider == null or _effects_slider == null:
 		return
+	if _music_slider.value == _saved_music and _effects_slider.value == _saved_effects:
+		return
+	_saved_music = _music_slider.value
+	_saved_effects = _effects_slider.value
 	UserSettings.save(
 		UserSettings.db_from_percent(_music_slider.value),
 		UserSettings.db_from_percent(_effects_slider.value))
@@ -143,7 +153,19 @@ func _on_back_pressed() -> void:
 	closed.emit()
 
 
-## Esc / right click closes the panel instead of reaching the pause handler.
+## Right click must be caught in _input: the full-rect panel consumes pointer
+## events in the GUI before _unhandled_input can see them.
+func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree():
+		return
+	if event is InputEventMouseButton and event.is_action_pressed(InputActions.CANCEL):
+		var viewport := get_viewport()
+		if viewport != null:
+			viewport.set_input_as_handled()
+		_on_back_pressed()
+
+
+## Esc closes the panel instead of reaching the pause handler.
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed(InputActions.CANCEL):
 		get_viewport().set_input_as_handled()

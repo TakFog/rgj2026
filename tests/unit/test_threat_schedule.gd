@@ -33,8 +33,26 @@ func test_bag_interval_ignores_temperature() -> void:
 
 func test_types_run_independently() -> void:
 	var due := schedule.tick(90.01, 0.0)
-	assert_eq(due.count(ThreatSchedule.Type.CO2), 3)
-	assert_eq(due.count(ThreatSchedule.Type.BAG), 2)
+	assert_eq(due.count(ThreatSchedule.Type.CO2), 1)
+	assert_eq(due.count(ThreatSchedule.Type.BAG), 1)
+	assert_eq(due.count(ThreatSchedule.Type.CYCLONE), 1)
+
+
+func test_huge_delta_spawns_at_most_one_per_type() -> void:
+	var due := schedule.tick(1000.0, 1.0)
+	assert_eq(due.count(ThreatSchedule.Type.CO2), 1)
+	assert_eq(due.size(), 3)
+	assert_true(schedule.tick(0.01, 1.0).is_empty())
+
+
+func test_non_positive_interval_disables_type() -> void:
+	var actors := BalanceActors.new()
+	actors.bag_interval = 0.0
+	actors.co2_interval_cold = -5.0
+	schedule = ThreatSchedule.new(actors)
+	var due := schedule.tick(1000.0, 0.0)
+	assert_eq(due.count(ThreatSchedule.Type.BAG), 0)
+	assert_eq(due.count(ThreatSchedule.Type.CO2), 0)
 	assert_eq(due.count(ThreatSchedule.Type.CYCLONE), 1)
 
 

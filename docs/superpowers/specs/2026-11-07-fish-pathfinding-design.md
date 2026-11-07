@@ -5,7 +5,7 @@
 2. Hungry wandering fish automatically go eat the nearest reachable algae.
 
 ## Pathfinding — `core/reef_pathfinder.gd` (pure, unit tested)
-- Wraps `AStarGrid2D` over `GridModel`. Rebuilt on every query (20×20 grid, cheap; never out of sync).
+- Wraps `AStarGrid2D` over `GridModel`. Rebuilt only when `GridModel.version` changes (bumped by `occupy`/`release`), so it never goes out of sync; fish pass the same `share_key` and share one snapshot stored in `grid.derived`.
 - Solidity comes from an injected predicate on the grid occupant. In game: everything except `Nest` is solid (nests are Area2D, fish swim over them).
 - Diagonal steps only when both side cells are free (`DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES`), so fish never clip corners.
 - `find_path(from, to)`: waypoints at cell centres, ending at the exact `to`. If the goal cell is solid or sealed off, the route goes to the closest reachable cell, then the last segment aims at `to` — the fish touches the obstacle and the existing collision rules apply (algae → eat, anything else → idle).

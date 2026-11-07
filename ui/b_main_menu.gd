@@ -7,13 +7,18 @@ extends ColorRect
 
 const BUTTON_SIZE := SeaStyle.BUTTON_SIZE
 const SCREEN_MARGIN := 24.0
-const TITLE_HEIGHT := 80.0
+## The title screen shows the painted logo instead of the game name.
+const LOGO_TEXTURE: Texture2D = preload("res://assets/ui/logo.png")
+const LOGO_HEIGHT := 260.0
 const TITLE_Y_FRACTION := 0.25
 
-## Player-facing name and credits, kept in one place so the title screen and
-## the credits panel cannot drift apart.
+## Player-facing name and credits, kept in one place so the credits panel and
+## the rest of the UI cannot drift apart.
 const GAME_TITLE := "BalanSea"
 const CREDITS_TEXT := "Un gestionale di barriera corallina.\nSviluppato durante la Rome Game Jam 2026 a tema SUBIRE.\n\nFlavio De Benedictis — Developer\nLorenzo Patané — Developer\nMaria Elena Papale — Artist\nMateusz Kulesza — Music, Developer"
+## User command-line argument (after `--`) that skips the title screen and
+## starts a run straight away, so tools/smoke.sh exercises real gameplay.
+const SMOKE_PLAY_ARG := "--smoke-play"
 
 signal play_pressed
 signal exit_pressed
@@ -32,6 +37,7 @@ static var _skip_next_open := false
 var _menu_panel: Control
 var _credits_panel: Control
 var _settings_panel: SettingsPanel
+var _play_button: Button
 
 
 func _ready() -> void:
@@ -57,7 +63,7 @@ func _ready() -> void:
 	# Auto-open when the menu enters the tree (game start). Calling open()
 	# from DevBSystems would race: Game.ui is not in the tree yet when
 	# DevBSystems._ready runs, so _ready here hasn't fired yet.
-	if _skip_next_open:
+	if _skip_next_open or OS.get_cmdline_user_args().has(SMOKE_PLAY_ARG):
 		_skip_next_open = false
 		_start_without_menu()
 	else:
@@ -85,25 +91,28 @@ func _build_menu_panel() -> Control:
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Title across the full width, vertically centred on 1/4 of the screen.
-	var title := Label.new()
-	title.text = GAME_TITLE
-	SeaStyle.style_title(title, SeaStyle.HERO_TITLE_FONT_SIZE)
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(title)
-	title.anchor_left = 0.0
-	title.anchor_right = 1.0
-	title.anchor_top = TITLE_Y_FRACTION
-	title.anchor_bottom = TITLE_Y_FRACTION
-	title.offset_left = 0.0
-	title.offset_right = 0.0
-	title.offset_top = -TITLE_HEIGHT * 0.5
-	title.offset_bottom = TITLE_HEIGHT * 0.5
+	# Logo across the full width, vertically centred on 1/4 of the screen.
+	var logo := TextureRect.new()
+	logo.name = "Logo"
+	logo.texture = LOGO_TEXTURE
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(logo)
+	logo.anchor_left = 0.0
+	logo.anchor_right = 1.0
+	logo.anchor_top = TITLE_Y_FRACTION
+	logo.anchor_bottom = TITLE_Y_FRACTION
+	logo.offset_left = 0.0
+	logo.offset_right = 0.0
+	logo.offset_top = -LOGO_HEIGHT * 0.5
+	logo.offset_bottom = LOGO_HEIGHT * 0.5
 
 	# Play, centred both horizontally and vertically.
 	var play_btn := _button("Gioca")
 	play_btn.pressed.connect(_on_play_pressed)
+	_play_button = play_btn
 	panel.add_child(play_btn)
 	play_btn.set_anchors_preset(Control.PRESET_CENTER)
 	play_btn.offset_left = -BUTTON_SIZE.x * 0.5
@@ -220,6 +229,7 @@ func _on_settings_pressed() -> void:
 
 func _on_settings_closed() -> void:
 	_menu_panel.visible = true
+	_play_button.grab_focus.call_deferred()
 
 
 func _on_credits_pressed() -> void:
@@ -232,6 +242,7 @@ func _on_back_pressed() -> void:
 	button_pressed.emit()
 	_credits_panel.visible = false
 	_menu_panel.visible = true
+	_play_button.grab_focus.call_deferred()
 
 
 func _on_exit_pressed() -> void:
@@ -241,9 +252,15 @@ func _on_exit_pressed() -> void:
 
 ## The run is paused behind the menu, so swallow the pause key: otherwise
 ## Space/Esc would unpause the game underneath the still-visible menu.
+## On the credits screen, Esc goes back to the menu.
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed(InputActions.PAUSE):
+	if not visible:
+		return
+	var cancel := event.is_action_pressed(InputActions.CANCEL)
+	if cancel or event.is_action_pressed(InputActions.PAUSE):
 		get_viewport().set_input_as_handled()
+		if cancel and _credits_panel.visible:
+			_on_back_pressed()
 
 
 ## Play / How-to-play hides the menu but leaves the run paused for the tutorial.
@@ -260,6 +277,8 @@ func open() -> void:
 	_menu_panel.visible = true
 	_set_gameplay_hud_visible(false)
 	get_tree().paused = true
+	# Keyboard/gamepad players can start without the mouse.
+	_play_button.grab_focus.call_deferred()
 
 
 ## Hide the menu and resume the game.

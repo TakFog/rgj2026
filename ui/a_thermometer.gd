@@ -90,6 +90,9 @@ static func glass_outline(x: float, half_width: float, top: float, bulb_y: float
 
 
 func _ready() -> void:
+	# The UI layer runs ALWAYS; the bubbles and alarm pulse freeze with the run
+	# (pause, menus, game over) instead of redrawing every frame behind them.
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 	custom_minimum_size = CARD_SIZE
 	size = CARD_SIZE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE

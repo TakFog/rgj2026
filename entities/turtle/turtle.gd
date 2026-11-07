@@ -24,6 +24,15 @@ const RUN_OUT := 600.0
 const EXIT_MARGIN := 32.0
 ## Fraction of a move that must survive sliding along an obstacle; less = stuck.
 const MIN_SLIDE_RATIO := 0.3
+## Re-plan delay after getting stuck against an obstacle (each plan snapshots
+## the grid and runs Dijkstra, so not every frame).
+const STUCK_REPLAN_SECONDS := 0.3
+## Consecutive failed exit plans (walled in by corals) before swimming
+## straight out over the corals.
+const MAX_EXIT_FAILURES := 3
+## Seconds spent leaving before giving up on routes and swimming straight out
+## over the corals (safety net: it must not hold its spawn slot forever).
+const LEAVE_TIMEOUT := 60.0
 
 var brain: TurtleBrain
 
@@ -38,6 +47,12 @@ var _roam_point := Vector2.ZERO
 var _has_roam_point := false
 var _visual: TurtleVisual
 var _rng := RandomNumberGenerator.new()
+## Set on the first frame in LEAVING, whatever caused it.
+var _leaving := false
+var _leave_time := 0.0
+var _exit_failures := 0
+## Walled in: collisions with corals are off and it swims straight out.
+var _ignore_corals := false
 
 
 ## Places the turtle just off screen at `entry`. Call before adding it to the tree.
@@ -68,11 +83,12 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	var was_leaving := brain.state == TurtleBrain.State.LEAVING
 	var island := Rect2(Vector2.ZERO, Game.grid.world_size())
 	if brain.tick(delta, island.has_point(global_position)):
 		_finish_algae()
 	_replan_timer -= delta
+	if brain.state == TurtleBrain.State.LEAVING and not _leaving:
+		_start_leaving()
 	match brain.state:
 		TurtleBrain.State.HELPING:
 			if _try_touch():
@@ -88,7 +104,10 @@ func _physics_process(delta: float) -> void:
 				# A threat beats the algae: drop it if one shows up.
 				_plan(true)
 		TurtleBrain.State.LEAVING:
-			if not was_leaving or (_path.is_empty() and _replan_timer <= 0.0):
+			_leave_time += delta
+			if not _ignore_corals and _leave_time >= LEAVE_TIMEOUT:
+				_swim_over_corals()
+			elif _replan_timer <= 0.0:
 				_plan_exit()
 			_follow_path(_speed() * delta)
 			if _path.is_empty() and not _in_alive_area():
@@ -213,12 +232,34 @@ func _plan_exit() -> void:
 	_replan_timer = _cfg.turtle_replan_seconds
 	_target = null
 	var island := Rect2(Vector2.ZERO, Game.grid.world_size())
-	if not island.grow(_cfg.turtle_radius).has_point(global_position):
-		# Already off the island: open water, swim straight away from it.
-		var outward := (global_position - island.get_center()).normalized()
-		_path = PackedVector2Array([global_position + outward * RUN_OUT])
-	elif _pathfinder.plan_from(global_position):
+	if _ignore_corals or not island.grow(_cfg.turtle_radius).has_point(global_position):
+		# Off the island (open water) or walled in: swim straight away from it.
+		_path = PredatorPathfinder.straight_exit(global_position, island, _heading, RUN_OUT)
+		return
+	_path.clear()
+	if _pathfinder.plan_from(global_position):
 		_path = _pathfinder.exit_path(RUN_OUT)
+	if not _path.is_empty():
+		_exit_failures = 0
+		return
+	_exit_failures += 1
+	if _exit_failures >= MAX_EXIT_FAILURES:
+		_swim_over_corals()
+
+
+## First frame in LEAVING (stay over, bag removed or enough algae): plan the
+## exit, exactly once.
+func _start_leaving() -> void:
+	_leaving = true
+	_plan_exit()
+
+
+## Walled in by corals (or leaving for too long): stop colliding with corals and
+## swim straight out, so it always frees its spawn slot.
+func _swim_over_corals() -> void:
+	_ignore_corals = true
+	collision_mask = 0
+	_plan_exit()
 
 
 ## Swims up to `budget` world units along the waypoints, curving between them.
@@ -233,7 +274,7 @@ func _follow_path(budget: float) -> void:
 		_heading = PathSteering.turn(_heading, to_next, step, _cfg.turtle_turn_radius)
 		if not _move(_heading * step, to_next / distance * step):
 			# Stuck against an obstacle (e.g. a coral just placed): re-plan soon.
-			_replan_timer = minf(_replan_timer, 0.1)
+			_replan_timer = minf(_replan_timer, STUCK_REPLAN_SECONDS)
 			return
 		budget -= step
 

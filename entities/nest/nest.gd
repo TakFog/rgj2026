@@ -62,7 +62,7 @@ func _ready() -> void:
 	_update_sprite()
 	# Ground cover: drawn below the y-sorted actors (fish, corals, threats) so
 	# they always swim over the nest, even when the nest sprite overlaps them.
-	ViewFollower.attach(self, _visual).z_index = -1
+	ViewFollower.attach(self, _visual, true).z_index = -1
 
 
 func _process(delta: float) -> void:

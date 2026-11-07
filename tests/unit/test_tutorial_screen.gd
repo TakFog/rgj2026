@@ -68,9 +68,10 @@ func _open_screen(mode: TutorialScreen.Mode) -> TutorialScreen:
 	InputActions.register()
 	var tree := Engine.get_main_loop() as SceneTree
 	var screen := TutorialScreen.new()
-	# The test runner calls tests before the first frame, so _ready has not run.
-	screen._ready()
 	tree.root.add_child(screen)
+	# _ready only runs on add_child once the tree itself is ready.
+	if not screen.is_node_ready():
+		screen._ready()
 	screen.open(mode)
 	return screen
 
