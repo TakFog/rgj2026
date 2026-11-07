@@ -56,7 +56,9 @@ func _ready() -> void:
 	_visual = PlaceholderShape.cell(position, EMPTY_COLOR)
 	_sprite = _visual.add_sprite(EMPTY_TEXTURE, SPRITE_HEIGHT_CELLS)
 	_update_sprite()
-	ViewFollower.attach(self, _visual)
+	# Ground cover: drawn below the y-sorted actors (fish, corals, threats) so
+	# they always swim over the nest, even when the nest sprite overlaps them.
+	ViewFollower.attach(self, _visual).z_index = -1
 
 
 func _process(delta: float) -> void:
