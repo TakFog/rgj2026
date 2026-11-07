@@ -28,12 +28,27 @@ func test_every_shipped_event_is_configured() -> void:
 		assert_almost(event.low_pass_hz, 0.0)
 
 
-func test_shipped_music_track_is_set_and_loops() -> void:
+func test_shipped_music_stems_loop_in_sync() -> void:
 	var shipped: AudioSettings = load("res://data/audio_settings.tres")
-	assert_true(shipped.music_track != null, "no music track in data/audio_settings.tres")
-	var wav := shipped.music_track as AudioStreamWAV
-	assert_true(wav != null, "music track is not a WAV")
-	assert_true(wav.loop_mode != AudioStreamWAV.LOOP_DISABLED, "music track does not loop")
+	assert_eq(shipped.drums.size(), 2, "two drum takes")
+	assert_eq(shipped.arp_half.size(), 2, "two half arp takes")
+	assert_eq(shipped.arp_full.size(), 2, "two full arp takes")
+	var loop_end := -1
+	for stream: AudioStream in shipped.drums + shipped.arp_half + shipped.arp_full:
+		var wav := stream as AudioStreamWAV
+		assert_true(wav != null, "%s is not a WAV" % stream.resource_path)
+		assert_eq(wav.loop_mode, AudioStreamWAV.LOOP_FORWARD, "%s does not loop" % stream.resource_path)
+		if loop_end < 0:
+			loop_end = wav.loop_end
+		assert_eq(wav.loop_end, loop_end, "%s does not share the loop point" % stream.resource_path)
+
+
+func test_arp_level_from_hostile_count() -> void:
+	assert_eq(MusicSystem.arp_level(0, 6), 0, "no arp without hostiles")
+	assert_eq(MusicSystem.arp_level(1, 6), 1)
+	assert_eq(MusicSystem.arp_level(5, 6), 1, "half up to 5")
+	assert_eq(MusicSystem.arp_level(6, 6), 2, "full from 6")
+	assert_eq(MusicSystem.arp_level(9, 6), 2)
 
 
 func test_shipped_outro_is_set_and_does_not_loop() -> void:

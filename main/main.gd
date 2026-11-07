@@ -9,25 +9,20 @@ extends Node
 const DevASystems := preload("res://main/dev_a_systems.gd")
 const DevBSystems := preload("res://main/dev_b_systems.gd")
 const DebugOverlay := preload("res://core/debug_overlay.gd")
+const Music := preload("res://systems/b_music.gd")
 const Ground := preload("res://main/ground.gd")
 
 
 func _ready() -> void:
 	Game.reset()
 
-	# Looping background track, chosen in data/audio_settings.tres.
-	var music := AudioStreamPlayer.new()
+	# Stem-based background music, configured in data/audio_settings.tres.
+	var music := Music.new()
 	music.name = "Music"
 	music.add_to_group(Groups.MUSIC)
-	music.stream = Game.AUDIO_SETTINGS.music_track
-	music.bus = Game.AUDIO_SETTINGS.music_bus()
-	music.volume_db = Game.AUDIO_SETTINGS.music_gain_db
-	music.pitch_scale = Game.AUDIO_SETTINGS.music_pitch
 	# Keep the track going while the game is paused (e.g. menus).
 	music.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(music)
-	if music.stream != null:
-		music.play()
 
 	var world := Node2D.new()
 	world.name = "World"
