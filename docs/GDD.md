@@ -162,6 +162,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 ### 7.1 CO2
 - Nube (raggio 60 unità), si muove **quasi dritta con curve casuali** (direzione + rumore sull'angolo).
 - Fuori dall'isola (fondale aperto) il rumore è ridotto (`co2_outside_turn_scale`, 10%) e la direzione viene forzata verso il centro dell'isola: la nube attraversa il fondale quasi in linea retta e punta sempre verso la zona giocabile, iniziando a curvare solo una volta dentro.
+- **Attraversa i coralli**: ogni corallo toccato perde ossigeno una volta sola e la nube continua la sua corsa. Con `co2_dies_on_coral = true` (solo per debug) sparisce invece al primo corallo.
 
 ### 7.2 Busta di plastica
 - Lenta, si muove in modo **più casuale** della CO2 (cambi di direzione più ampi e frequenti).
@@ -198,7 +199,7 @@ Le combinazioni non elencate **non fanno nulla**.
 | Agente | Bersaglio | Effetto |
 |---|---|---|
 | Alga (espansione) | Corallo | Corallo −`algae_coral_damage` (10) ossigeno |
-| CO2 | Corallo | Corallo −`co2_coral_damage` (50) ossigeno al primo contatto (basta toccare una qualsiasi delle sue celle), la nube **sparisce**. Con `co2_dies_on_coral = false` la nube invece prosegue e danneggia ogni corallo una sola volta |
+| CO2 | Corallo | Corallo −`co2_coral_damage` (50) ossigeno al primo contatto (basta toccare una qualsiasi delle sue celle); la nube **prosegue** e danneggia ogni corallo una sola volta. Con `co2_dies_on_coral = true` la nube sparisce al primo corallo |
 | CO2 | Alga | La CO2 viene **assorbita** (sparisce) e l'alga **si espande subito** |
 | CO2 | Nido con uova | Le uova muoiono, il nido torna `EMPTY` |
 | Busta | Pesce | Il pesce **muore**, la busta resta |
