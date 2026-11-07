@@ -17,6 +17,7 @@ signal button_pressed
 
 var _menu_panel: Control
 var _credits_panel: Control
+var _settings_panel: SettingsPanel
 
 
 func _ready() -> void:
@@ -33,6 +34,11 @@ func _ready() -> void:
 	_credits_panel = _build_credits_panel()
 	_credits_panel.visible = false
 	add_child(_credits_panel)
+	_settings_panel = SettingsPanel.new()
+	_settings_panel.visible = false
+	_settings_panel.closed.connect(_on_settings_closed)
+	_settings_panel.button_pressed.connect(func() -> void: button_pressed.emit())
+	add_child(_settings_panel)
 
 	# Auto-open when the menu enters the tree (game start). Calling open()
 	# from DevBSystems would race: Game.ui is not in the tree yet when
@@ -72,6 +78,17 @@ func _build_menu_panel() -> Control:
 	play_btn.offset_right = BUTTON_SIZE.x * 0.5
 	play_btn.offset_top = -BUTTON_SIZE.y * 0.5
 	play_btn.offset_bottom = BUTTON_SIZE.y * 0.5
+
+	# Settings, just below Play.
+	var settings_btn := _button("Impostazioni")
+	settings_btn.add_theme_font_size_override("font_size", 22)
+	settings_btn.pressed.connect(_on_settings_pressed)
+	panel.add_child(settings_btn)
+	settings_btn.set_anchors_preset(Control.PRESET_CENTER)
+	settings_btn.offset_left = -BUTTON_SIZE.x * 0.5
+	settings_btn.offset_right = BUTTON_SIZE.x * 0.5
+	settings_btn.offset_top = BUTTON_SIZE.y * 0.5 + 16.0
+	settings_btn.offset_bottom = BUTTON_SIZE.y * 1.5 + 16.0
 
 	# Exit, bottom left of the screen.
 	var exit_btn := _button("Esci")
@@ -140,6 +157,16 @@ func _on_play_pressed() -> void:
 	play_pressed.emit()
 
 
+func _on_settings_pressed() -> void:
+	button_pressed.emit()
+	_menu_panel.visible = false
+	_settings_panel.open()
+
+
+func _on_settings_closed() -> void:
+	_menu_panel.visible = true
+
+
 func _on_credits_pressed() -> void:
 	button_pressed.emit()
 	_menu_panel.visible = false
@@ -168,6 +195,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func open() -> void:
 	visible = true
 	_credits_panel.visible = false
+	_settings_panel.close()
 	_menu_panel.visible = true
 	get_tree().paused = true
 
@@ -175,4 +203,5 @@ func open() -> void:
 ## Hide the menu and resume the game.
 func close() -> void:
 	visible = false
+	_settings_panel.close()
 	get_tree().paused = false

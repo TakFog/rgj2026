@@ -7,10 +7,14 @@ extends Node
 
 ## Used by the audio system (systems/b_audio.gd).
 signal pause_toggled(paused: bool)
+## A pause-menu button was pressed (used by the audio system).
+signal button_pressed
 
 var monitor: PopulationMonitor
 var commander: FishCommander
 var overlay: Control
+var _pause_box: Control
+var _settings_panel: SettingsPanel
 
 
 ## True when a pause press must be left to another handler: anything while
@@ -26,6 +30,8 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _settings_panel != null and _settings_panel.visible:
+		return
 	if not event.is_action_pressed(InputActions.PAUSE):
 		return
 	var has_selection := not get_tree().paused and commander != null \
@@ -40,6 +46,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func set_paused(value: bool) -> void:
 	get_tree().paused = value
+	if value:
+		_show_pause()
 	overlay.visible = value
 	pause_toggled.emit(value)
 
@@ -51,11 +59,55 @@ func _build_overlay() -> Control:
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.visible = false
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(center)
+
+	_pause_box = VBoxContainer.new()
+	_pause_box.add_theme_constant_override("separation", 16)
+	center.add_child(_pause_box)
+
 	var label := Label.new()
-	label.text = "PAUSA\nSpazio per riprendere"
+	label.text = "PAUSA"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 40)
-	root.add_child(label)
-	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_pause_box.add_child(label)
+
+	var hint := Label.new()
+	hint.text = "Spazio per riprendere"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 24)
+	_pause_box.add_child(hint)
+
+	var settings_btn := Button.new()
+	settings_btn.text = "Impostazioni"
+	settings_btn.custom_minimum_size = Vector2(220, 60)
+	settings_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	settings_btn.add_theme_font_size_override("font_size", 24)
+	settings_btn.pressed.connect(_on_settings_pressed)
+	_pause_box.add_child(settings_btn)
+
+	_settings_panel = SettingsPanel.new()
+	_settings_panel.visible = false
+	_settings_panel.closed.connect(_on_settings_closed)
+	_settings_panel.button_pressed.connect(func() -> void: button_pressed.emit())
+	root.add_child(_settings_panel)
 	return root
+
+
+func _on_settings_pressed() -> void:
+	button_pressed.emit()
+	_pause_box.visible = false
+	_settings_panel.open()
+
+
+func _on_settings_closed() -> void:
+	_pause_box.visible = true
+
+
+func _show_pause() -> void:
+	if _settings_panel != null:
+		_settings_panel.close()
+	if _pause_box != null:
+		_pause_box.visible = true

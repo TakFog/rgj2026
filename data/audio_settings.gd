@@ -5,6 +5,9 @@ extends Resource
 ## boost. Tweak in data/audio_settings.tres; see docs/audio.md for the how-to.
 
 const MUSIC_BUS := &"Music"
+## Parent bus of every Sfx_* event bus, so the settings menu can fade all
+## effects at once. The Music bus reports straight to Master.
+const EFFECTS_BUS := &"Effects"
 const SFX_BUS_PREFIX := "Sfx_"
 ## At or below this level a sound is skipped instead of played inaudibly.
 const SILENCE_DB := -80.0
@@ -103,10 +106,17 @@ func effect_gain_db(name: StringName) -> float:
 	return effects_gain_db + event(name).gain_db
 
 
-## Audio bus for `event`, carrying its filters. Created on first use.
+## Audio bus for `event`, carrying its filters. Created on first use, routed
+## through the Effects bus so the whole group shares one volume.
 func event_bus(name: StringName) -> StringName:
 	var settings := event(name)
-	return ensure_bus(StringName(SFX_BUS_PREFIX + name), settings.high_pass_hz, settings.low_pass_hz)
+	return ensure_bus(StringName(SFX_BUS_PREFIX + name), settings.high_pass_hz,
+			settings.low_pass_hz, effects_bus())
+
+
+## Parent bus of all effect buses (no filters). Created on first use.
+static func effects_bus() -> StringName:
+	return ensure_bus(EFFECTS_BUS, 0.0, 0.0)
 
 
 ## Audio bus for the music, carrying the music filters. Created on first use.
@@ -114,15 +124,16 @@ func music_bus() -> StringName:
 	return ensure_bus(MUSIC_BUS, music_high_pass_hz, music_low_pass_hz)
 
 
-## Creates `bus_name` (routed to Master) with a high-pass and/or a low-pass
+## Creates `bus_name` (routed to `send`) with a high-pass and/or a low-pass
 ## filter, unless it already exists. A cutoff of 0.0 leaves that filter off.
-static func ensure_bus(bus_name: StringName, high_pass_hz: float, low_pass_hz: float) -> StringName:
+static func ensure_bus(bus_name: StringName, high_pass_hz: float, low_pass_hz: float,
+		send: StringName = &"Master") -> StringName:
 	if AudioServer.get_bus_index(bus_name) != -1:
 		return bus_name
 	AudioServer.add_bus()
 	var index := AudioServer.bus_count - 1
 	AudioServer.set_bus_name(index, bus_name)
-	AudioServer.set_bus_send(index, &"Master")
+	AudioServer.set_bus_send(index, send)
 	if high_pass_hz > 0.0:
 		var high_pass := AudioEffectHighPassFilter.new()
 		high_pass.cutoff_hz = high_pass_hz
