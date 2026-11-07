@@ -13,8 +13,8 @@ signal button_pressed
 enum Mode { START, REVIEW }
 enum InputAction { NONE, NEXT, PRIMARY }
 
-## Replay the selected interaction after this many seconds.
-const LOOP_SECONDS := 5.8
+## Advance to the next interaction after this many seconds.
+const LOOP_SECONDS := 4.5
 const SCREEN_MARGIN := 24.0
 const RIGHT_COLUMN_MIN_WIDTH := 340.0
 const CAPTION_FONT_SIZE := 24
@@ -28,6 +28,7 @@ var _elapsed := 0.0
 var _selected_index := 0
 var _chips: Array[Button] = []
 var _chip_rows: Array[int] = []
+var _scroll: ScrollContainer
 
 
 static func primary_label(mode: Mode) -> String:
@@ -133,17 +134,17 @@ func _ready() -> void:
 	list_title.add_theme_color_override("font_color", SeaStyle.SAND_COLOR)
 	right.add_child(list_title)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	right.add_child(scroll)
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right.add_child(_scroll)
 
 	var rows := VBoxContainer.new()
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rows.add_theme_constant_override("separation", 6)
 	rows.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	scroll.add_child(rows)
+	_scroll.add_child(rows)
 	for group in _grouped_rows():
 		rows.add_child(_build_group(group))
 
@@ -182,8 +183,7 @@ func _process(delta: float) -> void:
 		return
 	_elapsed += delta
 	if _elapsed >= LOOP_SECONDS:
-		_elapsed = 0.0
-		_stage.show_interaction(TutorialInteractions.ROWS[_selected_index])
+		_select_next()
 
 
 ## Selects one interaction: rebuilds the stage and refreshes the chip highlight.
@@ -208,11 +208,15 @@ func _on_chip_pressed(index: int) -> void:
 
 
 func _refresh_chips() -> void:
+	var selected: Button = null
 	for i in _chips.size():
 		if _chip_rows[i] == _selected_index:
 			SeaStyle.style_highlighted_button(_chips[i])
+			selected = _chips[i]
 		else:
 			SeaStyle.style_button(_chips[i])
+	if selected != null and _scroll != null and _scroll.is_inside_tree():
+		_scroll.ensure_control_visible(selected)
 
 
 func _on_primary_pressed() -> void:

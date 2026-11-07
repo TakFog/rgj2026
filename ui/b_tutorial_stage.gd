@@ -15,6 +15,19 @@ const CONTENT_CENTER := Vector2(3.7, 2.0)
 const NEST_HEIGHT := 130.0
 const ALGAE_HEIGHT := 105.0
 const CORAL_HEIGHT := 140.0
+## Nests are ground cover; predators and other agents draw above them.
+const Z_BY_ID := {
+	&"nest": -1,
+	&"nest_eggs": -1,
+	&"coral": 0,
+	&"algae": 0,
+	&"fish": 5,
+	&"bag": 8,
+	&"co2": 10,
+	&"predator": 20,
+	&"turtle": 22,
+	&"cyclone": 24,
+}
 
 var _projection: ViewProjection
 var _layer: Node2D
@@ -227,6 +240,7 @@ func _clear() -> void:
 
 func _build_nest() -> void:
 	_nest = _sprite(Nest.EMPTY_TEXTURE, NEST_HEIGHT, Vector2(5.0, 2.0))
+	_nest.z_index = Z_BY_ID[&"nest"]
 	_adult = _fish(Vector2(1.2, 2.7), true, Vector2.RIGHT)
 	_ring = ClockRing.new()
 	_ring.position = _pos(Vector2(5.0, 2.0))
@@ -255,15 +269,22 @@ func _build_generic(data: Dictionary) -> void:
 
 
 func _generic_visual(id: StringName, cell: Vector2) -> Node2D:
+	var visual: Node2D
 	match id:
-		&"co2": return _co2(cell)
-		&"fish": return _fish(cell, true, Vector2.RIGHT)
-		&"algae": return _algae(cell)
-	var texture := TutorialIcons.texture(id)
-	if texture == null:
-		return null
-	var tint := Coral.CORAL_HEALTHY_TINT if id == &"coral" else Color.WHITE
-	return _sprite(texture, TutorialIcons.height(id), cell, tint)
+		&"co2":
+			visual = _co2(cell)
+		&"fish":
+			visual = _fish(cell, true, Vector2.RIGHT)
+		&"algae":
+			visual = _algae(cell)
+		_:
+			var texture := TutorialIcons.texture(id)
+			if texture == null:
+				return null
+			var tint := Coral.CORAL_HEALTHY_TINT if id == &"coral" else Color.WHITE
+			visual = _sprite(texture, TutorialIcons.height(id), cell, tint)
+	visual.z_index = Z_BY_ID.get(id, 0)
+	return visual
 
 
 func _animate(id: StringName) -> void:

@@ -26,6 +26,27 @@ func test_stage_does_not_join_gameplay_groups() -> void:
 			assert_false(node.is_in_group(group), "%s joined %s" % [node.name, group])
 
 
+func test_predator_draws_above_nest() -> void:
+	var stage := TutorialStage.new()
+	var row := {}
+	for candidate in TutorialInteractions.ROWS:
+		if candidate["id"] == &"predator_eggs":
+			row = candidate
+	stage.show_interaction(row)
+	var predator_z := -100
+	var nest_z := 100
+	for node in stage.visual_nodes():
+		var sprite := node as Sprite2D
+		if sprite == null:
+			continue
+		if sprite.texture == PredatorVisual.TEXTURE:
+			predator_z = sprite.z_index
+		elif sprite.texture == Nest.EGGS_TEXTURE:
+			nest_z = sprite.z_index
+	assert_true(predator_z > nest_z, "predator %d, nest %d" % [predator_z, nest_z])
+	stage.free()
+
+
 func test_stage_fills_the_tutorial_pane() -> void:
 	var stage := TutorialStage.new()
 	assert_eq(stage.size_flags_horizontal, Control.SIZE_EXPAND_FILL)
