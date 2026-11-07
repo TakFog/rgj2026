@@ -20,11 +20,14 @@ func _init() -> void:
 	show_shadow = false
 
 
-## The tumble is cosmetic: it shares the spawn RNG only so a seeded run looks
-## the same every time, and never feeds back into the heading.
+## The tumble gets its own RNG: drawing from the spawn RNG would shift the bag's
+## heading and every later spawn position, which is gameplay this effect must not
+## touch.
 func setup(entry: EdgeEntry, rng: RandomNumberGenerator) -> void:
 	super.setup(entry, rng)
-	_spin = TumbleSpin.new(Game.actors.bag_spin_speed, rng)
+	var spin_rng := RandomNumberGenerator.new()
+	spin_rng.randomize()
+	_spin = TumbleSpin.new(Game.actors.bag_spin_speed, spin_rng)
 
 
 func _animate_body(delta: float) -> void:

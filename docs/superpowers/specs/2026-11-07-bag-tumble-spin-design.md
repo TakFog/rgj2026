@@ -20,8 +20,9 @@ damage or timing.
 
 ## Non-goals
 
-- No change to bag movement (`DriftMotion`) or to any other threat (CO2 and
-  cyclone keep their shadows).
+- No change to bag movement (`DriftMotion`) or to any other threat. Cyclones
+  keep their ground shadow; CO2 clouds already drew their own shadowless nebula
+  (`_make_visual()` override) before this work and are untouched.
 - No new art; the temporary sprite stays.
 - No squash / 3D "edge-on" faking for now — pure in-plane rotation. A mild
   horizontal squash can be added later if the spin reads too much like a wheel.
@@ -74,8 +75,11 @@ damage or timing.
   movement, so subclasses can animate their sprite without touching movement.
   A `show_shadow` flag (default `true`) guards the shadow, and `PlasticBag`
   turns it off.
-- `entities/threats/plastic_bag.gd` — creates its `TumbleSpin` from the RNG
-  passed to `setup()` (deterministic per spawn) and, in `_animate_body`, sets the
+- `entities/threats/plastic_bag.gd` — creates its `TumbleSpin` from its **own
+  randomized RNG**, never from the RNG passed to `setup()`: drawing from that
+  one would shift the bag's heading and every later spawn position, which is
+  gameplay this effect must not touch. (`TumbleSpin` itself stays deterministic
+  when handed a seeded RNG, so tests can pin it.) In `_animate_body` it sets the
   body's `rotation` to the model's angle. `rotation` on the body node pivots
   around the sprite's centre, which is exactly the bag centre.
 
