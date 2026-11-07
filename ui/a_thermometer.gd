@@ -5,25 +5,24 @@ extends Control
 ## from cool aqua through sand to coral red as Game.temperature climbs, a °C
 ## scale, and a caption. Fully custom-drawn; never blocks clicks on the reef.
 
-const CARD_SIZE := Vector2(96, 268)
+const CARD_SIZE := Vector2(88, 236)
 const CORNER_RADIUS := InventoryCard.CORNER_RADIUS
-const MARGIN := 16
+const MARGIN := 20
 
 ## Glass geometry, in card pixels. The tube is a capsule joined to the bulb.
-const TUBE_X := 36.0
-const TUBE_HALF_WIDTH := 9.0
-const TUBE_TOP := 20.0
-const BULB_CENTER_Y := 200.0
-const BULB_RADIUS := 19.0
+const TUBE_X := 31.0
+const TUBE_HALF_WIDTH := 8.0
+const TUBE_TOP := 18.0
+const BULB_CENTER_Y := 182.0
+const BULB_RADIUS := 17.0
 const GLASS_INSET := 4.0
 ## Scale (and liquid level) runs from just above the bulb to just under the cap.
 const SCALE_BOTTOM := BULB_CENTER_Y - BULB_RADIUS - 6.0
 const SCALE_TOP := TUBE_TOP + TUBE_HALF_WIDTH + 6.0
-const TICK_GAP := 5.0
-const MAJOR_TICK := 8.0
-const MINOR_TICK := 4.0
-const TICK_FONT_SIZE := 12
-const CAPTION_FONT_SIZE := 17
+const TICK_GAP := 6.0
+const MAJOR_TICK := 6.0
+const TICK_FONT_SIZE := 11
+const CAPTION_FONT_SIZE := 16
 
 ## Liquid level eases toward the real value instead of snapping.
 const LEVEL_SMOOTHING := 6.0
@@ -31,12 +30,12 @@ const LEVEL_SMOOTHING := 6.0
 const ALARM_FROM := 0.75
 const PULSE_SPEED := 4.0
 const FLASH_SECONDS := 0.6
-const BUBBLE_COUNT := 5
+const BUBBLE_COUNT := 4
 
 const COLD := Color(0.3, 0.8, 0.95)
 const WARM := InventoryCard.SAND_COLOR
 const HOT := Color(1.0, 0.3, 0.25)
-const GLASS_COLOR := Color(0.25, 0.85, 0.9, 0.08)
+const GLASS_COLOR := Color(0.47, 0.8, 0.78, 0.08)
 const HIGHLIGHT_COLOR := Color(1, 1, 1, 0.28)
 
 var _shown := 0.0
@@ -101,7 +100,7 @@ func _ready() -> void:
 	_style.set_corner_radius_all(CORNER_RADIUS)
 	_style.anti_aliasing = true
 	_style.bg_color = InventoryCard.BG_COLOR
-	_style.set_border_width_all(3)
+	_style.set_border_width_all(2)
 	_glass = glass_outline(TUBE_X, TUBE_HALF_WIDTH, TUBE_TOP, BULB_CENTER_Y, BULB_RADIUS)
 	_shown = Game.temperature
 	Game.temperature_changed.connect(_on_temperature_changed)
@@ -140,13 +139,13 @@ func _draw_frame(t: float) -> void:
 	var pulse := 0.5 + 0.5 * sin(_time * PULSE_SPEED)
 	_style.border_color = Color(InventoryCard.RIM_COLOR, 0.6).lerp(HOT, alarm * (0.6 + 0.4 * pulse))
 	if alarm > 0.0:
-		_style.shadow_color = Color(HOT, 0.25 + 0.3 * alarm * pulse)
-		_style.shadow_size = int(6 + 8 * alarm * pulse)
+		_style.shadow_color = Color(HOT, 0.2 + 0.3 * alarm * pulse)
+		_style.shadow_size = int(5 + 7 * alarm * pulse)
 		_style.shadow_offset = Vector2.ZERO
 	else:
 		_style.shadow_color = InventoryCard.SHADOW_COLOR
-		_style.shadow_size = 6
-		_style.shadow_offset = Vector2(0, 4)
+		_style.shadow_size = 0
+		_style.shadow_offset = Vector2.ZERO
 	draw_style_box(_style, Rect2(Vector2.ZERO, size))
 
 
@@ -166,9 +165,6 @@ func _draw_ticks() -> void:
 		draw_line(Vector2(x0, y), Vector2(x0 + MAJOR_TICK, y), tick_color, 2.0, true)
 		draw_string(font, Vector2(x0 + MAJOR_TICK + 3.0, y + TICK_FONT_SIZE * 0.35), "%d°" % degree,
 				HORIZONTAL_ALIGNMENT_LEFT, -1, TICK_FONT_SIZE, tick_color)
-		if degree != degrees[-1]:
-			var half := _level_y(degree_ratio(degree + 0.5, min_c, max_c))
-			draw_line(Vector2(x0, half), Vector2(x0 + MINOR_TICK, half), Color(tick_color, 0.3), 1.0, true)
 
 
 func _draw_liquid(t: float, color: Color) -> void:
@@ -211,6 +207,6 @@ func _draw_glass_shine() -> void:
 func _draw_caption(color: Color) -> void:
 	var font := get_theme_default_font()
 	var text_color := color.lightened(0.35).lerp(Color.WHITE, _flash)
-	var baseline := CARD_SIZE.y - 16.0
+	var baseline := CARD_SIZE.y - 14.0
 	var font_size := CAPTION_FONT_SIZE + roundi(3.0 * _flash)
 	draw_string(font, Vector2(0, baseline), caption(_celsius), HORIZONTAL_ALIGNMENT_CENTER, size.x, font_size, text_color)

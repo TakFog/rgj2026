@@ -4,8 +4,8 @@ extends HBoxContainer
 ## and a radial refill indicator (GDD §9).
 ## Pausable: no placing while the game is paused.
 
-const SEPARATION := 14
-const MARGIN := 18
+const SEPARATION := 12
+const MARGIN := 20
 
 var inventory: InventorySystem
 var placement: PlacementController

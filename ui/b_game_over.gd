@@ -6,7 +6,7 @@ extends ColorRect
 
 const CAPTION := "Tempo di sopravvivenza"
 const TITLE := "L'equilibrio si è interrotto"
-const CRITICAL_COLOR := Color(1.0, 0.45, 0.4)
+const CRITICAL_COLOR := Color(0.96, 0.52, 0.47)
 ## Order used for the final population summary.
 const COUNT_ORDER: Array[StringName] = [&"corals", &"algae", &"fish", &"nests"]
 ## Why the reef collapsed, keyed by the population that hit zero.
@@ -97,7 +97,7 @@ static func format_counts(counts: Dictionary) -> String:
 		if not counts.has(population):
 			continue
 		if not text.is_empty():
-			text += "   "
+			text += "  ·  "
 		text += "%s %d" % [Hud.display_name(population), counts[population]]
 	return text
 

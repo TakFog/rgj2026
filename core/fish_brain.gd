@@ -96,11 +96,11 @@ func wants_to_seek_nest() -> bool:
 
 ## The node found a reachable empty nest: swim to it. Only from WANDER, so an
 ## order or another drive is never interrupted.
-func seek_nest(target: Object) -> void:
+func seek_nest(p_target: Object) -> void:
 	if dead or not adult or state != State.WANDER:
 		return
 	_enter(State.SEEKING_NEST)
-	nest = target
+	nest = p_target
 
 
 ## The node found no reachable empty nest: keep wandering, retry later.

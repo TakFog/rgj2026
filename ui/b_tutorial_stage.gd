@@ -71,7 +71,9 @@ func _init(x_axis := Vector2(1, 0), y_axis := Vector2(-0.5, 0.5)) -> void:
 func _ready() -> void:
 	var seabed := ColorRect.new()
 	seabed.name = "Seabed"
-	seabed.color = Color8(100, 96, 70)
+	# Deep water, not the old olive fill: the olive read as a placeholder
+	# behind the painted reef art.
+	seabed.color = Color8(26, 78, 86)
 	seabed.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	seabed.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var shader_material := ShaderMaterial.new()
