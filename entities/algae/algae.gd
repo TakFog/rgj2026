@@ -7,6 +7,9 @@ signal destroyed
 
 var cell: Vector2i
 
+var _rng := RandomNumberGenerator.new()
+var _time_to_grow := 0.0
+
 
 func setup(p_cell: Vector2i) -> void:
 	cell = p_cell
@@ -20,12 +23,35 @@ func _ready() -> void:
 	Game.grid.occupy([cell], self)
 	CellShapes.add_collision(self, [cell], cell)
 	ViewFollower.attach(self, PlaceholderShape.cell(position, Color(0.3, 0.8, 0.35)))
+	_rng.randomize()
+	_reset_timer()
+
+
+func _physics_process(delta: float) -> void:
+	_time_to_grow -= delta
+	if _time_to_grow <= 0.0:
+		_reset_timer()
+		try_expand()
+
+
+## One expansion attempt (GDD §5.3). Skipped when the algae cap is reached.
+func try_expand() -> void:
+	if is_queued_for_deletion():
+		return
+	if get_tree().get_nodes_in_group(Groups.ALGAE).size() >= Game.eco.algae_max_count:
+		return
+	var result := AlgaeSpread.attempt(cell, Game.grid, _rng, _is_coral, CellProbe.is_covered_by_actor)
+	match result["outcome"]:
+		AlgaeSpread.Outcome.SPAWN:
+			Game.factory.spawn_algae(result["cell"])
+		AlgaeSpread.Outcome.DAMAGE_CORAL:
+			(result["target"] as Coral).apply_oxygen_damage(Game.eco.algae_coral_damage)
 
 
 ## Called by a CO2 cloud that touches this algae: the cloud is absorbed and the
-## algae expands immediately. Implemented by Dev A in the algae plan.
+## algae expands immediately. Deferred: B3 calls this from a physics callback.
 func on_co2_absorbed() -> void:
-	pass
+	try_expand.call_deferred()
 
 
 func destroy() -> void:
@@ -35,3 +61,12 @@ func destroy() -> void:
 	Game.grid.release([cell])
 	destroyed.emit()
 	queue_free()
+
+
+func _reset_timer() -> void:
+	var base := Game.by_temperature(Game.eco.algae_growth_interval_cold, Game.eco.algae_growth_interval_hot)
+	_time_to_grow = AlgaeSpread.next_interval(base, Game.eco.algae_growth_jitter, _rng)
+
+
+func _is_coral(entity: Object) -> bool:
+	return entity is Coral
