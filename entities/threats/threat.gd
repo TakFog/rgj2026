@@ -1,12 +1,12 @@
 class_name Threat
 extends Area2D
 ## Base for moving threats (GDD §7). Moves freely in the logical world, applies
-## ThreatRules on contact (GDD §8) and frees itself after leaving the map.
+## ThreatRules on contact (GDD §8) and frees itself after leaving the visible seabed.
 ## Subclasses only set kind / radius / speed / turn_noise / color in _init().
 
 signal destroyed
 
-## Distance beyond the world edge (on top of 2 × radius) before a threat is removed.
+## Distance beyond the visible seabed (on top of 2 × radius) before a threat is removed.
 const EXIT_MARGIN := 32.0
 ## Screen pixels the threat body floats above its ground shadow.
 const HOVER_PX := 18.0
@@ -23,7 +23,7 @@ var _hit := {} # target instance id -> true
 var _dead := false
 
 
-## Places the threat just outside the map at `entry`, heading inward.
+## Places the threat just off screen at `entry`, heading to the island.
 ## Call before adding the node to the tree.
 func setup(entry: EdgeEntry, rng: RandomNumberGenerator) -> void:
 	heading = entry.heading
@@ -53,9 +53,14 @@ func _physics_process(delta: float) -> void:
 	if _drift:
 		heading = _drift.step(heading, delta)
 	position += Vector2.from_angle(heading) * speed * delta
-	var alive_area := Rect2(Vector2.ZERO, Game.grid.world_size()).grow(radius * 2.0 + EXIT_MARGIN)
-	if not alive_area.has_point(position):
+	if not _in_alive_area():
 		destroy()
+
+
+## Inside the visible seabed, grown so threats spawn and leave fully off screen.
+func _in_alive_area() -> bool:
+	var grown := Geometry2D.offset_polygon(Game.visible_world_polygon(), radius * 2.0 + EXIT_MARGIN)
+	return not grown.is_empty() and Geometry2D.is_point_in_polygon(position, grown[0])
 
 
 ## Instant contact resolution. Safe to call several times in one physics step.

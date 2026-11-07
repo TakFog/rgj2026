@@ -51,6 +51,18 @@ func mouse_world() -> Vector2:
 	return projection.to_world(view.get_global_mouse_position())
 
 
+## The world area currently on screen (viewport corners projected back to the
+## logical world, camera included). A parallelogram under the oblique view.
+func visible_world_polygon() -> PackedVector2Array:
+	var to_canvas := view.get_global_transform_with_canvas().affine_inverse()
+	var rect := view.get_viewport_rect()
+	var corners := [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]
+	var polygon := PackedVector2Array()
+	for corner: Vector2 in corners:
+		polygon.append(projection.to_world(to_canvas * corner))
+	return polygon
+
+
 ## Linear interpolation by current temperature (cold value at 0, hot value at 1).
 func by_temperature(cold: float, hot: float) -> float:
 	return lerpf(cold, hot, clampf(temperature, 0.0, 1.0))

@@ -31,6 +31,7 @@ func _ready() -> void:
 	var camera := Camera2D.new()
 	camera.name = "Camera"
 	camera.position = Game.projection.to_screen(Game.grid.world_size() * 0.5)
+	camera.zoom = Vector2.ONE * Game.VIEW_SETTINGS.zoom
 	screen.add_child(camera)
 
 	var ui := CanvasLayer.new()

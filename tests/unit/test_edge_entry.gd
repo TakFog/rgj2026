@@ -1,36 +1,54 @@
 extends TestCase
 
-const SIZE := Vector2(640, 640)
+const ISLAND := Rect2(0, 0, 640, 640)
+## Visible world area: a sheared quad around the island, like the oblique view.
+const VISIBLE := [Vector2(-400, -300), Vector2(900, -300), Vector2(1300, 940), Vector2(-100, 940)]
 
 
-func test_points_lie_on_world_edge_and_inward_points_inside() -> void:
+func _visible() -> PackedVector2Array:
+	return PackedVector2Array(VISIBLE)
+
+
+func _distance_to_border(point: Vector2, polygon: PackedVector2Array) -> float:
+	var best := INF
+	for i in polygon.size():
+		var closest := Geometry2D.get_closest_point_to_segment(point, polygon[i], polygon[(i + 1) % polygon.size()])
+		best = minf(best, point.distance_to(closest))
+	return best
+
+
+func test_points_lie_on_visible_border() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
-	var rect := Rect2(Vector2.ZERO, SIZE)
 	for i in 200:
-		var entry := EdgeEntry.random(rng, SIZE, 0.5)
-		var on_x_edge := is_equal_approx(entry.point.x, 0.0) or is_equal_approx(entry.point.x, SIZE.x)
-		var on_y_edge := is_equal_approx(entry.point.y, 0.0) or is_equal_approx(entry.point.y, SIZE.y)
-		assert_true(on_x_edge or on_y_edge, str(entry.point))
-		assert_true(rect.grow(0.001).has_point(entry.point), str(entry.point))
-		assert_true(rect.has_point(entry.point + entry.inward), "inward %s at %s" % [entry.inward, entry.point])
+		var entry := EdgeEntry.random(rng, _visible(), ISLAND)
+		assert_almost(_distance_to_border(entry.point, _visible()), 0.0, 0.01, str(entry.point))
 
 
-func test_heading_stays_within_spread_of_inward() -> void:
+func test_heading_ray_hits_the_island() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
 	for i in 200:
-		var entry := EdgeEntry.random(rng, SIZE, 0.5)
-		var dir := Vector2.from_angle(entry.heading)
-		assert_true(dir.dot(entry.inward) >= cos(0.5) - 0.0001, "heading %s inward %s" % [entry.heading, entry.inward])
+		var entry := EdgeEntry.random(rng, _visible(), ISLAND)
+		var far := entry.point + Vector2.from_angle(entry.heading) * 10000.0
+		var hits := Geometry2D.intersect_polyline_with_polygon(
+			PackedVector2Array([entry.point, far]),
+			PackedVector2Array([ISLAND.position, Vector2(ISLAND.end.x, 0), ISLAND.end, Vector2(0, ISLAND.end.y)]))
+		assert_false(hits.is_empty(), "heading %s from %s misses" % [entry.heading, entry.point])
 
 
-func test_zero_spread_heads_straight_in() -> void:
+func test_uses_every_side() -> void:
 	var rng := RandomNumberGenerator.new()
-	rng.seed = 1
-	for i in 20:
-		var entry := EdgeEntry.random(rng, SIZE, 0.0)
-		assert_almost(Vector2.from_angle(entry.heading), entry.inward)
+	rng.seed = 3
+	var sides := {}
+	var polygon := _visible()
+	for i in 400:
+		var entry := EdgeEntry.random(rng, polygon, ISLAND)
+		for s in polygon.size():
+			var closest := Geometry2D.get_closest_point_to_segment(entry.point, polygon[s], polygon[(s + 1) % polygon.size()])
+			if entry.point.distance_to(closest) < 0.01:
+				sides[s] = true
+	assert_eq(sides.size(), 4)
 
 
 func test_same_seed_gives_same_entry() -> void:
@@ -38,7 +56,7 @@ func test_same_seed_gives_same_entry() -> void:
 	var b := RandomNumberGenerator.new()
 	a.seed = 99
 	b.seed = 99
-	var first := EdgeEntry.random(a, SIZE, 0.5)
-	var second := EdgeEntry.random(b, SIZE, 0.5)
+	var first := EdgeEntry.random(a, _visible(), ISLAND)
+	var second := EdgeEntry.random(b, _visible(), ISLAND)
 	assert_almost(first.point, second.point)
 	assert_almost(first.heading, second.heading)

@@ -153,7 +153,7 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 
 ## 7. Minacce
 
-Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la griglia) ed entrano dal bordo della mappa. Colpiscono un oggetto fermo quando la loro forma si sovrappone a una delle sue celle. **2.5 s prima** compare un **avviso** sul bordo (freccia/icona lampeggiante che indica direzione e tipo). Quando escono dalla mappa vengono rimosse.
+Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la griglia) ed entrano dal bordo dello schermo. Colpiscono un oggetto fermo quando la loro forma si sovrappone a una delle sue celle. **Niente avvisi**: la zona giocabile (la griglia) è un'**isola sottomarina** al centro dello schermo, circondata da fondale aperto non giocabile. La camera ha uno zoom fisso (`zoom` in `view_settings.tres`) che lascia visibile questo fondale: le minacce nascono appena fuori dallo schermo, puntano verso un punto a caso dell'isola e il giocatore le vede arrivare attraverso il fondale. Quando escono dallo schermo vengono rimosse.
 
 ### 7.1 CO2
 - Nube (raggio 60 unità), si muove **quasi dritta con curve casuali** (direzione + rumore sull'angolo).
@@ -205,7 +205,7 @@ ideologia_marina/
 │   └── coral_shapes/      # PackedScene o Resource con i poligoni
 ├── systems/
 │   ├── TemperatureSystem.gd
-│   ├── ThreatSpawner.gd   # spawn + avvisi
+│   ├── ThreatSpawner.gd   # spawn dal bordo dello schermo
 │   ├── InventorySystem.gd
 │   ├── PlacementController.gd
 │   ├── GridModel.gd       # occupazione celle: Dictionary[Vector2i → entità], cell↔world, adiacenti
@@ -218,7 +218,7 @@ ideologia_marina/
 │   └── threats/ CO2.tscn  Bag.tscn  Cyclone.tscn  (Area2D, layer THREAT)
 ├── levels/
 │   └── Level01.tscn       # mappa iniziale fissa
-├── ui/  HUD.tscn  Inventory.tscn  Thermometer.tscn  Warning.tscn  GameOver.tscn
+├── ui/  HUD.tscn  Inventory.tscn  Thermometer.tscn  GameOver.tscn
 └── main/ Main.tscn
 ```
 
@@ -241,7 +241,7 @@ ideologia_marina/
 | M2 | Pesce: wander, selezione, ordine dritto, mangiare, fame | ciclo pesci–alghe |
 | M3 | Nido: fecondazione, schiusa, maturità | ciclo di vita |
 | M4 | Inventario + piazzamento + GameState + game over + punteggio | **prima build giocabile** |
-| M5 | Minacce + avvisi + tabella delle interazioni | pressione esterna |
+| M5 | Minacce (visibili sul fondale attorno all'isola) + tabella delle interazioni | pressione esterna |
 | M6 | Temperatura + rallentamento dai coralli | curva di difficoltà |
 | M7 | Grafica, suoni, debug overlay, bilanciamento | rifinitura |
 
