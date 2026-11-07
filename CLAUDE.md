@@ -6,6 +6,9 @@ The game design document is `docs/GDD.md`.
 
 ## Git
 
+- **Never work on `main`.** Never commit directly to `main`. All work happens on
+  a personal feature branch and reaches `main` only through a merge of that
+  verified branch.
 - Always write commit messages (and PR titles/descriptions) in **English**.
 
 ### Git flow
