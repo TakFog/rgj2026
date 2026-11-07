@@ -11,6 +11,10 @@ const EGGS_COLOR := Color(1.0, 0.55, 0.2)
 ## Temporary art, until the designer's nest sprites are ready.
 const EMPTY_TEXTURE := preload("res://assets/sprites/temp/nest_empty.png")
 const EGGS_TEXTURE := preload("res://assets/sprites/temp/nest_eggs.png")
+## Row (texture px, measured on the art) where each nest touches the ground:
+## it is placed on the cell centre so the nest sits on its tile.
+const EMPTY_FOOT_Y := 165.0
+const EGGS_FOOT_Y := 185.0
 ## Juveniles appear around the nest centre, this far apart (world units).
 const HATCH_SPREAD := 8.0
 
@@ -41,6 +45,7 @@ func _ready() -> void:
 	_cycle.hatched.connect(_on_hatched)
 	_visual = PlaceholderShape.cell(position, EMPTY_COLOR)
 	_sprite = _visual.add_sprite(EMPTY_TEXTURE, 0.9)
+	_update_sprite()
 	ViewFollower.attach(self, _visual)
 
 
@@ -52,7 +57,13 @@ func _process(delta: float) -> void:
 		hazard = NestCycle.hazard_from_chance(death_chance, _cycle.hatch_seconds)
 	_cycle.tick(delta, hazard)
 	_visual.color = EGGS_COLOR if has_eggs() else EMPTY_COLOR
-	_sprite.texture = EGGS_TEXTURE if has_eggs() else EMPTY_TEXTURE
+	_update_sprite()
+
+
+func _update_sprite() -> void:
+	var eggs := has_eggs()
+	_sprite.texture = EGGS_TEXTURE if eggs else EMPTY_TEXTURE
+	_sprite.offset = Vector2(0.0, _sprite.texture.get_height() * 0.5 - (EGGS_FOOT_Y if eggs else EMPTY_FOOT_Y))
 
 
 func is_empty() -> bool:
