@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bma7ph0v88vni"
-path="res://.godot/imported/algae.png-0770a1ab79b68f6d25bead969baea4a8.ctex"
+uid="uid://d1p1p7u18tf83"
+path="res://.godot/imported/algae.png-ab3a6706cc7700967b8dae60c9a91443.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/temp/algae.png"
-dest_files=["res://.godot/imported/algae.png-0770a1ab79b68f6d25bead969baea4a8.ctex"]
+source_file="res://assets/sprites/algae.png"
+dest_files=["res://.godot/imported/algae.png-ab3a6706cc7700967b8dae60c9a91443.ctex"]
 
 [params]
 
