@@ -12,7 +12,7 @@ const TITLE_Y_FRACTION := 0.25
 
 ## Player-facing name and credits, kept in one place so the title screen and
 ## the credits panel cannot drift apart.
-const GAME_TITLE := "Ideologia Marina"
+const GAME_TITLE := "BalanSea"
 const CREDITS_TEXT := "Un gestionale di barriera corallina.\nTema del game jam: SUBIRE.\n\nRealizzato con Godot 4.7.2."
 
 signal play_pressed

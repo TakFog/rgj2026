@@ -1,4 +1,4 @@
-# Ideologia Marina
+# BalanSea
 
 A real-time, top-down 2D reef-management game made for a game jam (theme: **SUBIRE**, "to endure").
 

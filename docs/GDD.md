@@ -1,4 +1,4 @@
-# Ideologia Marina — Game Design Document (MVP)
+# BalanSea — Game Design Document (MVP)
 
 > Game jam, tema **SUBIRE**. Gestionale real-time di una barriera corallina, vista dall'alto 2D, Godot 4.x (GDScript).
 > Obiettivo: mantenere l'equilibrio dell'ecosistema il più a lungo possibile.
@@ -225,7 +225,7 @@ Danni dal più debole al più forte: alga (10) < busta (35) < CO2 (50). Tutti i 
 ## 10. Architettura Godot
 
 ```
-ideologia_marina/
+balansea/
 ├── project.godot
 ├── autoload/
 │   ├── GameState.gd       # conteggi, punteggio, segnali, game over

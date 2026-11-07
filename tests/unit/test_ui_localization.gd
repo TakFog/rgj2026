@@ -2,7 +2,7 @@ extends TestCase
 ## Guards the player-facing language: the title and the F3 labels are Italian.
 
 func test_game_title_is_italian() -> void:
-	assert_eq(MainMenuScreen.GAME_TITLE, "Ideologia Marina")
+	assert_eq(MainMenuScreen.GAME_TITLE, "BalanSea")
 
 
 func test_debug_flag_labels_are_italian() -> void:
