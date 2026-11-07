@@ -57,6 +57,7 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	var main_menu := MainMenuScreen.new()
 	main_menu.name = "MainMenu"
 	main_menu.play_pressed.connect(_on_play_pressed)
+	main_menu.exit_pressed.connect(_on_exit_pressed)
 	Game.ui.add_child(main_menu)
 
 	var pause := PauseController.new()
@@ -71,6 +72,11 @@ func _on_play_pressed() -> void:
 	var music := get_tree().get_first_node_in_group(Groups.MUSIC)
 	if music != null and music.has_method(&"start_game_music"):
 		music.start_game_music()
+
+
+## Exit pressed on the title screen: close the game (hidden in web builds).
+func _on_exit_pressed() -> void:
+	get_tree().quit()
 
 
 ## P4: sound effects (GDD §9). Hooks Dev A's placement and inventory, read from
