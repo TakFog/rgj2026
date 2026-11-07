@@ -89,7 +89,6 @@ master is now `video/ciccio.png`, shipped as `assets/ui/menu.png`.
 CREDITI, ESCI), sized from the hotspot so it follows the art at every window
 size. The labels use the shared off-white caption colour and sit above the
 additive hover/focus glow. The old anti-goal "labels appearing twice" now only
-means the shipped painting must stay text-free. The text-free painting has an
-opaque navy background, so the menu backdrop is now
-`SeaStyle.MENU_BACKDROP_COLOR` (sampled from the art) instead of the
-translucent overlay; the letterbox bars blend into the painting.
+means the shipped painting must stay text-free. The menu keeps the shared
+translucent `SeaStyle.OVERLAY_COLOR` backdrop, so the paused reef shows through
+the painting's transparent background and the letterbox bars.

@@ -63,7 +63,7 @@ var _glow_material: CanvasItemMaterial
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	color = SeaStyle.MENU_BACKDROP_COLOR
+	color = SeaStyle.OVERLAY_COLOR
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	visible = true
