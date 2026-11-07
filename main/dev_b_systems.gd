@@ -51,6 +51,16 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	hud.bind(monitor)
 	Game.ui.add_child(hud)
 
+	# Touch builds only: on-screen Pausa/Annulla buttons. Added before the
+	# overlays (game over, menu, tutorial, pause) so those cover it.
+	var touch_controls: TouchControls = null
+	if Platform.is_touch():
+		touch_controls = TouchControls.new()
+		touch_controls.name = "TouchControls"
+		touch_controls.commander = commander
+		touch_controls.add_to_group(Groups.GAMEPLAY_HUD)
+		Game.ui.add_child(touch_controls)
+
 	var game_over := GameOverScreen.new()
 	game_over.name = "GameOver"
 	Game.ui.add_child(game_over)
@@ -85,6 +95,8 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	if music != null:
 		pause.pause_toggled.connect(music.set_paused)
 	add_child(pause)
+	if touch_controls != null:
+		touch_controls.pause = pause
 
 
 ## Play pressed on the title screen: the tutorial comes first on the first run.

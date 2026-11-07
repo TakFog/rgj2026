@@ -19,9 +19,16 @@ const INVALID_COLOR := Color(1.0, 0.25, 0.25, 0.45)
 ## swimming over a cell. The ghost still follows the mouse every frame, and a
 ## cell change revalidates immediately, so placement stays responsive.
 const GHOST_REFRESH_SECONDS := 0.1
+## Touch preview origin before the first tap on the reef: no ghost is shown.
+const NO_CELL := Vector2i(-(1 << 30), -(1 << 30))
 
 var inventory: InventorySystem
 var active_slot := -1
+## Touch builds (Platform.is_touch) have no hover: the ghost sits where the
+## player last tapped or dragged, and a second tap on that cell confirms it.
+## Mouse builds (web included) keep following the mouse and place on click.
+var touch_mode := Platform.is_touch()
+var _touch_origin := NO_CELL
 
 var _ghost: Node2D
 var _ghost_cells: Array[Vector2i] = []
@@ -43,6 +50,7 @@ func begin(slot: int) -> void:
 		return
 	active_slot = slot
 	_ghost_cells = []
+	_touch_origin = NO_CELL
 	_ghost_elapsed = GHOST_REFRESH_SECONDS # show the preview immediately
 	Game.placing = true
 	placement_started.emit()
@@ -50,6 +58,7 @@ func begin(slot: int) -> void:
 
 func cancel() -> void:
 	active_slot = -1
+	_touch_origin = NO_CELL
 	Game.placing = false
 	_ghost_cells = []
 	_ghost.queue_redraw()
@@ -94,10 +103,24 @@ func try_place_at(origin: Vector2i) -> bool:
 	return true
 
 
+## Touch placement: a tap on the cell already previewed confirms it; any other
+## tap only moves the preview there.
+static func touch_tap_confirms(previewed: Vector2i, tapped: Vector2i) -> bool:
+	return previewed != NO_CELL and previewed == tapped
+
+
+## Cell the ghost is anchored to: the mouse, or the last tap/drag on touch.
+func _preview_origin() -> Vector2i:
+	if touch_mode:
+		return _touch_origin
+	return Game.grid.world_to_cell(Game.mouse_world())
+
+
 func _physics_process(delta: float) -> void:
 	if active_slot < 0:
 		return
-	var cells := footprint(Game.grid.world_to_cell(Game.mouse_world()))
+	var origin := _preview_origin()
+	var cells: Array[Vector2i] = [] if origin == NO_CELL else footprint(origin)
 	if cells != _ghost_cells:
 		# The mouse entered another cell (or the item changed): follow it and
 		# revalidate at once, exactly like the original every-frame preview.
@@ -128,6 +151,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 	if active_slot < 0:
 		return
+	if touch_mode and _handle_touch(event):
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed(InputActions.COMMAND):
 		try_place_at(Game.grid.world_to_cell(Game.mouse_world()))
 		get_viewport().set_input_as_handled()
@@ -135,6 +161,23 @@ func _unhandled_input(event: InputEvent) -> void:
 		cancel()
 		placement_cancelled.emit()
 		get_viewport().set_input_as_handled()
+
+
+## Touch placement input. Returns true when `event` was used.
+func _handle_touch(event: InputEvent) -> bool:
+	var tapped := Game.grid.world_to_cell(Game.mouse_world())
+	if event.is_action_pressed(InputActions.COMMAND):
+		if touch_tap_confirms(_touch_origin, tapped):
+			try_place_at(tapped)
+		else:
+			_touch_origin = tapped
+		return true
+	# Dragging a finger over the reef drags the preview along.
+	var motion := event as InputEventMouseMotion
+	if motion != null and motion.button_mask & MOUSE_BUTTON_MASK_LEFT and _touch_origin != NO_CELL:
+		_touch_origin = tapped
+		return true
+	return false
 
 
 func _draw_ghost() -> void:

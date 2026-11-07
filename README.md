@@ -26,6 +26,20 @@ The full game design document (in Italian) is in [`docs/GDD.md`](docs/GDD.md).
 | Space / Esc | Pause (Esc pauses only when there is nothing to cancel) |
 | F3 | Debug overlay (SHOW PATHS draws planned fish/predator/turtle routes) |
 
+### Android (touch)
+
+The Android build adds touch controls; every other build (web included) keeps the controls above.
+
+| Input | Action |
+| --- | --- |
+| Tap | Select a fish, give it an order, tap an inventory card |
+| Tap / drag on the reef while placing | Move the placement preview; tap the preview again to place |
+| **Annulla** button / Back | Cancel placement / deselect |
+| **Pausa** button / Back | Pause (Back pauses only when there is nothing to cancel) |
+| Three-finger tap | Debug overlay |
+
+Building and installing the APK: [`docs/android.md`](docs/android.md).
+
 ## Requirements
 
 - [Godot **4.7.2** stable](https://godotengine.org/download/archive/4.7.2-stable/) (standard build, no .NET needed).
@@ -57,7 +71,9 @@ GODOT=/path/to/godot tools/test.sh
 To add a test, create `tests/unit/test_<something>.gd` extending `TestCase`; every method whose name
 starts with `test_` is run automatically.
 
-CI (GitHub Actions, `.github/workflows/ci.yml`) runs both scripts on every push and pull request.
+CI (GitHub Actions, `.github/workflows/ci.yml`) runs both scripts on every push and pull request,
+and builds a signed Android APK (downloadable as the `android-apk` artifact of the run). Every push
+to `main` publishes it as a GitHub release tagged `v1`, `v2`, … (see [`docs/android.md`](docs/android.md)).
 
 ## Audio
 
