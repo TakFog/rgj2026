@@ -151,6 +151,18 @@ func test_event_bus_carries_the_event_filters() -> void:
 	assert_almost(high.cutoff_hz, 120.0)
 
 
+func test_pause_filter_is_configured() -> void:
+	var shipped: AudioSettings = load("res://data/audio_settings.tres")
+	assert_true(shipped.pause_music_low_pass_hz > 0.0, "pause filter disabled")
+	assert_true(shipped.pause_filter_fade_seconds >= 0.0)
+
+
+func test_pause_cutoff_opens_when_running_or_disabled() -> void:
+	assert_almost(MusicSystem.pause_cutoff(false, 900.0), MusicSystem.FILTER_OPEN_HZ)
+	assert_almost(MusicSystem.pause_cutoff(true, 900.0), 900.0)
+	assert_almost(MusicSystem.pause_cutoff(true, 0.0), MusicSystem.FILTER_OPEN_HZ)
+
+
 func _rng() -> RandomNumberGenerator:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7

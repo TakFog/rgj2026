@@ -43,7 +43,7 @@ minacce ──► CO2, buste, cicloni (annunciati prima di entrare)
   - **Pesci**: un nido con uova che si schiudono entro il timeout (*sono morti tutti i pesci, ma le uova stanno per schiudersi → ti salvi*). I pesci non arrivano dall'inventario.
   - **Alghe / coralli / nidi**: piazzandone uno dall'inventario, se c'è o se uno slot si ricarica in tempo.
 - Interfaccia: mentre è attivo un conto alla rovescia, al centro in alto compare un avviso rosso con l'icona della popolazione e i secondi rimasti. Per i pesci, se c'è un nido con uova, l'avviso mostra anche il tempo che manca alla schiusa, così il giocatore capisce subito se si salverà.
-- **Punteggio** = secondi sopravvissuti (MVP). Mostrato nell'interfaccia e nella schermata di game over.
+- **Punteggio** = secondi sopravvissuti (MVP). Mostrato nell'interfaccia e nella schermata di game over, che mostra anche la popolazione collassata, i conteggi finali e il miglior tempo salvato.
 
 ## 4. Mappa iniziale
 
@@ -125,7 +125,7 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 	- Altrimenti resta fermo `idle_after_order_seconds` (2 s) e poi torna a `WANDER`.
   - `EATING`: dopo `eat_seconds` (3 s) l'alga viene rimossa e la fame si azzera. Poi torna a `WANDER`. *Un pesce circondato dalle alghe può uscirne mangiando.*
   - `FERTILIZING`: deve restare fermo sul nido `fertilize_seconds` (3 s). Se se ne va prima (nuovo ordine), la fecondazione non avviene. Se va a buon fine, il nido passa a `EGGS` e il pesce torna a `WANDER`, libero di andarsene.
-- **Fame**: da 0 a `starve_seconds` (45 s). Barra visibile sopra il pesce quando supera il 50%: è piena a fame 0 e si svuota man mano che il pesce si affama, come la barra di sazietà del predatore. Al massimo il pesce muore.
+- **Fame**: da 0 a `starve_seconds` (45 s). Barra visibile sopra il pesce quando supera il 50%: è piena a fame 0 e si svuota man mano che il pesce si affama, come la barra di sazietà del predatore. Il colore va dal verde (pieno) al rosso (quasi vuoto); sopra il 75% compare un "!" lampeggiante. Al massimo il pesce muore.
 - **Età**: nasce giovane e diventa fecondo dopo `maturity_seconds` (60 s). Il pesce giovane si riconosce a vista (sprite più piccolo).
 - La velocità è ridotta dalla temperatura.
 

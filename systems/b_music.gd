@@ -14,6 +14,10 @@ const ARP_HALF_MIN := 1
 ## Hostiles change slowly; 4 scans per second are plenty for the arp mix and
 ## avoid a scene-tree group query on every frame.
 const HOSTILE_REFRESH_SECONDS := 0.25
+## The Music bus feeds this bus, which carries the pause low-pass filter.
+const PAUSE_BUS := &"PauseFilter"
+## Above human hearing: the pause filter is effectively off at this cutoff.
+const FILTER_OPEN_HZ := 20500.0
 
 var _drums: Array[AudioStreamPlayer] = []
 var _half: Array[AudioStreamPlayer] = []
@@ -30,6 +34,9 @@ var _full_pick := 0
 var _rng := RandomNumberGenerator.new()
 var _hostile_elapsed := HOSTILE_REFRESH_SECONDS
 var _hostile_count := 0
+var _pause_filter: AudioEffectLowPassFilter
+var _pause_cutoff := FILTER_OPEN_HZ
+var _paused := false
 
 
 ## 0 = no arp, 1 = half, 2 = full. `full_at` is the hostile count for full.
@@ -41,6 +48,7 @@ static func arp_level(hostiles: int, full_at: int) -> int:
 
 func _ready() -> void:
 	_rng.randomize()
+	_setup_pause_filter()
 	_drums = _make_players(Game.AUDIO_SETTINGS.drums)
 	_half = _make_players(Game.AUDIO_SETTINGS.arp_half)
 	_full = _make_players(Game.AUDIO_SETTINGS.arp_full)
@@ -60,6 +68,12 @@ func start_game_music() -> void:
 	if _intro != null:
 		_intro.stop()
 	_start_stems()
+
+
+## Muffles the music while the pause menu is open. Driven by PauseController's
+## signal, not get_tree().paused, so the game-over outro stays clear.
+func set_paused(value: bool) -> void:
+	_paused = value
 
 
 ## Stops everything for good: the outro takes over when the run is lost.
@@ -120,6 +134,7 @@ func _start_fallback() -> void:
 
 
 func _process(delta: float) -> void:
+	_update_pause_filter(delta)
 	if not _started:
 		return
 	if _clock != null and _clock.playing:
@@ -171,6 +186,48 @@ func _apply(player: AudioStreamPlayer, group_db: float) -> void:
 		player.volume_db = AudioSettings.SILENCE_DB
 	else:
 		player.volume_db = Game.AUDIO_SETTINGS.music_gain_db + group_db + linear_to_db(gain)
+
+
+## Cutoff the music eases toward: the pause cutoff while paused (unless the
+## effect is disabled), otherwise fully open.
+static func pause_cutoff(p_paused: bool, pause_hz: float) -> float:
+	if p_paused and pause_hz > 0.0:
+		return minf(pause_hz, FILTER_OPEN_HZ)
+	return FILTER_OPEN_HZ
+
+
+## Routes the Music bus through a dedicated filtered bus. The bus and its filter
+## are created once and reused across scene reloads, so restarts do not stack
+## effects on the audio server.
+func _setup_pause_filter() -> void:
+	var bus_name := AudioSettings.ensure_bus(PAUSE_BUS, 0.0, 0.0)
+	var music_index := AudioServer.get_bus_index(Game.AUDIO_SETTINGS.music_bus())
+	if music_index != -1:
+		AudioServer.set_bus_send(music_index, bus_name)
+	var index := AudioServer.get_bus_index(bus_name)
+	if index == -1:
+		return
+	if AudioServer.get_bus_effect_count(index) > 0:
+		_pause_filter = AudioServer.get_bus_effect(index, 0) as AudioEffectLowPassFilter
+	if _pause_filter == null:
+		_pause_filter = AudioEffectLowPassFilter.new()
+		AudioServer.add_bus_effect(index, _pause_filter)
+	_pause_cutoff = FILTER_OPEN_HZ
+	_pause_filter.cutoff_hz = _pause_cutoff
+
+
+## Eases the pause filter cutoff toward its target while the tree is paused.
+func _update_pause_filter(delta: float) -> void:
+	if _pause_filter == null:
+		return
+	var settings := Game.AUDIO_SETTINGS
+	var target := pause_cutoff(_paused, settings.pause_music_low_pass_hz)
+	if settings.pause_filter_fade_seconds <= 0.0:
+		_pause_cutoff = target
+	else:
+		var span := maxf(FILTER_OPEN_HZ - minf(settings.pause_music_low_pass_hz, FILTER_OPEN_HZ), 1.0)
+		_pause_cutoff = move_toward(_pause_cutoff, target, span / settings.pause_filter_fade_seconds * delta)
+	_pause_filter.cutoff_hz = _pause_cutoff
 
 
 func _all_players() -> Array[AudioStreamPlayer]:

@@ -98,6 +98,13 @@ in the Audio panel.
 The placement sound is the one that ships with a filter (a gentle high-pass, so
 it cuts less through the music).
 
+While the pause menu is open, the `Music` bus is routed through `PauseFilter`, a
+dedicated bus with a low-pass at `pause_music_low_pass_hz` (`0.0` disables it).
+It eases in/out over `pause_filter_fade_seconds`, so pausing sounds like the reef
+slipping underwater. The filter is driven by the pause button, not by
+`get_tree().paused`: the game-over outro keeps playing clearly. Effects and UI
+clicks are not filtered.
+
 ## Placement sounds
 
 Placing an item reports its kind, and the sound is `placement_<kind>` (kind is
