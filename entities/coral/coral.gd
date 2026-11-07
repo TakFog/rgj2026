@@ -8,7 +8,8 @@ signal destroyed
 const HEALTHY_COLOR := Color(1.0, 0.45, 0.55)
 const SUFFOCATED_COLOR := Color(0.45, 0.42, 0.42)
 ## Tint of the (grayscale) coral art: red at full oxygen, fading to its own gray at 0.
-const CORAL_HEALTHY_TINT := Color(1.0, 0.3, 0.3)
+## Red is overbright (> 1) so the mid-gray art reads as a vivid, bright red.
+const CORAL_HEALTHY_TINT := Color(1.6, 0.25, 0.25)
 const CORAL_SUFFOCATED_TINT := Color.WHITE
 const CRUMBLE_SECONDS := 0.6
 ## Rock the corals grow on (never tinted) and the grayscale corals drawn over it.
