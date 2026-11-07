@@ -137,18 +137,19 @@ func _on_matured() -> void:
 
 
 ## Contract #7: the eaten algae disappears.
-func _on_eat_finished(algae: Object) -> void:
+func _on_eat_finished(algae: Variant) -> void:
 	if _alive_in(algae, Groups.ALGAE):
 		(algae as Algae).destroy()
 
 
 ## Contract #4: the nest receives the eggs if it is still there and empty.
-func _on_fertilize_finished(nest: Object) -> void:
+func _on_fertilize_finished(nest: Variant) -> void:
 	if _alive_in(nest, Groups.NESTS) and (nest as Nest).is_empty():
 		(nest as Nest).fertilize()
 
 
 ## True if `entity` still exists and still belongs to `group` (destroy() leaves
-## the group immediately, even when the node is freed later).
-static func _alive_in(entity: Object, group: StringName) -> bool:
+## the group immediately, even when the node is freed later). Untyped on purpose:
+## a freed object passed to an `Object` parameter fails the call-site type check.
+static func _alive_in(entity: Variant, group: StringName) -> bool:
 	return is_instance_valid(entity) and (entity as Node).is_in_group(group)
