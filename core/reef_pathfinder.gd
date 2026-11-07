@@ -76,10 +76,11 @@ func find_path(from: Vector2, to: Vector2) -> PackedVector2Array:
 	return _smooth(from, path)
 
 
-## Nearest occupant (by path length) for which `predicate(occupant) -> bool`.
+## Nearest occupant (by path length) for which `predicate(occupant) -> bool`,
+## within `max_distance` straight-line world units of `from` (INF = no limit).
 ## Returns `{occupant, path}` where the (smoothed) path ends at the centre of
 ## the touched occupant cell, or `{}` if none is reachable.
-func nearest_occupant(from: Vector2, predicate: Callable) -> Dictionary:
+func nearest_occupant(from: Vector2, predicate: Callable, max_distance := INF) -> Dictionary:
 	_refresh()
 	var start := _clamp_cell(_grid.world_to_cell(from))
 	if _astar.is_point_solid(start):
@@ -96,7 +97,8 @@ func nearest_occupant(from: Vector2, predicate: Callable) -> Dictionary:
 				continue
 			visited[next] = true
 			var occupant := _grid.occupant(next)
-			if occupant != null and predicate.call(occupant):
+			if occupant != null and predicate.call(occupant) \
+					and _grid.cell_to_world(next).distance_to(from) <= max_distance:
 				return {"occupant": occupant, "path": _smooth(from, _path_to_touch(start, cell, next))}
 			if not _astar.is_point_solid(next):
 				queue.append(next)
