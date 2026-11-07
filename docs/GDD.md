@@ -181,7 +181,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 ### 7.5 Tartaruga marina (aiutante)
 - **Feature flag**: `turtle_enabled` in `balance_actors.tres` (default `true`).
 - Arriva ogni `turtle_interval` (90 s), al massimo `turtle_max_count` (1) alla volta, dal bordo dello schermo come le minacce. Non è una minaccia: aiuta il giocatore.
-- **Priorità**: prima difende i pesci, poi pulisce. Va verso la **minaccia raggiungibile più vicina** lungo il percorso (predatore che sta cacciando o busta di plastica); se non ce ne sono, verso l'**alga raggiungibile più vicina**. Ricalcola ogni `turtle_replan_seconds` (0.5 s); mentre mangia un'alga la lascia se compare una minaccia raggiungibile.
+- **Priorità**: prima difende i pesci, poi pulisce. Una minaccia conta solo se è **vicina** (distanza in linea d'aria): un predatore che sta cacciando entro `turtle_predator_aggro_radius` (160 = 5 celle) o una busta di plastica entro `turtle_bag_aggro_radius` (320 = 10 celle). Tra quelle nel proprio raggio va verso la **minaccia raggiungibile più vicina** lungo il percorso; una volta puntata la insegue finché non la elimina, anche se esce dal raggio. Se non ce ne sono, verso l'**alga raggiungibile più vicina**. Ricalcola ogni `turtle_replan_seconds` (0.5 s); mentre mangia un'alga la lascia se compare una minaccia nel suo raggio.
 - **Predatore**: gli va addosso e lo allontana (il predatore smette di cacciare e lascia l'isola). La tartaruga resta.
 - **Busta**: la elimina toccandola, poi **se ne va**.
 - **Alghe**: le mangia in `turtle_eat_seconds` (0.6 s), molto più in fretta dei pesci (`eat_seconds` 3 s). Con `turtle_max_algae` > 0 se ne va dopo averne mangiate tante (0 = nessun limite).
