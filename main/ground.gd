@@ -99,11 +99,11 @@ func _map_transform(island: PackedVector2Array) -> Transform2D:
 ## The visible screen area in this node's coordinates (camera included).
 func _screen_polygon() -> PackedVector2Array:
 	if not _screen_polygon_valid:
-		var to_local := get_global_transform_with_canvas().affine_inverse()
+		var canvas_to_local := get_global_transform_with_canvas().affine_inverse()
 		var rect := get_viewport_rect()
 		_screen_polygon_cache = PackedVector2Array([
-			to_local * rect.position, to_local * Vector2(rect.end.x, rect.position.y),
-			to_local * rect.end, to_local * Vector2(rect.position.x, rect.end.y)])
+			canvas_to_local * rect.position, canvas_to_local * Vector2(rect.end.x, rect.position.y),
+			canvas_to_local * rect.end, canvas_to_local * Vector2(rect.position.x, rect.end.y)])
 		_screen_polygon_valid = true
 	return _screen_polygon_cache
 

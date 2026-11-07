@@ -126,10 +126,10 @@ static func _fit_on_cell(sprite: Sprite2D, cell_polygon: PackedVector2Array) -> 
 
 ## Per-cell phase: neighbouring algae sway independently instead of in lockstep.
 func _sway_material(at_cell: Vector2i) -> ShaderMaterial:
-	var material := ShaderMaterial.new()
-	material.shader = SWAY_SHADER
-	material.set_shader_parameter("phase", float(at_cell.x) * 0.73 + float(at_cell.y) * 1.21)
-	return material
+	var sway := ShaderMaterial.new()
+	sway.shader = SWAY_SHADER
+	sway.set_shader_parameter("phase", float(at_cell.x) * 0.73 + float(at_cell.y) * 1.21)
+	return sway
 
 
 func _is_coral(entity: Object) -> bool:

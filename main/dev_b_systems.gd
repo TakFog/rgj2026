@@ -6,9 +6,6 @@ const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
 const PredatorSpawner := preload("res://systems/b_predator_spawner.gd")
 const TurtleSpawner := preload("res://systems/b_turtle_spawner.gd")
 const AudioSystem := preload("res://systems/b_audio.gd")
-const Juice := preload("res://core/juice.gd")
-const MainMenuScreen := preload("res://ui/b_main_menu.gd")
-const TutorialScreen := preload("res://ui/b_tutorial_screen.gd")
 
 var _main_menu: MainMenuScreen
 var _tutorial: TutorialScreen

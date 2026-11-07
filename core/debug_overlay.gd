@@ -246,10 +246,10 @@ func _panel_height() -> float:
 
 ## Top-left corner of the fixed panel contents, anchored bottom-right.
 func _panel_origin() -> Vector2:
-	var size := get_viewport_rect().size
+	var viewport := get_viewport_rect().size
 	return Vector2(
-		size.x - PANEL_WIDTH - PANEL_PAD - PANEL_INSET,
-		size.y - _panel_height() - PANEL_PAD - PANEL_INSET)
+		viewport.x - PANEL_WIDTH - PANEL_PAD - PANEL_INSET,
+		viewport.y - _panel_height() - PANEL_PAD - PANEL_INSET)
 
 
 ## Positions the panel background, the temperature slider (right under the
@@ -275,9 +275,9 @@ func _sync_slider() -> void:
 
 
 ## Creates a toggle-styled button showing the flag name and current state.
-func _make_flag_button(name: String, value: bool) -> Button:
+func _make_flag_button(flag_name: String, value: bool) -> Button:
 	var btn := Button.new()
-	btn.text = _flag_label(name, value)
+	btn.text = _flag_label(flag_name, value)
 	btn.add_theme_font_size_override("font_size", FONT_SIZE)
 	btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	btn.focus_mode = Control.FOCUS_NONE
@@ -322,9 +322,9 @@ func _update_labels() -> void:
 	_set_label(&"_flags", "Flag di gioco:", Vector2(x, y), COLOR_TEMP, wanted)
 
 	# Keep flag button labels in sync with current state (only when they change).
-	for name in _flag_buttons.keys():
-		var btn := _flag_buttons[name] as Button
-		var flag_text := _flag_label(name, _flag_value(name))
+	for flag_name in _flag_buttons.keys():
+		var btn := _flag_buttons[flag_name] as Button
+		var flag_text := _flag_label(flag_name, _flag_value(flag_name))
 		if btn.text != flag_text:
 			btn.text = flag_text
 
@@ -385,14 +385,14 @@ func _update_labels() -> void:
 
 
 ## Returns the Italian display text for a debug flag.
-func _flag_label(name: String, value: bool) -> String:
-	var pretty: String = FLAG_NAMES.get(name, name.to_upper().replace("_", " "))
+func _flag_label(flag_name: String, value: bool) -> String:
+	var pretty: String = FLAG_NAMES.get(flag_name, flag_name.to_upper().replace("_", " "))
 	return "%s: %s" % [pretty, "SÌ" if value else "NO"]
 
 
 ## Returns the current value of a debug/feature flag by name.
-func _flag_value(name: StringName) -> bool:
-	match name:
+func _flag_value(flag_name: StringName) -> bool:
+	match flag_name:
 		"co2_dies_on_coral": return Game.actors.co2_dies_on_coral
 		"predator_enabled": return Game.actors.predator_enabled
 		"turtle_enabled": return Game.actors.turtle_enabled

@@ -99,15 +99,15 @@ func _turn_scale() -> float:
 ## Pulls the heading back toward the island center while outside the playable
 ## area, so the threat always heads inside instead of drifting off the seabed.
 ## A no-op once the threat is inside the island grid.
-func _steer_inward(heading: float, delta: float) -> float:
+func _steer_inward(p_heading: float, delta: float) -> float:
 	var island := Rect2(Vector2.ZERO, Game.grid.world_size())
 	if island.has_point(position):
-		return heading
+		return p_heading
 	var center := island.position + island.size * 0.5
 	var target := (center - position).angle()
-	var diff := wrapf(target - heading, -PI, PI)
+	var diff := wrapf(target - p_heading, -PI, PI)
 	var step := clampf(diff, -INWARD_STEER * delta, INWARD_STEER * delta)
-	return heading + step
+	return p_heading + step
 
 
 ## Inside the visible seabed, grown so threats spawn and leave fully off screen.

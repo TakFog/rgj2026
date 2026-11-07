@@ -36,8 +36,8 @@ func _ready() -> void:
 				takes.append(load(path))
 		if not takes.is_empty():
 			_streams[event] = takes
-	for name: StringName in _streams:
-		Game.AUDIO_SETTINGS.event_bus(name) # Create the filter buses up front.
+	for event_name: StringName in _streams:
+		Game.AUDIO_SETTINGS.event_bus(event_name) # Create the filter buses up front.
 	# Apply the player's saved Music/Effects levels now that the buses exist.
 	UserSettings.load_and_apply()
 	for i in VOICES:
@@ -103,19 +103,19 @@ func _fade_wind(delta: float) -> void:
 
 
 ## Plays a random take of `event` on the next voice in the ring.
-func play(name: StringName) -> void:
-	if not _streams.has(name):
+func play(event_name: StringName) -> void:
+	if not _streams.has(event_name):
 		return
-	var gain_db := Game.AUDIO_SETTINGS.effect_gain_db(name)
+	var gain_db := Game.AUDIO_SETTINGS.effect_gain_db(event_name)
 	if gain_db <= AudioSettings.SILENCE_DB:
 		return
-	var takes: Array[AudioStream] = _streams[name]
+	var takes: Array[AudioStream] = _streams[event_name]
 	var player := _players[_next]
 	_next = (_next + 1) % _players.size()
 	player.stream = takes[_rng.randi_range(0, takes.size() - 1)]
-	player.bus = Game.AUDIO_SETTINGS.event_bus(name)
+	player.bus = Game.AUDIO_SETTINGS.event_bus(event_name)
 	player.volume_db = gain_db
-	player.pitch_scale = Game.AUDIO_SETTINGS.event(name).random_pitch(_rng)
+	player.pitch_scale = Game.AUDIO_SETTINGS.event(event_name).random_pitch(_rng)
 	player.play()
 
 
@@ -207,10 +207,10 @@ func _on_entity_added(node: Node) -> void:
 
 ## A threat entering the visible seabed for the first time.
 func _play_when_in_view(threat: Threat, event: StringName) -> void:
-	var played := false
+	var played: Array[bool] = [false]
 	threat.view_changed.connect(func(in_view: bool) -> void:
-		if in_view and not played:
-			played = true
+		if in_view and not played[0]:
+			played[0] = true
 			play(event))
 
 
@@ -235,10 +235,10 @@ func _set_cyclone_in_view(id: int, in_view: bool) -> void:
 
 
 ## First loaded take of `name`, or null.
-func _first_take(name: StringName) -> AudioStream:
-	if not _streams.has(name):
+func _first_take(event_name: StringName) -> AudioStream:
+	if not _streams.has(event_name):
 		return null
-	var takes: Array[AudioStream] = _streams[name]
+	var takes: Array[AudioStream] = _streams[event_name]
 	return takes[0] if not takes.is_empty() else null
 
 

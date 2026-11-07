@@ -19,5 +19,5 @@ func _init() -> void:
 ## while crossing the open seabed and exiting the game area, so inward
 ## steering is disabled. They only stop when destroyed by a coral or once
 ## they leave the visible seabed.
-func _steer_inward(heading: float, delta: float) -> float:
-	return heading
+func _steer_inward(p_heading: float, _delta: float) -> float:
+	return p_heading

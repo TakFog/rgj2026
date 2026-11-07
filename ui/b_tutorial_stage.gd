@@ -64,13 +64,13 @@ func _ready() -> void:
 	seabed.color = Color8(100, 96, 70)
 	seabed.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	seabed.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var material := ShaderMaterial.new()
-	material.shader = SEABED_SHADER
-	material.set_shader_parameter("to_world_x", Vector2(1, 0))
-	material.set_shader_parameter("to_world_y", Vector2(1, 2))
-	material.set_shader_parameter("tint_amount", 0.35)
-	material.set_shader_parameter("vignette_strength", 0.4)
-	seabed.material = material
+	var shader_material := ShaderMaterial.new()
+	shader_material.shader = SEABED_SHADER
+	shader_material.set_shader_parameter("to_world_x", Vector2(1, 0))
+	shader_material.set_shader_parameter("to_world_y", Vector2(1, 2))
+	shader_material.set_shader_parameter("tint_amount", 0.35)
+	shader_material.set_shader_parameter("vignette_strength", 0.4)
+	seabed.material = shader_material
 	add_child(seabed)
 	# show_interaction() may have run before the node entered the tree.
 	move_child(seabed, 0)
@@ -151,10 +151,10 @@ func _fish(cell: Vector2, adult: bool, heading: Vector2) -> FishVisual:
 
 func _algae(cell: Vector2) -> Sprite2D:
 	var sprite := _sprite(Algae.TEXTURE, ALGAE_HEIGHT, cell, Algae.SPRITE_TINT)
-	var material := ShaderMaterial.new()
-	material.shader = Algae.SWAY_SHADER
-	material.set_shader_parameter("phase", cell.x * 0.73 + cell.y * 1.21)
-	sprite.material = material
+	var sway := ShaderMaterial.new()
+	sway.shader = Algae.SWAY_SHADER
+	sway.set_shader_parameter("phase", cell.x * 0.73 + cell.y * 1.21)
+	sprite.material = sway
 	return sprite
 
 
