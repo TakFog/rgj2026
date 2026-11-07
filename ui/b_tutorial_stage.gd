@@ -7,7 +7,7 @@ extends Control
 
 const SEABED_SHADER := preload("res://main/seabed.gdshader")
 const CELL_PX := 56.0
-const STAGE_SIZE := Vector2(820, 340)
+const STAGE_SIZE := Vector2(900, 340)
 const NEST_HEIGHT := 110.0
 const ALGAE_HEIGHT := 90.0
 const CORAL_HEIGHT := 120.0

@@ -24,3 +24,8 @@ func test_stage_does_not_join_gameplay_groups() -> void:
 	for node in stage.visual_nodes():
 		for group in [Groups.FISH, Groups.NESTS, Groups.CORALS, Groups.ALGAE, Groups.THREATS]:
 			assert_false(node.is_in_group(group), "%s joined %s" % [node.name, group])
+
+
+func test_stage_width_matches_the_tutorial_card() -> void:
+	assert_eq(TutorialStage.STAGE_SIZE.x, TutorialScreen.CONTENT_WIDTH,
+			"the stage must fill the card's content width")

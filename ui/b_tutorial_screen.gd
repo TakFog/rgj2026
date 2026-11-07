@@ -15,6 +15,8 @@ enum InputAction { NONE, NEXT, PRIMARY }
 
 const SECONDS_PER_STEP := 6.0
 const BUTTON_SIZE := Vector2(180.0, 60.0)
+## Content width of the card; TutorialStage fills it edge to edge.
+const CONTENT_WIDTH := 900.0
 
 var _mode := Mode.START
 var _sequence: TutorialSequence
@@ -66,7 +68,7 @@ func _ready() -> void:
 	center.add_child(card)
 
 	var box := VBoxContainer.new()
-	box.custom_minimum_size = Vector2(900.0, 0.0)
+	box.custom_minimum_size = Vector2(CONTENT_WIDTH, 0.0)
 	box.add_theme_constant_override("separation", 18)
 	card.add_child(box)
 
