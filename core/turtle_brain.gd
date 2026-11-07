@@ -1,8 +1,9 @@
 class_name TurtleBrain
 extends RefCounted
 ## Pure rules of the sea turtle helper (issue #4). It comes from outside the
-## island to help: first it defends the fish from threats (rams the predator
-## away, removes a plastic bag), then it cleans algae, much faster than fish.
+## island to help: threats nearby (a predator or a bag, each with its own aggro
+## radius) make it defend the fish (ram the predator away, remove the bag);
+## otherwise it cleans algae, much faster than fish.
 ## It leaves after removing a bag, after eating turtle_max_algae algae (if > 0),
 ## or after turtle_stay_seconds on the island.
 
@@ -24,10 +25,17 @@ func _init(cfg: BalanceActors) -> void:
 
 
 ## Picks the next job from route lengths (INF = unreachable): the nearest
-## reachable threat if any, else the nearest reachable algae.
+## reachable threat inside its own aggro radius if any, else the nearest
+## reachable algae. `threat_distances` and `threat_radii` are parallel to
+## `threat_costs`; the radius depends on the threat (predator or bag).
+## `locked` is the threat index it is already chasing: it keeps it, even
+## outside the radius, until the caller reports it invalid (pass -1).
 ## Returns `{task: Task, index: int}` (index -1 with Task.NONE).
-static func pick(threat_costs: Array, algae_costs: Array) -> Dictionary:
-	var threat := _nearest(threat_costs)
+static func pick(threat_costs: Array, threat_distances: Array, threat_radii: Array,
+		algae_costs: Array, locked := -1) -> Dictionary:
+	if locked >= 0 and locked < threat_costs.size() and not is_inf(threat_costs[locked]):
+		return {"task": Task.THREAT, "index": locked}
+	var threat := _nearest_in_range(threat_costs, threat_distances, threat_radii)
 	if threat >= 0:
 		return {"task": Task.THREAT, "index": threat}
 	var algae := _nearest(algae_costs)
@@ -74,6 +82,17 @@ func stop_eating() -> void:
 ## The turtle removed a plastic bag: its job is done, it leaves.
 func bag_removed() -> void:
 	state = State.LEAVING
+
+
+## Nearest reachable threat that is also inside its own aggro radius.
+static func _nearest_in_range(costs: Array, distances: Array, radii: Array) -> int:
+	var best := -1
+	for i in costs.size():
+		if is_inf(costs[i]) or distances[i] > radii[i]:
+			continue
+		if best == -1 or costs[i] < costs[best]:
+			best = i
+	return best
 
 
 static func _nearest(costs: Array) -> int:

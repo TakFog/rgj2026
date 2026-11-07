@@ -73,6 +73,10 @@ extends Resource
 @export var turtle_replan_seconds := 0.5
 ## Extra distance beyond touching at which it rams a threat or eats an algae.
 @export var turtle_reach_margin := 4.0
+## Straight-line distance within which it goes after a hunting predator.
+@export var turtle_predator_aggro_radius := 160.0
+## Straight-line distance within which it goes after a plastic bag.
+@export var turtle_bag_aggro_radius := 320.0
 
 @export_group("Collapse")
 @export var collapse_grace_seconds := 10.0

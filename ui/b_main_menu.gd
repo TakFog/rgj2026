@@ -15,6 +15,11 @@ signal exit_pressed
 ## Any menu button was pressed (used by the audio system).
 signal button_pressed
 
+## Set by Restart just before reloading the scene: the reloaded menu then
+## starts the run straight away instead of showing the title screen.
+## Static, so it survives reload_current_scene().
+static var _skip_next_open := false
+
 var _menu_panel: Control
 var _credits_panel: Control
 var _settings_panel: SettingsPanel
@@ -43,7 +48,26 @@ func _ready() -> void:
 	# Auto-open when the menu enters the tree (game start). Calling open()
 	# from DevBSystems would race: Game.ui is not in the tree yet when
 	# DevBSystems._ready runs, so _ready here hasn't fired yet.
-	open()
+	if _skip_next_open:
+		_skip_next_open = false
+		_start_without_menu()
+	else:
+		open()
+
+
+## Restarts the run, skipping the title screen. Used by the pause menu and the
+## game-over screen.
+static func restart_run(tree: SceneTree) -> void:
+	_skip_next_open = true
+	tree.paused = false
+	tree.reload_current_scene()
+
+
+## Like pressing Play, without the click: deferred so the music node and the
+## other listeners are in the tree when play_pressed fires.
+func _start_without_menu() -> void:
+	close()
+	play_pressed.emit.call_deferred()
 
 
 func _build_menu_panel() -> Control:
@@ -148,6 +172,7 @@ func _button(text: String) -> Button:
 	btn.text = text
 	btn.custom_minimum_size = BUTTON_SIZE
 	btn.add_theme_font_size_override("font_size", 28)
+	SeaStyle.style_button(btn)
 	return btn
 
 

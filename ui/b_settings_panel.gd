@@ -27,15 +27,27 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 
+	# The whole panel is one sea card, like the HUD inventory cards.
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", SeaStyle.panel_box())
+	center.add_child(card)
+
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 18)
-	center.add_child(box)
+	card.add_child(box)
 
 	var title := Label.new()
 	title.text = "Impostazioni"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 36)
+	title.add_theme_color_override("font_color", SeaStyle.SAND_COLOR)
 	box.add_child(title)
+
+	var divider := ColorRect.new()
+	divider.color = Color(SeaStyle.RIM_COLOR, 0.35)
+	divider.custom_minimum_size = Vector2(0, 2)
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(divider)
 
 	_music_slider = _add_volume_row(box, "Musica")
 	_effects_slider = _add_volume_row(box, "Effetti")
@@ -44,6 +56,7 @@ func _ready() -> void:
 	back.text = "Indietro"
 	back.custom_minimum_size = BUTTON_SIZE
 	back.add_theme_font_size_override("font_size", 28)
+	SeaStyle.style_button(back)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	back.pressed.connect(_on_back_pressed)
 	box.add_child(back)
@@ -60,6 +73,7 @@ func _add_volume_row(parent: VBoxContainer, text: String) -> HSlider:
 	label.text = text
 	label.custom_minimum_size.x = LABEL_WIDTH
 	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", SeaStyle.CAPTION_COLOR)
 	row.add_child(label)
 
 	var slider := HSlider.new()
@@ -68,6 +82,7 @@ func _add_volume_row(parent: VBoxContainer, text: String) -> HSlider:
 	slider.step = 1.0
 	slider.custom_minimum_size.x = SLIDER_WIDTH
 	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	SeaStyle.style_slider(slider)
 	slider.value_changed.connect(_on_slider_changed)
 	slider.drag_ended.connect(func(_changed: bool) -> void: _save())
 	row.add_child(slider)
@@ -76,6 +91,7 @@ func _add_volume_row(parent: VBoxContainer, text: String) -> HSlider:
 	value.custom_minimum_size.x = VALUE_WIDTH
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	value.add_theme_font_size_override("font_size", 22)
+	value.add_theme_color_override("font_color", SeaStyle.SAND_COLOR)
 	row.add_child(value)
 
 	if _music_value == null:
