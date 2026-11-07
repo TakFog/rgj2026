@@ -79,6 +79,24 @@ func test_cyclone_destroys_fish_algae_nests_threats_and_keeps_going() -> void:
 		assert_false(outcome.threat_dies)
 
 
+func test_nothing_reacts_to_a_cyclone() -> void:
+	for kind in [ThreatSchedule.Type.CO2, ThreatSchedule.Type.BAG, ThreatSchedule.Type.CYCLONE]:
+		var outcome := _resolve(kind, ThreatRules.Target.CYCLONE)
+		assert_eq(outcome.effect, ThreatRules.Effect.NOTHING, "kind %d" % kind)
+		assert_false(outcome.threat_dies)
+
+
+func test_target_of_tells_cyclones_from_other_threats() -> void:
+	var cyclone := Cyclone.new()
+	cyclone.add_to_group(Groups.THREATS)
+	var bag := PlasticBag.new()
+	bag.add_to_group(Groups.THREATS)
+	assert_eq(ThreatRules.target_of(cyclone), ThreatRules.Target.CYCLONE)
+	assert_eq(ThreatRules.target_of(bag), ThreatRules.Target.THREAT)
+	cyclone.free()
+	bag.free()
+
+
 func test_cyclone_kills_coral_and_stops() -> void:
 	var outcome := _resolve(ThreatSchedule.Type.CYCLONE, ThreatRules.Target.CORAL)
 	assert_eq(outcome.effect, ThreatRules.Effect.DESTROY)
