@@ -8,10 +8,13 @@ signal destroyed
 ## Used by the audio system (systems/b_audio.gd).
 signal spread
 
-## Temporary art, until the designer's algae sprite is ready.
-const TEXTURE := preload("res://assets/sprites/temp/algae.png")
+const TEXTURE := preload("res://assets/sprites/algae.png")
+## Swaying movement of the plant underwater (fragment-space UV warp).
+const SWAY_SHADER := preload("res://entities/algae/algae_sway.gdshader")
 ## Alpha of the coloured cell drawn under the sprite.
 const FOOTPRINT_ALPHA := 0.3
+## The art is a dark, detailed clump; lift it so it reads green on bright sand.
+const SPRITE_TINT := Color(1.8, 1.8, 1.8)
 
 var cell: Vector2i
 ## Last fish that reserved this algae (to swim to it or eat it), or null. It
@@ -38,7 +41,9 @@ func _ready() -> void:
 	# the turtle swimming over an algae stay on top of it.
 	# Faint footprint: the sprite does the reading, the cell only grounds it.
 	var visual := PlaceholderShape.cell(position, Color(0.3, 0.8, 0.35, FOOTPRINT_ALPHA))
-	visual.add_sprite(TEXTURE, 0.8)
+	var sprite := visual.add_sprite(TEXTURE, 1.6)
+	sprite.modulate = SPRITE_TINT
+	sprite.material = _sway_material(cell)
 	ViewFollower.attach(self, visual).z_index = -1
 	_rng.randomize()
 	_reset_timer()
@@ -89,6 +94,14 @@ func destroy() -> void:
 func _reset_timer() -> void:
 	var base := Game.by_temperature(Game.eco.algae_growth_interval_cold, Game.eco.algae_growth_interval_hot)
 	_time_to_grow = AlgaeSpread.next_interval(base, Game.eco.algae_growth_jitter, _rng)
+
+
+## Per-cell phase: neighbouring algae sway independently instead of in lockstep.
+func _sway_material(at_cell: Vector2i) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = SWAY_SHADER
+	material.set_shader_parameter("phase", float(at_cell.x) * 0.73 + float(at_cell.y) * 1.21)
+	return material
 
 
 func _is_coral(entity: Object) -> bool:
