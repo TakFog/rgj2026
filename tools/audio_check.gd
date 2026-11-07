@@ -9,7 +9,7 @@ func _init() -> void:
 	var settings: AudioSettings = load("res://data/audio_settings.tres")
 	var events: Dictionary = AudioEvents.TAKES
 
-	print("Music: ", _track(settings))
+	print("Music stems: ", _stems(settings))
 	print("Outro: ", _outro(settings))
 	print()
 	print("%-16s %-10s %8s %6s %10s %10s  %s" % [
@@ -19,15 +19,25 @@ func _init() -> void:
 	quit()
 
 
-func _track(settings: AudioSettings) -> String:
-	if settings.music_track == null:
-		return "(none, the game is silent)"
-	var wav := settings.music_track as AudioStreamWAV
-	var loop := "loop: yes" if wav != null and wav.loop_mode != AudioStreamWAV.LOOP_DISABLED else "loop: NO (check the .wav.import)"
-	return "%s (%s, %.1f s)  gain %+.1f dB  pitch %.2f  high-pass %s  low-pass %s" % [
-		settings.music_track.resource_path, loop, settings.music_track.get_length(),
-		settings.music_gain_db, settings.music_pitch,
-		_hz(settings.music_high_pass_hz), _hz(settings.music_low_pass_hz)]
+func _stems(settings: AudioSettings) -> String:
+	if settings.drums.is_empty() and settings.arp_half.is_empty() and settings.arp_full.is_empty():
+		if settings.music_track == null:
+			return "(no stems and no fallback track, the game is silent)"
+		var wav := settings.music_track as AudioStreamWAV
+		var loop := "loop: yes" if wav != null and wav.loop_mode != AudioStreamWAV.LOOP_DISABLED else "loop: NO (check the .wav.import)"
+		return "fallback %s (%s, %.1f s)  gain %+.1f dB  pitch %.2f  high-pass %s  low-pass %s" % [
+			settings.music_track.resource_path, loop, settings.music_track.get_length(),
+			settings.music_gain_db, settings.music_pitch,
+			_hz(settings.music_high_pass_hz), _hz(settings.music_low_pass_hz)]
+	var loop := ""
+	if not settings.drums.is_empty():
+		var wav := settings.drums[0] as AudioStreamWAV
+		if wav != null:
+			loop = "loop %.2f s" % (wav.loop_end / float(wav.mix_rate))
+	return "drums %d, arp half %d, arp full %d (%s)  music %+.1f dB, drums %+.1f dB, arp %+.1f dB, full at %d hostiles, fade %.1f s / drums %.1f s" % [
+		settings.drums.size(), settings.arp_half.size(), settings.arp_full.size(), loop,
+		settings.music_gain_db, settings.drums_gain_db, settings.arp_gain_db,
+		settings.arp_full_hostiles, settings.music_fade_seconds, settings.drum_fade_seconds]
 
 
 func _outro(settings: AudioSettings) -> String:

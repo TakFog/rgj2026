@@ -10,10 +10,26 @@ const SFX_BUS_PREFIX := "Sfx_"
 const SILENCE_DB := -80.0
 
 @export_group("Music")
-## Looping track played during the run: pick a .wav from assets/audio in the
-## inspector. It must loop, which comes from the WAV import (edit/loop_mode = 2).
-## Empty means silence.
+## Fallback loop, used only when no stems are assigned (empty = no fallback).
+## Pick a .wav from assets/audio; it must loop (WAV import edit/loop_mode = 2).
 @export var music_track: AudioStream
+## Stems: all of them play from the start and loop in sync, and the arrangement
+## switches by fading volumes. Their .import must share the same edit/loop_end
+## (384872 frames for the shipped takes). See docs/audio.md.
+## The drum takes alternate at every loop boundary.
+@export var drums: Array[AudioStream] = []
+## Arp takes played when the level is half, one picked at random each loop.
+@export var arp_half: Array[AudioStream] = []
+## Arp takes played when the level is full, one picked at random each loop.
+@export var arp_full: Array[AudioStream] = []
+@export_range(-80.0, 24.0, 0.1) var drums_gain_db := 0.0
+@export_range(-80.0, 24.0, 0.1) var arp_gain_db := 0.0
+## Hostiles (Groups.THREATS) at which the full arp replaces the half one.
+@export var arp_full_hostiles := 6
+## Seconds the arp takes to fade in/out when the level changes.
+@export_range(0.05, 8.0, 0.05) var music_fade_seconds := 1.5
+## Seconds to crossfade the two drum takes at each loop (0 = hard cut).
+@export_range(0.0, 2.0, 0.05) var drum_fade_seconds := 0.2
 @export_range(-80.0, 24.0, 0.1) var music_gain_db := 0.0
 ## Playback speed multiplier: 1.0 unmodified, 0.5 an octave down, 2.0 up.
 @export_range(0.25, 4.0, 0.05) var music_pitch := 1.0

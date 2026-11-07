@@ -103,18 +103,23 @@ Giving another kind its own sound needs no code: add e.g. `placement_algae` to
 
 ## Music
 
-The music is a single looping track played by `Main` (`main/main.gd`). To change
-it, set `music_track` in `data/audio_settings.tres` (Music section): pick any
-`.wav` from `assets/audio/` in the inspector, or clear it for silence. The
-available tracks are `game_loop.wav` and `game_loop_alt.wav` (currently used);
-`intro.wav` and `outro.wav` are kept for later.
+The run's music is built from stems in `assets/audio/game_loop/`: two drum takes,
+two half-arp takes and two full-arp takes. All six start together and loop in
+sync — they share one loop point (`edit/loop_end = 384872` frames = 8.73 s, 4 bars
+at 110 BPM in each `.import`), so the arrangement switches purely by fading
+volumes:
 
-Losing the run (any population hits zero) stops the loop and plays
-`outro_track` once on the same Music bus: set it to `outro.wav`, or clear it for
-silence when you lose. Its level is `outro_gain_db`; it must not loop.
+- the two drum takes **alternate at every loop**;
+- the arp is silent with no hostiles, plays **half** with 1-5 hostiles and
+  **full** from 6 on (`arp_full_hostiles`), picking one of its two takes at
+  random each loop;
+- the arp fades in/out over `music_fade_seconds`, the drums crossfade over
+  `drum_fade_seconds`.
 
-Level, pitch and filters are `music_gain_db`, `music_pitch`,
-`music_high_pass_hz` and `music_low_pass_hz` in the same resource. The loop comes
-from the WAV import setting `edit/loop_mode` (`2` = forward) in the track's
-`.wav.import` file, so a new track must have it set — `tools/test.sh` fails if the
-configured track does not loop.
+Hostiles are everything in `Groups.THREATS` (CO2 clouds, plastic bags, cyclones
+and predators). Stems, `drums_gain_db` / `arp_gain_db` and `music_gain_db` live
+in `data/audio_settings.tres`. Assigning no stems makes the game fall back to
+the single looping `music_track`.
+
+Losing the run stops the stems and plays `outro_track` once on the same Music bus
+(level `outro_gain_db`; it must not loop).

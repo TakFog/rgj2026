@@ -85,9 +85,9 @@ func play(name: StringName) -> void:
 
 ## Losing the run: the loop stops and the outro track plays once (GDD §3).
 func _on_game_over(_population: StringName, _score_seconds: float) -> void:
-	var music := get_tree().get_first_node_in_group(Groups.MUSIC) as AudioStreamPlayer
-	if music != null:
-		music.stop()
+	var music := get_tree().get_first_node_in_group(Groups.MUSIC)
+	if music != null and music.has_method(&"stop_music"):
+		music.stop_music()
 	if Game.AUDIO_SETTINGS.outro_track == null:
 		return
 	_outro.stream = Game.AUDIO_SETTINGS.outro_track
