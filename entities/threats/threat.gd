@@ -4,7 +4,11 @@ extends Area2D
 ## ThreatRules on contact (GDD §8) and frees itself after leaving the visible seabed.
 ## Subclasses only set kind / radius / speed / turn_noise / color in _init().
 
-signal destroyed
+## Why a threat stopped existing: removed by gameplay on screen (bite, contact,
+## turtle, cyclone...) or by drifting off the visible seabed.
+enum End { IN_PLAY, OFF_SCREEN }
+
+signal destroyed(end: int)
 
 ## Distance beyond the visible seabed (on top of 2 × radius) before a threat is removed.
 const EXIT_MARGIN := 32.0
@@ -62,7 +66,7 @@ func _physics_process(delta: float) -> void:
 		heading = _steer_inward(heading, delta)
 	position += Vector2.from_angle(heading) * speed * delta
 	if not _in_alive_area():
-		destroy()
+		destroy(End.OFF_SCREEN)
 
 
 ## Dampens the drift noise over the non-playable open seabed.
@@ -128,12 +132,12 @@ func _make_visual() -> Node2D:
 
 
 ## Idempotent. Safe inside physics callbacks (monitoring is toggled deferred).
-func destroy() -> void:
+func destroy(end := End.IN_PLAY) -> void:
 	if _dead:
 		return
 	_dead = true
 	remove_from_group(Groups.THREATS)
 	set_deferred("monitoring", false)
 	set_deferred("monitorable", false)
-	destroyed.emit()
+	destroyed.emit(end)
 	queue_free()

@@ -25,6 +25,9 @@ const TAKES := {
 		"res://assets/audio/item/i1.wav",
 		"res://assets/audio/item/i2.wav",
 	],
+	&"co2_gone": [ # a CO2 cloud disappears
+		"res://assets/audio/co2/fart.wav",
+	],
 	&"bag_destroyed": [ # a plastic bag pops
 		"res://assets/audio/busta/b0.wav",
 	],

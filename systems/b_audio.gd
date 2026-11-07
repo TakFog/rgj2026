@@ -88,9 +88,19 @@ func _on_placement_finished(kind: StringName) -> void:
 	play(AudioEvents.placement_event(kind))
 
 
-## Plastic bags pop and predators bite (GDD §7.2, §7.4).
+## Threats vanish (bags, CO2) and predators bite (GDD §7.1, §7.2, §7.4).
 func _on_entity_added(node: Node) -> void:
 	if node is PlasticBag:
-		(node as PlasticBag).destroyed.connect(func() -> void: play(&"bag_destroyed"))
+		_play_when_in_play((node as PlasticBag).destroyed, &"bag_destroyed")
+	elif node is Co2Cloud:
+		_play_when_in_play((node as Co2Cloud).destroyed, &"co2_gone")
 	elif node is Predator:
 		(node as Predator).ate.connect(func() -> void: play(&"predator_ate"))
+
+
+## A threat drifting out of the visible seabed makes no sound; only the ones
+## that end in play (on screen) do.
+func _play_when_in_play(destroyed: Signal, event: StringName) -> void:
+	destroyed.connect(func(end: int) -> void:
+		if end == Threat.End.IN_PLAY:
+			play(event))

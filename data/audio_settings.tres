@@ -41,6 +41,10 @@ gain_db = -12.0
 script = ExtResource("2_audio_event")
 gain_db = -12.0
 
+; A CO2 cloud disappears (assets/audio/co2).
+[sub_resource type="Resource" id="AudioEvent_co2_gone"]
+script = ExtResource("2_audio_event")
+
 ; A plastic bag pops (assets/audio/busta).
 [sub_resource type="Resource" id="AudioEvent_bag_destroyed"]
 script = ExtResource("2_audio_event")
@@ -60,5 +64,6 @@ events = Dictionary[StringName, ExtResource("2_audio_event")]({
 &"placement_algae": SubResource("AudioEvent_placement_algae"),
 &"predator_ate": SubResource("AudioEvent_predator_ate"),
 &"item_available": SubResource("AudioEvent_item_available"),
+&"co2_gone": SubResource("AudioEvent_co2_gone"),
 &"bag_destroyed": SubResource("AudioEvent_bag_destroyed")
 })
