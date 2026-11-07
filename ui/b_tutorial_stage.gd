@@ -32,6 +32,8 @@ var _oxygen_bar: OxygenBar
 ## Generic interaction vignette (agent on the left, target on the right).
 var _agent: Node2D
 var _target: Node2D
+## The row currently being shown; its agent_end/target_end drive the outcome.
+var _data: Dictionary = {}
 
 
 func _init(x_axis := Vector2(1, 0), y_axis := Vector2(-0.5, 0.5)) -> void:
@@ -65,6 +67,7 @@ func _ready() -> void:
 ## a generic agent-to-target diagram.
 func show_interaction(data: Dictionary) -> void:
 	_clear()
+	_data = data
 	var id: StringName = data.get("id", &"")
 	match id:
 		&"fish_nest": _build_nest()
@@ -215,6 +218,7 @@ func _clear() -> void:
 	_oxygen_bar = null
 	_agent = null
 	_target = null
+	_data = {}
 	if _layer == null:
 		return
 	for child in _layer.get_children():
@@ -321,29 +325,73 @@ func _animate_coral(tween: Tween) -> void:
 	tween.tween_method(_fade_all, 0.0, 1.0, 0.5).set_delay(5.2)
 
 
-## Generic vignette: the agent slides into the target, the target flashes and
-## the agent fades (or dissolves, for CO2).
+## Generic vignette: the agent slides into the target, then the row's
+## agent_end/target_end decide who flashes, vanishes, leaves or passes through.
 func _animate_generic(tween: Tween) -> void:
 	var agent := _agent
 	var target := _target
 	if agent == null or target == null:
 		return
+	var agent_end: String = _data.get("agent_end", "stay")
+	var target_end: String = _data.get("target_end", "damage")
 	tween.tween_property(agent, "position", _pos(Vector2(4.0, 2.2)), 1.2).set_delay(0.2)
 	tween.tween_callback(func() -> void:
 		if not is_instance_valid(agent) or not is_instance_valid(target):
 			return
 		_pulse(target, 1.1, 0.35)
-		if agent is Co2Bubbles:
-			(agent as Co2Bubbles).vanish()
-		else:
-			var fade := _extra_tween()
-			fade.tween_property(agent, "modulate:a", 0.0, 0.3)
-		var flash := _extra_tween()
-		var original: Color = target.modulate
-		flash.tween_property(target, "modulate", Color(2.0, 0.6, 0.6, 1.0), 0.15)
-		flash.tween_property(target, "modulate", original, 0.25)
+		_apply_end(agent, agent_end, Vector2.RIGHT)
+		_apply_end(target, target_end, Vector2.RIGHT)
 	).set_delay(1.2)
-	tween.tween_method(_fade_all, 0.0, 1.0, 0.5).set_delay(4.2)
+	tween.tween_method(_fade_all, 0.0, 1.0, 0.5).set_delay(5.0)
+
+
+## Applies one outcome to an actor: stay, vanish, leave, pass, damage, empty.
+func _apply_end(item: Node2D, end: String, direction: Vector2) -> void:
+	match end:
+		"vanish":
+			if item is Co2Bubbles:
+				(item as Co2Bubbles).vanish()
+			else:
+				_fade_out(item, 0.3)
+		"leave", "pass":
+			_move_out(item, direction, 260.0, 0.9)
+		"damage":
+			_flash(item)
+		"empty":
+			_empty_nest(item)
+		"grow":
+			_pulse(item, 1.12, 0.5)
+		_:
+			pass
+
+
+func _fade_out(item: Node2D, seconds: float) -> void:
+	var tween := _extra_tween()
+	tween.tween_property(item, "modulate:a", 0.0, seconds)
+
+
+func _move_out(item: Node2D, direction: Vector2, distance: float, seconds: float) -> void:
+	var tween := _extra_tween()
+	tween.set_parallel(true)
+	tween.tween_property(item, "position", item.position + direction * distance, seconds)
+	tween.tween_property(item, "modulate:a", 0.0, seconds)
+
+
+func _flash(item: Node2D) -> void:
+	var original: Color = item.modulate
+	var tween := _extra_tween()
+	tween.tween_property(item, "modulate", Color(2.0, 0.6, 0.6, 1.0), 0.15)
+	tween.tween_property(item, "modulate", original, 0.25)
+
+
+## Eggs eaten/destroyed: swap the nest sprite to the empty-nest art.
+func _empty_nest(item: Node2D) -> void:
+	var sprite := item as Sprite2D
+	if sprite == null:
+		_fade_out(item, 0.3)
+		return
+	_fit(sprite, Nest.EMPTY_TEXTURE, NEST_HEIGHT)
+	_pulse(sprite, 1.05, 0.2)
 
 
 ## Sweeping arc that compresses the nest's 20-second wait into the vignette.

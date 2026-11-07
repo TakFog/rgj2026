@@ -10,6 +10,8 @@ func test_rows_cover_the_gdd_interactions() -> void:
 		assert_false(row["target_id"].is_empty(), "empty target id")
 		assert_false(row["short"].is_empty(), "empty short effect")
 		assert_false(row["group"].is_empty(), "empty group")
+		assert_true(_valid_end(row["agent_end"]), "bad agent end: %s" % row["agent_end"])
+		assert_true(_valid_end(row["target_end"]), "bad target end: %s" % row["target_end"])
 		keys["%s|%s" % [row["agent"], row["target"]]] = true
 
 	for key in [
@@ -35,3 +37,20 @@ func test_rows_cover_the_gdd_interactions() -> void:
 
 func test_rows_have_enough_entries_for_a_real_reference() -> void:
 	assert_true(TutorialInteractions.ROWS.size() >= 16)
+
+
+func test_turtle_leaves_the_predator_on_stage() -> void:
+	var row := _row(&"turtle_predator")
+	assert_eq(row["agent_end"], "stay")
+	assert_eq(row["target_end"], "leave")
+
+
+func _valid_end(value: String) -> bool:
+	return value in ["stay", "vanish", "leave", "pass", "damage", "empty", "grow"]
+
+
+func _row(id: StringName) -> Dictionary:
+	for row in TutorialInteractions.ROWS:
+		if row["id"] == id:
+			return row
+	return {}
