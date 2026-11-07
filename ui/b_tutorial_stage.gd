@@ -29,6 +29,9 @@ var _algae_a: Sprite2D
 var _ghost_algae: Sprite2D
 var _coral_sprite: Sprite2D
 var _oxygen_bar: OxygenBar
+## Generic interaction vignette (agent on the left, target on the right).
+var _agent: Node2D
+var _target: Node2D
 
 
 func _init(x_axis := Vector2(1, 0), y_axis := Vector2(-0.5, 0.5)) -> void:
@@ -53,20 +56,23 @@ func _ready() -> void:
 	material.set_shader_parameter("vignette_strength", 0.4)
 	seabed.material = material
 	add_child(seabed)
-	# show_step() may have run before the node entered the tree.
+	# show_interaction() may have run before the node entered the tree.
 	move_child(seabed, 0)
 
 
-## Builds and (when in the scene tree) animates one vignette.
-func show_step(index: int) -> void:
+## Builds and (when in the scene tree) animates the selected interaction.
+## The three core reactions keep their hand-made vignettes; everything else uses
+## a generic agent-to-target diagram.
+func show_interaction(data: Dictionary) -> void:
 	_clear()
-	match index:
-		0: _build_nest()
-		1: _build_co2()
-		2: _build_coral()
-		_: return
+	var id: StringName = data.get("id", &"")
+	match id:
+		&"fish_nest": _build_nest()
+		&"co2_algae": _build_co2()
+		&"algae_coral": _build_coral()
+		_: _build_generic(data)
 	if is_inside_tree():
-		_animate(index)
+		_animate(id)
 
 
 func stop() -> void:
@@ -207,6 +213,8 @@ func _clear() -> void:
 	_ghost_algae = null
 	_coral_sprite = null
 	_oxygen_bar = null
+	_agent = null
+	_target = null
 	if _layer == null:
 		return
 	for child in _layer.get_children():
@@ -237,14 +245,32 @@ func _build_coral() -> void:
 	_oxygen_bar = _make_oxygen_bar(Vector2(5.0, 2.2))
 
 
-func _animate(index: int) -> void:
+func _build_generic(data: Dictionary) -> void:
+	_agent = _generic_visual(StringName(data.get("agent_id", &"")), Vector2(1.2, 2.2))
+	_target = _generic_visual(StringName(data.get("target_id", &"")), Vector2(5.0, 2.2))
+
+
+func _generic_visual(id: StringName, cell: Vector2) -> Node2D:
+	match id:
+		&"co2": return _co2(cell)
+		&"fish": return _fish(cell, true, Vector2.RIGHT)
+		&"algae": return _algae(cell)
+	var texture := TutorialIcons.texture(id)
+	if texture == null:
+		return null
+	var tint := Coral.CORAL_HEALTHY_TINT if id == &"coral" else Color.WHITE
+	return _sprite(texture, TutorialIcons.height(id), cell, tint)
+
+
+func _animate(id: StringName) -> void:
 	var tween := _start_tween()
 	if tween == null:
 		return
-	match index:
-		0: _animate_nest(tween)
-		1: _animate_co2(tween)
-		2: _animate_coral(tween)
+	match id:
+		&"fish_nest": _animate_nest(tween)
+		&"co2_algae": _animate_co2(tween)
+		&"algae_coral": _animate_coral(tween)
+		_: _animate_generic(tween)
 
 
 func _animate_nest(tween: Tween) -> void:
@@ -293,6 +319,31 @@ func _animate_coral(tween: Tween) -> void:
 	tween.tween_property(_coral_sprite, "modulate", Coral.CORAL_HEALTHY_TINT, 0.3).set_delay(1.3)
 	tween.tween_property(_oxygen_bar, "ratio", 0.8, 0.4).set_delay(1.2)
 	tween.tween_method(_fade_all, 0.0, 1.0, 0.5).set_delay(5.2)
+
+
+## Generic vignette: the agent slides into the target, the target flashes and
+## the agent fades (or dissolves, for CO2).
+func _animate_generic(tween: Tween) -> void:
+	var agent := _agent
+	var target := _target
+	if agent == null or target == null:
+		return
+	tween.tween_property(agent, "position", _pos(Vector2(4.0, 2.2)), 1.2).set_delay(0.2)
+	tween.tween_callback(func() -> void:
+		if not is_instance_valid(agent) or not is_instance_valid(target):
+			return
+		_pulse(target, 1.1, 0.35)
+		if agent is Co2Bubbles:
+			(agent as Co2Bubbles).vanish()
+		else:
+			var fade := _extra_tween()
+			fade.tween_property(agent, "modulate:a", 0.0, 0.3)
+		var flash := _extra_tween()
+		var original: Color = target.modulate
+		flash.tween_property(target, "modulate", Color(2.0, 0.6, 0.6, 1.0), 0.15)
+		flash.tween_property(target, "modulate", original, 0.25)
+	).set_delay(1.2)
+	tween.tween_method(_fade_all, 0.0, 1.0, 0.5).set_delay(4.2)
 
 
 ## Sweeping arc that compresses the nest's 20-second wait into the vignette.

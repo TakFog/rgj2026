@@ -5,20 +5,23 @@ func test_rows_cover_the_gdd_interactions() -> void:
 	var keys := {}
 	for row in TutorialInteractions.ROWS:
 		assert_false(row["agent"].is_empty(), "empty agent")
+		assert_false(row["agent_id"].is_empty(), "empty agent id")
 		assert_false(row["target"].is_empty(), "empty target")
-		assert_false(row["effect"].is_empty(), "empty effect")
+		assert_false(row["target_id"].is_empty(), "empty target id")
+		assert_false(row["short"].is_empty(), "empty short effect")
+		assert_false(row["group"].is_empty(), "empty group")
 		keys["%s|%s" % [row["agent"], row["target"]]] = true
 
 	for key in [
 		"Alga|Corallo",
-		"CO2|Corallo",
-		"CO2|Alga",
-		"CO2|Nido con uova",
+		"CO₂|Corallo",
+		"CO₂|Alga",
+		"CO₂|Nido con uova",
 		"Busta|Pesce",
 		"Busta|Corallo",
 		"Ciclone|Pesce o alga",
 		"Ciclone|Nido",
-		"Ciclone|CO2 o busta",
+		"Ciclone|CO₂ o busta",
 		"Ciclone|Predatore",
 		"Ciclone|Corallo",
 		"Predatore|Pesce",
