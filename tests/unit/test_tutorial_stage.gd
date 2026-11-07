@@ -26,6 +26,9 @@ func test_stage_does_not_join_gameplay_groups() -> void:
 			assert_false(node.is_in_group(group), "%s joined %s" % [node.name, group])
 
 
-func test_stage_width_matches_the_tutorial_card() -> void:
-	assert_eq(TutorialStage.STAGE_SIZE.x, TutorialScreen.CONTENT_WIDTH,
-			"the stage must fill the card's content width")
+func test_stage_fills_the_tutorial_pane() -> void:
+	var stage := TutorialStage.new()
+	assert_eq(stage.size_flags_horizontal, Control.SIZE_EXPAND_FILL)
+	assert_eq(stage.size_flags_vertical, Control.SIZE_EXPAND_FILL)
+	assert_true(TutorialStage.STAGE_SIZE.x > 0.0)
+	stage.free()

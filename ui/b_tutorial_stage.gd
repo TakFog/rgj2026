@@ -6,11 +6,15 @@ extends Control
 ## One step is built and animated at a time; TutorialScreen advances them.
 
 const SEABED_SHADER := preload("res://main/seabed.gdshader")
-const CELL_PX := 56.0
-const STAGE_SIZE := Vector2(900, 340)
-const NEST_HEIGHT := 110.0
-const ALGAE_HEIGHT := 90.0
-const CORAL_HEIGHT := 120.0
+const CELL_PX := 64.0
+## Minimum size; the tutorial screen stretches the stage to fill its pane.
+const STAGE_SIZE := Vector2(460, 270)
+## The vignettes use cells around x 1.2..6.2, y 1.5..2.7. Keep them centred in
+## the pane instead of anchored to the top-left of that range.
+const CONTENT_CENTER := Vector2(3.7, 2.0)
+const NEST_HEIGHT := 130.0
+const ALGAE_HEIGHT := 105.0
+const CORAL_HEIGHT := 140.0
 
 var _projection: ViewProjection
 var _layer: Node2D
@@ -30,6 +34,7 @@ var _oxygen_bar: OxygenBar
 func _init(x_axis := Vector2(1, 0), y_axis := Vector2(-0.5, 0.5)) -> void:
 	custom_minimum_size = STAGE_SIZE
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_projection = ViewProjection.new(x_axis, y_axis, CELL_PX)
 
@@ -91,7 +96,7 @@ func _visual_layer() -> Node2D:
 func _pos(cell: Vector2) -> Vector2:
 	var stage_size := size if size.x > 0.0 else STAGE_SIZE
 	var origin := Vector2(stage_size.x * 0.5, stage_size.y * 0.72)
-	return origin + _projection.to_screen(cell) - _projection.to_screen(Vector2.ZERO)
+	return origin + _projection.to_screen(cell - CONTENT_CENTER) - _projection.to_screen(Vector2.ZERO)
 
 
 func _sprite(texture: Texture2D, height_px: float, cell: Vector2, tint := Color.WHITE) -> Sprite2D:
