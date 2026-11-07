@@ -38,8 +38,10 @@ func spawn_predator(entry: EdgeEntry) -> Predator:
 	return predator
 
 
-func spawn_turtle(entry: EdgeEntry) -> Turtle:
+## `max_algae` overrides the turtle's algae cap (-1 = balance default); the
+## early turtle rush uses it so its group leaves after a few algae.
+func spawn_turtle(entry: EdgeEntry, max_algae := -1) -> Turtle:
 	var turtle := Turtle.new()
-	turtle.setup(entry)
+	turtle.setup(entry, max_algae)
 	Game.world.add_child(turtle)
 	return turtle
