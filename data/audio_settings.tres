@@ -54,7 +54,7 @@ gain_db = -12.0
 ; A cyclone on screen (loops while it is visible) and its impact, very quiet.
 [sub_resource type="Resource" id="AudioEvent_cyclone_wind"]
 script = ExtResource("2_audio_event")
-gain_db = -2.0
+gain_db = -8.0
 
 [sub_resource type="Resource" id="AudioEvent_cyclone_hit"]
 script = ExtResource("2_audio_event")
