@@ -2,12 +2,19 @@ extends Node
 ## Dev B's systems and UI are added here (fish commander, population monitor,
 ## threat spawner, HUD...). Only Dev B edits this file.
 
+const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
+
 
 func _ready() -> void:
 	var commander := FishCommander.new()
 	commander.name = "FishCommander"
 	add_child(commander)
 	_setup_population_and_hud(commander)
+
+	# B3: threats announced at the map edge (GDD §7).
+	var threat_spawner := ThreatSpawner.new()
+	threat_spawner.name = "ThreatSpawner"
+	add_child(threat_spawner)
 
 
 ## B2: population monitor, HUD, pause and game over (GDD §3, §9).
