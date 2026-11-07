@@ -25,7 +25,6 @@ const COLOR_CORAL_LOW := Color(1.0, 0.5, 0.5)
 const COLOR_NEST := Color(1.0, 0.75, 0.35)
 const COLOR_NEST_EMPTY := Color(0.55, 0.55, 0.55)
 const COLOR_FISH := Color(0.7, 0.85, 1.0)
-const COLOR_ALGAE := Color(0.7, 1.0, 0.7)
 const COLOR_THREAT := Color(1.0, 0.55, 0.55)
 const COLOR_TEMP := Color(1.0, 1.0, 1.0)
 
@@ -83,15 +82,6 @@ func _update_labels() -> void:
 		var pos := _viewport_position(nest.global_position)
 		var color := COLOR_NEST if nest.has_eggs() else COLOR_NEST_EMPTY
 		_set_label(id, text, pos + OFFSET, color, wanted)
-
-	# --- Algae: cell coordinates ---
-	for algae in get_tree().get_nodes_in_group(Groups.ALGAE):
-		if not _alive(algae):
-			continue
-		var id := algae.get_instance_id()
-		var text := "ALGAE (%d,%d)" % [algae.cell.x, algae.cell.y]
-		var pos := _viewport_position(algae.global_position)
-		_set_label(id, text, pos + OFFSET, COLOR_ALGAE, wanted)
 
 	# --- Fish: state + hunger ---
 	for fish in get_tree().get_nodes_in_group(Groups.FISH):
