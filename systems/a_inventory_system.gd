@@ -13,7 +13,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	model.tick(delta)
+	model.tick(Game.frame_step(delta))
 
 
 func _nests_on_map() -> int:

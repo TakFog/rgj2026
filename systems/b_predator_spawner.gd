@@ -15,7 +15,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not Game.actors.predator_enabled:
 		return
-	_progress += delta / Game.actors.predator_interval
+	_progress += Game.frame_step(delta) / Game.actors.predator_interval
 	if _progress < 1.0:
 		return
 	_progress -= 1.0

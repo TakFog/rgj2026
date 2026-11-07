@@ -46,17 +46,20 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if is_over:
 		return
-	score_seconds += delta
+	# Capped: a long hitch (e.g. a hidden browser tab) must not expire the
+	# collapse countdowns in a single frame.
+	var step := Game.frame_step(delta)
+	score_seconds += step
 	# The HUD shows whole seconds: no need to format and redraw it 60 times/s.
 	var whole_second := floori(score_seconds)
 	if whole_second != _last_score_second:
 		_last_score_second = whole_second
 		score_changed.emit(score_seconds)
-	_count_elapsed += delta
+	_count_elapsed += step
 	if _count_elapsed >= COUNT_INTERVAL:
 		_count_elapsed = fmod(_count_elapsed, COUNT_INTERVAL)
 		_sample_counts()
-	tracker.tick(delta)
+	tracker.tick(step)
 
 
 ## Refreshes the four population counts and reports them to the collapse tracker.

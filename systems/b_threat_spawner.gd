@@ -13,7 +13,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	for kind in _schedule.tick(delta, Game.temperature):
+	for kind in _schedule.tick(Game.frame_step(delta), Game.temperature):
 		var island := Rect2(Vector2.ZERO, Game.grid.world_size())
 		spawn(kind, EdgeEntry.random(_rng, Game.visible_world_polygon(), island), _rng)
 

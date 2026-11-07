@@ -4,6 +4,7 @@ extends Node
 ## placement controller to cancel (roadmap contract #8) — and after game over.
 ## Esc also yields to the fish commander while a fish is selected (deselect first).
 ## PROCESS_MODE_ALWAYS so it can unpause.
+## Losing focus (hidden browser tab, alt-tab) opens the pause menu mid-run.
 
 ## Used by the audio system (systems/b_audio.gd).
 signal pause_toggled(paused: bool)
@@ -16,6 +17,7 @@ var overlay: Control
 var _pause_box: Control
 var _pause_items: VBoxContainer
 var _settings_panel: SettingsPanel
+var _resume_btn: Button
 
 
 ## True when a pause press must be left to another handler: anything while
@@ -24,10 +26,26 @@ static func yields_to_cancel(is_cancel: bool, placing: bool, has_selection: bool
 	return placing or (is_cancel and has_selection)
 
 
+## True when losing focus must open the pause menu: only during a live run.
+## The main menu, the tutorial and game over already pause the tree.
+static func pauses_on_focus_out(tree_paused: bool, run_over: bool) -> bool:
+	return not tree_paused and not run_over
+
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	overlay = _build_overlay()
 	Game.ui.add_child(overlay)
+
+
+func _notification(what: int) -> void:
+	if what != NOTIFICATION_APPLICATION_FOCUS_OUT and what != NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		return
+	if not is_inside_tree() or overlay == null:
+		return
+	if pauses_on_focus_out(get_tree().paused, monitor != null and monitor.is_over):
+		# Placement and fish selection stay as they are; the menu just covers them.
+		set_paused(true)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -37,7 +55,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var has_selection := not get_tree().paused and commander != null \
 			and is_instance_valid(commander.selected)
-	if yields_to_cancel(event.is_action_pressed(InputActions.CANCEL), Game.placing, has_selection):
+	# While paused (e.g. focus lost mid-placement) placement can't see the key,
+	# so Space/Esc must resume instead of being left to it.
+	if not get_tree().paused \
+			and yields_to_cancel(event.is_action_pressed(InputActions.CANCEL), Game.placing, has_selection):
 		return
 	if monitor != null and monitor.is_over:
 		return
@@ -50,6 +71,9 @@ func set_paused(value: bool) -> void:
 	if value:
 		_show_pause()
 	overlay.visible = value
+	if value and _resume_btn != null:
+		# Keyboard/gamepad navigation starts on Resume.
+		_resume_btn.grab_focus()
 	pause_toggled.emit(value)
 
 
@@ -80,8 +104,8 @@ func _build_overlay() -> Control:
 	_pause_items.add_child(label)
 	_pause_items.add_child(SeaStyle.divider())
 
-	var resume_btn := _add_button("Riprendi", _on_resume_pressed)
-	SeaStyle.style_highlighted_button(resume_btn)
+	_resume_btn = _add_button("Riprendi", _on_resume_pressed)
+	SeaStyle.style_highlighted_button(_resume_btn)
 	_add_button("Impostazioni", _on_settings_pressed)
 	_add_button("Ricomincia", _on_restart_pressed)
 	var exit_btn := _add_button("Esci", _on_exit_pressed)
