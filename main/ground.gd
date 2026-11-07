@@ -68,6 +68,9 @@ func _draw() -> void:
 func _seabed_material() -> ShaderMaterial:
 	var seabed := ShaderMaterial.new()
 	seabed.shader = SEABED_SHADER
+	var origin := Game.projection.to_world(Vector2.ZERO)
+	seabed.set_shader_parameter("to_world_x", Game.projection.to_world(Vector2.RIGHT) - origin)
+	seabed.set_shader_parameter("to_world_y", Game.projection.to_world(Vector2.DOWN) - origin)
 	return seabed
 
 

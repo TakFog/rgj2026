@@ -1,18 +1,24 @@
 // Underwater seabed look (Ground and its painted map): teal water tint,
-// a network of bright caustic lines, uneven depth and a darker vignette.
+// a network of bright caustic lines on the sand only, uneven depth and a
+// darker vignette.
 // Web-safe: Compatibility renderer / WebGL2, no screen texture, fixed-size loop.
-// Caustics live in canvas (world) space, the vignette in screen space, so
-// both stay continuous across the open seabed fill and the map drawn over it.
+// Caustics live in the logical (top-down) world, so they lie on the seabed
+// slanted like the island and its grid; the vignette is in screen space.
 shader_type canvas_item;
 
 // Water colour grade: the art's brightness in this colour, blended by `tint_amount`.
 uniform vec3 water_tint : source_color = vec3(0.2, 0.75, 0.85);
 uniform float tint_amount : hint_range(0.0, 1.0) = 0.3;
-// Caustic light network: tile size (canvas px), speed, line brightness.
+// Canvas → logical world (inverse view projection, columns), set by Ground.
+uniform vec2 to_world_x = vec2(1.0, 0.0);
+uniform vec2 to_world_y = vec2(0.0, 1.0);
+// Caustic light network: tile size (world units), speed, line brightness.
 uniform vec3 caustic_color : source_color = vec3(0.85, 1.0, 1.0);
-uniform float caustic_scale = 360.0;
+uniform float caustic_scale = 260.0;
 uniform float caustic_speed = 0.3;
 uniform float caustic_strength : hint_range(0.0, 2.0) = 0.45;
+// Sand detection in the map art (red minus blue): caustics fade in across this range.
+uniform vec2 sand_threshold = vec2(0.1, 0.35);
 // Large dark/light patches, like uneven depth (canvas px).
 uniform float depth_scale = 600.0;
 uniform float depth_strength : hint_range(0.0, 1.0) = 0.15;
@@ -71,6 +77,7 @@ void fragment() {
 		cos(world_pos.x * 0.03 + TIME * wobble_speed * 1.3)) * wobble_pixels * TEXTURE_PIXEL_SIZE;
 	vec2 uv = clamp(UV + wobble, vec2(0.0), vec2(1.0));
 	vec4 color = texture(TEXTURE, uv) * tint;
+	float sand = smoothstep(sand_threshold.x, sand_threshold.y, color.r - color.b);
 
 	// Tint by brightness (not hue), so warm sand stays sandy instead of turning green.
 	float luma = dot(color.rgb, vec3(0.299, 0.587, 0.114));
@@ -79,8 +86,9 @@ void fragment() {
 	float depth = value_noise(world_pos / depth_scale + vec2(TIME * 0.02, 0.0));
 	color.rgb *= 1.0 - depth_strength * depth;
 
-	float light = caustics(world_pos, TIME * caustic_speed + 23.0);
-	color.rgb += caustic_color * light * caustic_strength;
+	vec2 seabed_pos = mat2(to_world_x, to_world_y) * world_pos;
+	float light = caustics(seabed_pos, TIME * caustic_speed + 23.0);
+	color.rgb += caustic_color * light * caustic_strength * sand;
 
 	vec2 from_top = (SCREEN_UV - vec2(0.5, 0.0)) * vec2(1.0, 0.8);
 	color.rgb *= 1.0 - vignette_strength * smoothstep(0.35, 1.0, length(from_top));
