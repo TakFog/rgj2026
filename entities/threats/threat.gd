@@ -35,12 +35,15 @@ var outside_turn_scale := 1.0
 var color := Color.WHITE
 ## Optional sprite drawn instead of the placeholder body circle.
 var texture: Texture2D
+## Whether the ground shadow is drawn under the body (bags float, so they skip it).
+var show_shadow := true
 ## On-screen sprite height, in threat radii (world units).
 var sprite_height_radii := 2.5
 var heading := 0.0
 
 var _in_view := false
 var _drift: DriftMotion
+var _body: Node2D
 var _hit := {} # target instance id -> true
 var _dead := false
 
@@ -76,6 +79,7 @@ func _physics_process(delta: float) -> void:
 		heading = _drift.step(heading, delta, _turn_scale())
 		heading = _steer_inward(heading, delta)
 	position += Vector2.from_angle(heading) * speed * delta
+	_animate_body(delta)
 	var in_view := _in_alive_area()
 	if in_view != _in_view:
 		_in_view = in_view
@@ -143,7 +147,8 @@ func _on_contact(other: Node2D) -> void:
 ## Ground shadow (the real contact footprint) plus a body floating above it.
 func _make_visual() -> Node2D:
 	var root := Node2D.new()
-	root.add_child(PlaceholderShape.circle(position, radius, Color(0, 0, 0, 0.3)))
+	if show_shadow:
+		root.add_child(PlaceholderShape.circle(position, radius, Color(0, 0, 0, 0.3)))
 	var body: Node2D
 	if texture:
 		var sprite := Sprite2D.new()
@@ -155,8 +160,15 @@ func _make_visual() -> Node2D:
 	else:
 		body = PlaceholderShape.circle(position, radius * 0.8, color)
 	body.position = Vector2(0, -HOVER_PX)
+	_body = body
 	root.add_child(body)
 	return root
+
+
+## Cosmetic per-frame animation of the floating body (default: none). Must not
+## touch heading, position or collision.
+func _animate_body(_delta: float) -> void:
+	pass
 
 
 ## Idempotent. Safe inside physics callbacks (monitoring is toggled deferred).
