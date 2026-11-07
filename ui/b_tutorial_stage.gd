@@ -284,6 +284,9 @@ func _generic_visual(id: StringName, cell: Vector2) -> Node2D:
 				return null
 			var tint := Coral.CORAL_HEALTHY_TINT if id == &"coral" else Color.WHITE
 			visual = _sprite(texture, TutorialIcons.height(id), cell, tint)
+	# The turtle art faces left; the generic agent swims right, so mirror it.
+	if id == &"turtle" and visual is Sprite2D:
+		(visual as Sprite2D).scale.x = -absf((visual as Sprite2D).scale.x)
 	visual.z_index = Z_BY_ID.get(id, 0)
 	return visual
 
@@ -310,6 +313,9 @@ func _animate_nest(tween: Tween) -> void:
 		ring.visible = true
 	).set_delay(1.8)
 	tween.tween_property(ring, "ratio", 1.0, 1.6).set_delay(1.8)
+	tween.tween_callback(func() -> void:
+		_hatch_nest(nest)
+	).set_delay(3.4)
 	for i in 2:
 		var juvenile := _fish(Vector2(5.0, 2.0), false, Vector2.LEFT if i == 0 else Vector2.RIGHT)
 		juvenile.modulate.a = 0.0
@@ -317,6 +323,11 @@ func _animate_nest(tween: Tween) -> void:
 		tween.tween_property(juvenile, "modulate:a", 1.0, 0.2).set_delay(3.4)
 		tween.tween_property(juvenile, "position", _pos(target), 1.4).set_delay(3.4)
 	tween.tween_method(_fade_all, 0.0, 1.0, 0.5).set_delay(5.2)
+
+
+## Eggs hatched: the nest is empty again.
+func _hatch_nest(nest: Sprite2D) -> void:
+	_fit(nest, Nest.EMPTY_TEXTURE, NEST_HEIGHT)
 
 
 func _animate_co2(tween: Tween) -> void:

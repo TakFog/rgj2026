@@ -54,3 +54,38 @@ func test_stage_fills_the_tutorial_pane() -> void:
 	assert_eq(stage.size_flags_vertical, Control.SIZE_EXPAND_FILL)
 	assert_true(TutorialStage.STAGE_SIZE.x > 0.0)
 	stage.free()
+
+
+func test_hatching_empties_the_nest() -> void:
+	var stage := TutorialStage.new()
+	stage.show_interaction(_row(&"fish_nest"))
+	var nest: Sprite2D = stage.get("_nest")
+	# Drive the vignette past the hatch without waiting for real frames.
+	var tree := Engine.get_main_loop() as SceneTree
+	var tween := tree.create_tween()
+	tween.set_parallel(true)
+	stage._animate_nest(tween)
+	tween.custom_step(3.5)
+	assert_eq(nest.texture, Nest.EMPTY_TEXTURE, "nest must be empty after the eggs hatch")
+	stage.free()
+
+
+func test_turtle_faces_the_way_it_swims() -> void:
+	var stage := TutorialStage.new()
+	stage.show_interaction(_row(&"turtle_predator"))
+	var turtle: Sprite2D = null
+	for node in stage.visual_nodes():
+		var sprite := node as Sprite2D
+		if sprite != null and sprite.texture == TurtleVisual.TEXTURE:
+			turtle = sprite
+	assert_true(turtle != null, "turtle visual missing")
+	if turtle != null:
+		assert_true(turtle.scale.x < 0.0, "turtle must face right; its texture faces left")
+	stage.free()
+
+
+func _row(id: StringName) -> Dictionary:
+	for row in TutorialInteractions.ROWS:
+		if row["id"] == id:
+			return row
+	return {}
