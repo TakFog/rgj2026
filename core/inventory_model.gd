@@ -5,6 +5,9 @@ extends RefCounted
 ## An empty slot holds an empty Dictionary.
 
 signal changed
+## Emitted with the slot index when a used slot refills and is usable again.
+## (Silent for the initial fill_all and for take.)
+signal item_available(index: int)
 
 const CORAL := &"coral"
 const ALGAE := &"algae"
@@ -61,6 +64,7 @@ func tick(delta: float) -> void:
 		if _refill_left[i] <= 0.0:
 			slots[i] = draw()
 			refilled = true
+			item_available.emit(i)
 	if refilled:
 		changed.emit()
 

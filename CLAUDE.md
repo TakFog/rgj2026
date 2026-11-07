@@ -4,6 +4,11 @@ Godot **4.7.2** stable (GDScript, Compatibility renderer) top-down 2D reef-manag
 The same version is pinned in CI (`GODOT_VERSION` in `.github/workflows/ci.yml`); keep the two in sync when upgrading.
 The game design document is `docs/GDD.md`.
 
+## Audio
+
+- Every sound — music included — is configured through `data/audio_settings.tres` (level in dB, pitch, high/low-pass filters). Never hard-code a volume, pitch or filter in a script. How-to: `docs/audio.md`.
+- A new sound needs **both** a take list in `systems/b_audio.gd` `EVENTS` (files under `assets/audio/<event>/`) **and** an `AudioEvent` entry in the audio settings. `tests/unit/test_audio_settings.gd` fails if an event is missing from the settings.
+
 ## Git
 
 - **Never work on `main`.** Never commit directly to `main`. All work happens on
@@ -33,12 +38,15 @@ settings, so **never commit local editor changes to them**:
 
 ### Git flow
 
-1. **Never implement features directly on `main`.** Start every new feature from an up-to-date `main` on a personal feature branch prefixed with the GitHub username:
+1. **Never implement features directly on `main`.** Start every new feature from an up-to-date `main` on **your own** feature branch, prefixed with **your** GitHub username:
    ```sh
    git switch main && git pull origin main
-   git switch -c <gh-username>/<feature-name>   # e.g. lorenzopatane/coral-placement
+   git switch -c <your-gh-username>/<feature-name>   # e.g. mjkjkjk/audio
    ```
-   (Get the username with `gh api user -q .login`.)
+   The prefix identifies who did the work, so it must be the account you are working as:
+   - `gh api user -q .login` when the GitHub CLI is available;
+   - otherwise take it from `git config user.email` / `user.name` and **confirm with the user**.
+   Never borrow a prefix from the remote URL (e.g. `TakFog/rgj2026` is the repository owner, which is usually not you), from `git branch -r`, or from a branch by someone else.
 2. Commit the work on the feature branch.
 3. **Before merging, bring `main` into the feature branch** to integrate the latest changes and verify everything is stable and safe there:
    ```sh
@@ -49,7 +57,7 @@ settings, so **never commit local editor changes to them**:
 4. Only once the feature branch is verified, merge it into `main` and push:
    ```sh
    git switch main && git pull origin main
-   git merge <gh-username>/<feature-name>
+   git merge <your-gh-username>/<feature-name>
    git push origin main
    ```
 5. **Never delete feature branches**, even after they have been merged. Keep them for reference.

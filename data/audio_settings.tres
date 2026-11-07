@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AudioSettings" format=3]
+
+[ext_resource type="Script" path="res://data/audio_settings.gd" id="1"]
+[ext_resource type="Script" path="res://data/audio_event.gd" id="1_pxccp"]
+
+[sub_resource type="Resource" id="Resource_5ousj"]
+script = ExtResource("1_pxccp")
+high_pass_hz = 350.0
+gain_db = -3.0
+
+[sub_resource type="Resource" id="Resource_5rr5f"]
+script = ExtResource("1_pxccp")
+gain_db = -3.0
+
+[sub_resource type="Resource" id="Resource_6116b"]
+script = ExtResource("1_pxccp")
+
+[resource]
+script = ExtResource("1")
+events = Dictionary[StringName, ExtResource("1_pxccp")]({
+&"bag_destroyed": SubResource("Resource_6116b"),
+&"item_available": SubResource("Resource_5rr5f"),
+&"placement": SubResource("Resource_5ousj")
+})

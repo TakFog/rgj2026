@@ -90,3 +90,15 @@ func test_changed_is_emitted_on_take() -> void:
 	inventory.changed.connect(func(): emitted[0] += 1)
 	inventory.take(0)
 	assert_eq(emitted[0], 1)
+
+
+func test_item_available_is_emitted_once_when_a_slot_refills() -> void:
+	inventory.fill_all()
+	var slots := []
+	inventory.item_available.connect(func(index: int): slots.append(index))
+	inventory.take(2)
+	inventory.tick(4.0)
+	assert_eq(slots, [])
+	inventory.tick(4.1)
+	inventory.tick(4.1)
+	assert_eq(slots, [2])

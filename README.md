@@ -57,6 +57,11 @@ starts with `test_` is run automatically.
 
 CI (GitHub Actions, `.github/workflows/ci.yml`) runs both scripts on every push and pull request.
 
+## Audio
+
+Music and sound effects are tuned from `data/audio_settings.tres` (level in dB, pitch,
+low/high-pass filters, per event). To add a new sound, follow [`docs/audio.md`](docs/audio.md).
+
 ## Project layout
 
 | Folder | Contents |
@@ -74,7 +79,8 @@ CI (GitHub Actions, `.github/workflows/ci.yml`) runs both scripts on every push 
 
 ## Contributing
 
-- Work on a feature branch named `<github-username>/<feature-name>`, never directly on `main`.
+- Work on your own feature branch named `<your-github-username>/<feature-name>` (the prefix is your account, not the
+  repository owner's or a teammate's), never directly on `main`.
 - Before merging, merge the latest `origin/main` into your branch and check that tests pass and the
   game runs without errors.
 - Commit messages and PRs are written in English.
