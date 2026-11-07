@@ -9,3 +9,11 @@ func _init() -> void:
 	speed = Game.actors.cyclone_speed
 	turn_noise = 0.0
 	color = Color(0.45, 0.85, 0.95, 0.8)
+
+
+## Cyclones are perfectly straight (GDD §7.3): they keep their heading even
+## while crossing the open seabed and exiting the game area, so inward
+## steering is disabled. They only stop when destroyed by a coral or once
+## they leave the visible seabed.
+func _steer_inward(heading: float, delta: float) -> float:
+	return heading
