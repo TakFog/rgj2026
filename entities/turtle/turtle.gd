@@ -93,8 +93,14 @@ func _physics_process(delta: float) -> void:
 			_follow_path(_speed() * delta)
 			if _path.is_empty() and not _in_alive_area():
 				destroy()
-	_visual.heading = _heading
+	_visual.heading = _screen_heading()
 	_visual.eating = brain.state == TurtleBrain.State.EATING
+
+
+## Heading for the sprite. The view is oblique, so world directions are not
+## screen directions.
+func _screen_heading() -> Vector2:
+	return Game.projection.to_screen(_heading) - Game.projection.to_screen(Vector2.ZERO)
 
 
 ## Debug view only: the remaining planned route, in world units.
