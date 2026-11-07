@@ -28,6 +28,14 @@ static func attempt(origin: Vector2i, grid: GridModel, rng: RandomNumberGenerato
 	return {"outcome": Outcome.BLOCKED, "cell": origin, "target": null}
 
 
+## At the algae cap (GDD §5.3) a SPAWN outcome becomes BLOCKED: no new algae
+## is born, while the other outcomes (coral damage) still apply.
+static func apply_cap(result: Dictionary, at_cap: bool) -> Dictionary:
+	if at_cap and result["outcome"] == Outcome.SPAWN:
+		return {"outcome": Outcome.BLOCKED, "cell": result["cell"], "target": null}
+	return result
+
+
 ## Base interval randomised by ±jitter (e.g. 0.2 = ±20%).
 static func next_interval(base: float, jitter: float, rng: RandomNumberGenerator) -> float:
 	return base * rng.randf_range(1.0 - jitter, 1.0 + jitter)

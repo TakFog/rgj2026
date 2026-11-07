@@ -21,6 +21,8 @@ const SPRITE_TINT := Color(1.8, 1.8, 1.8)
 const ART_TILE_CENTER := Vector2(125.5, 167.0)
 const ART_TILE_WIDTH := 139.0
 
+static var _shared_sway: ShaderMaterial
+
 var cell: Vector2i
 ## Last fish that reserved this algae (to swim to it or eat it), or null. It
 ## only counts while that fish still reports holds(self), so no release
@@ -47,7 +49,7 @@ func _ready() -> void:
 	var sprite := visual.add_sprite(TEXTURE)
 	_fit_on_cell(sprite, visual.polygon)
 	sprite.modulate = SPRITE_TINT
-	sprite.material = _sway_material(cell)
+	sprite.material = _sway_material()
 	_attach_sorted_by_back_edge(visual)
 	_rng.randomize()
 	_reset_timer()
@@ -63,7 +65,7 @@ func _attach_sorted_by_back_edge(visual: Node2D) -> void:
 	add_child(anchor)
 	# Shift the visual back so it still sits on the cell.
 	visual.position = Game.projection.to_screen(position) - Game.projection.to_screen(position + anchor.position)
-	ViewFollower.attach(anchor, visual)
+	ViewFollower.attach(anchor, visual, true)
 
 
 func _physics_process(delta: float) -> void:
@@ -73,13 +75,14 @@ func _physics_process(delta: float) -> void:
 		try_expand()
 
 
-## One expansion attempt (GDD §5.3). Skipped when the algae cap is reached.
+## One expansion attempt (GDD §5.3). At the algae cap no new algae is born,
+## but the attempt still runs (it can damage a coral).
 func try_expand() -> void:
 	if is_queued_for_deletion():
 		return
-	if get_tree().get_nodes_in_group(Groups.ALGAE).size() >= Game.eco.algae_max_count:
-		return
+	var at_cap := get_tree().get_node_count_in_group(Groups.ALGAE) >= Game.eco.algae_max_count
 	var result := AlgaeSpread.attempt(cell, Game.grid, _rng, _is_coral, CellProbe.is_covered_by_actor)
+	result = AlgaeSpread.apply_cap(result, at_cap)
 	match result["outcome"]:
 		AlgaeSpread.Outcome.SPAWN:
 			Game.factory.spawn_algae(result["cell"])
@@ -124,12 +127,13 @@ static func _fit_on_cell(sprite: Sprite2D, cell_polygon: PackedVector2Array) -> 
 	sprite.position = -(ART_TILE_CENTER - texture_center) * sprite.scale
 
 
-## Per-cell phase: neighbouring algae sway independently instead of in lockstep.
-func _sway_material(at_cell: Vector2i) -> ShaderMaterial:
-	var sway := ShaderMaterial.new()
-	sway.shader = SWAY_SHADER
-	sway.set_shader_parameter("phase", float(at_cell.x) * 0.73 + float(at_cell.y) * 1.21)
-	return sway
+## One material shared by every algae so their sprites batch; the shader
+## derives each plant's phase from its position, so they still sway apart.
+static func _sway_material() -> ShaderMaterial:
+	if _shared_sway == null:
+		_shared_sway = ShaderMaterial.new()
+		_shared_sway.shader = SWAY_SHADER
+	return _shared_sway
 
 
 func _is_coral(entity: Object) -> bool:
