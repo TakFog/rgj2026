@@ -51,6 +51,29 @@ extends Resource
 ## Extra distance beyond touching at which a bite lands.
 @export var predator_bite_margin := 4.0
 
+@export_group("Turtle")
+## Feature flag: set to false to turn the sea turtle helper off entirely.
+@export var turtle_enabled := true
+## Seconds between two turtle arrivals (at most turtle_max_count at once).
+@export var turtle_interval := 60.0
+@export var turtle_max_count := 1
+## Like the predator it is wider than half a cell: one-cell coral corridors
+## keep it out.
+@export var turtle_radius := 20.0
+## Faster than the predator, so it can catch it.
+@export var turtle_speed := 70.0
+@export var turtle_turn_radius := 22.0
+## Seconds to eat one algae (fish take eat_seconds).
+@export var turtle_eat_seconds := 0.6
+## Leaves after eating this many algae; 0 = no limit.
+@export var turtle_max_algae := 0
+## Leaves after this many seconds on the island.
+@export var turtle_stay_seconds := 30.0
+## How often it re-picks its job and re-plans the route (targets move).
+@export var turtle_replan_seconds := 0.5
+## Extra distance beyond touching at which it rams a threat or eats an algae.
+@export var turtle_reach_margin := 4.0
+
 @export_group("Collapse")
 @export var collapse_grace_seconds := 10.0
 

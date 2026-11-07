@@ -178,6 +178,17 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 - Dopo ogni morso si ferma `predator_bite_pause_seconds` (1 s). Il caldo lo rallenta come gli altri pesci.
 - È un corpo sul layer delle minacce: non si può piazzare nulla sopra di lui e il ciclone lo spazza via.
 
+### 7.5 Tartaruga marina (aiutante)
+- **Feature flag**: `turtle_enabled` in `balance_actors.tres` (default `true`).
+- Arriva ogni `turtle_interval` (60 s), al massimo `turtle_max_count` (1) alla volta, dal bordo dello schermo come le minacce. Non è una minaccia: aiuta il giocatore.
+- **Priorità**: prima difende i pesci, poi pulisce. Va verso la **minaccia raggiungibile più vicina** lungo il percorso (predatore che sta cacciando o busta di plastica); se non ce ne sono, verso l'**alga raggiungibile più vicina**. Ricalcola ogni `turtle_replan_seconds` (0.5 s); mentre mangia un'alga la lascia se compare una minaccia raggiungibile.
+- **Predatore**: gli va addosso e lo allontana (il predatore smette di cacciare e lascia l'isola). La tartaruga resta.
+- **Busta**: la elimina toccandola, poi **se ne va**.
+- **Alghe**: le mangia in `turtle_eat_seconds` (0.6 s), molto più in fretta dei pesci (`eat_seconds` 3 s). Con `turtle_max_algae` > 0 se ne va dopo averne mangiate tante (0 = nessun limite).
+- Se ne va comunque dopo `turtle_stay_seconds` (30 s passati sull'isola).
+- È **grande** come il predatore (`turtle_radius` 20) e usa lo stesso percorso sugli angoli della griglia: **solo i coralli la fermano**, non entra nei corridoi larghi una cella. Più veloce del predatore (`turtle_speed` 70) per poterlo raggiungere; il caldo la rallenta come gli altri pesci.
+- È un corpo sul layer delle minacce (non si può piazzare nulla sopra di lei) ma le minacce e il ciclone la ignorano.
+
 ## 8. Tabella delle interazioni
 
 Le combinazioni non elencate **non fanno nulla**.
@@ -196,6 +207,9 @@ Le combinazioni non elencate **non fanno nulla**.
 | Predatore | Pesce | Mangiato (sazietà giovane/adulto) |
 | Predatore | Nido con uova | Le uova vengono mangiate, il nido torna `EMPTY` (sazietà = giovane × uova) |
 | Ciclone | Predatore | Rimosso |
+| Tartaruga | Predatore | Il predatore smette di cacciare e lascia l'isola |
+| Tartaruga | Busta | La busta viene rimossa, la tartaruga se ne va |
+| Tartaruga | Alga | Mangiata in `turtle_eat_seconds` |
 | Ciclone | Corallo | Il corallo **muore**, il ciclone **sparisce** |
 
 Danni dal più debole al più forte: alga (10) < busta (35) < CO2 (50). Tutti i danni sono **istantanei al contatto**, nessuno è al secondo.

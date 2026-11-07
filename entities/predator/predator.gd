@@ -84,6 +84,16 @@ func _physics_process(delta: float) -> void:
 	_visual.leaving = brain.state == PredatorBrain.State.LEAVING
 
 
+## Rammed by the sea turtle (issue #4): it swims off the island.
+func scare() -> void:
+	brain.scare()
+
+
+## Still hunting on the island (not leaving yet): the turtle chases it.
+func is_hunting() -> bool:
+	return brain != null and brain.state != PredatorBrain.State.LEAVING
+
+
 func destroy() -> void:
 	if is_queued_for_deletion():
 		return
