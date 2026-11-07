@@ -23,6 +23,13 @@ const SEGMENTS := 16
 
 static var _facing := SpriteFacing.new(FACING_CENTER, deg_to_rad(FACING_AXIS_DEG), FACING_LENGTH, deg_to_rad(MAX_TILT_DEG))
 
+## Projected circles are reused every frame (the projection is fixed during a
+## run), keyed by radius. `_ring` adds the closing point; `_top` is the highest
+## screen-space point, used to place the hunger bar.
+var _ellipses: Dictionary = {}
+var _rings: Dictionary = {}
+var _tops: Dictionary = {}
+
 var radius_world := 10.0
 ## Swimming direction in screen space.
 var heading := Vector2.RIGHT:
@@ -48,27 +55,44 @@ var hunger_ratio := 0.0:
 
 func _draw() -> void:
 	var radius := radius_world * (1.0 if adult else JUVENILE_SCALE)
-	var body := _ellipse(radius)
 	if selected:
-		var ring := _ellipse(radius + RING_GAP)
-		ring.append(ring[0])
-		draw_polyline(ring, RING_COLOR, 2.0)
+		draw_polyline(_ring(radius + RING_GAP), RING_COLOR, 2.0)
 	var length := radius * BODY_LENGTH_RADII * Game.VIEW_SETTINGS.pixels_per_unit
 	draw_set_transform_matrix(_facing.transform(heading, length))
 	draw_texture(TEXTURE, Vector2.ZERO)
 	draw_set_transform_matrix(Transform2D.IDENTITY)
 	if hunger_ratio > hunger_threshold:
-		var top := -length * SPRITE_HALF_HEIGHT
-		for point in body:
-			top = minf(top, point.y)
+		var top := minf(-length * SPRITE_HALF_HEIGHT, _top(radius))
 		var back := Rect2(Vector2(-BAR_SIZE.x * 0.5, top - 8.0), BAR_SIZE)
 		draw_rect(back, BAR_BACK)
 		draw_rect(Rect2(back.position, Vector2(BAR_SIZE.x * hunger_ratio, BAR_SIZE.y)), BAR_FILL)
 
 
 ## A world-space circle of `radius` around the fish, projected to screen space.
+## Cached: the fish redraws every frame while it swims.
 func _ellipse(radius: float) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for i in SEGMENTS:
-		points.append(Vector2.from_angle(TAU * i / SEGMENTS) * radius)
-	return Game.projection.project_polygon(points, Vector2.ZERO)
+	if not _ellipses.has(radius):
+		var points := PackedVector2Array()
+		for i in SEGMENTS:
+			points.append(Vector2.from_angle(TAU * i / SEGMENTS) * radius)
+		_ellipses[radius] = Game.projection.project_polygon(points, Vector2.ZERO)
+	return _ellipses[radius]
+
+
+## The same ellipse, closed for draw_polyline (selection ring).
+func _ring(radius: float) -> PackedVector2Array:
+	if not _rings.has(radius):
+		var ring := _ellipse(radius).duplicate()
+		ring.append(ring[0])
+		_rings[radius] = ring
+	return _rings[radius]
+
+
+## Screen-space top of the ellipse, for placing the hunger bar.
+func _top(radius: float) -> float:
+	if not _tops.has(radius):
+		var top := INF
+		for point in _ellipse(radius):
+			top = minf(top, point.y)
+		_tops[radius] = top
+	return _tops[radius]

@@ -108,6 +108,12 @@ func holds(algae: Object) -> bool:
 	return brain.state == FishBrain.State.EATING or brain.state == FishBrain.State.SEEKING_FOOD
 
 
+## Debug view only: the remaining planned route, in world units. Empty while
+## wandering (no route planned).
+func debug_path() -> PackedVector2Array:
+	return _path
+
+
 func destroy() -> void:
 	if is_queued_for_deletion():
 		return

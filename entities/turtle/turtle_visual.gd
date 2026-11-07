@@ -14,6 +14,9 @@ const HOVER_PX := 10.0
 const EATING_HOVER_PX := 3.0
 const SEGMENTS := 20
 
+## Projected circles reused every frame (the projection is fixed during a run).
+var _ellipses: Dictionary = {}
+
 var radius_world := 20.0
 var heading := Vector2.RIGHT:
 	set(value):
@@ -28,7 +31,7 @@ var eating := false:
 
 
 func _draw() -> void:
-	draw_colored_polygon(_ellipse(Vector2.ZERO, radius_world), SHADOW_COLOR)
+	draw_colored_polygon(_ellipse(radius_world), SHADOW_COLOR)
 	var width := radius_world * WIDTH_RADII * Game.VIEW_SETTINGS.pixels_per_unit
 	var size := Vector2(width, width * TEXTURE.get_height() / TEXTURE.get_width())
 	if heading.x < 0.0:
@@ -37,10 +40,12 @@ func _draw() -> void:
 	draw_texture_rect(TEXTURE, Rect2(Vector2(-size.x * 0.5, -size.y * 0.5 - hover), size), false)
 
 
-## A world-space circle of `radius` at `center` (relative to the turtle),
-## projected to screen space.
-func _ellipse(center: Vector2, radius: float) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for i in SEGMENTS:
-		points.append(center + Vector2.from_angle(TAU * i / SEGMENTS) * radius)
-	return Game.projection.project_polygon(points, Vector2.ZERO)
+## A world-space circle of `radius` around the turtle, projected to screen
+## space. Cached: the turtle redraws every frame while it swims.
+func _ellipse(radius: float) -> PackedVector2Array:
+	if not _ellipses.has(radius):
+		var points := PackedVector2Array()
+		for i in SEGMENTS:
+			points.append(Vector2.from_angle(TAU * i / SEGMENTS) * radius)
+		_ellipses[radius] = Game.projection.project_polygon(points, Vector2.ZERO)
+	return _ellipses[radius]

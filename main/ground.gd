@@ -22,11 +22,21 @@ const MAP_EDGE_FADE := Vector2(0.1, 0.08)
 const GRID_LINE := Color(1, 1, 1, 0.12)
 const SEABED_SHADER := preload("res://main/seabed.gdshader")
 
+## The open-seabed polygon is static during a run (the camera does not move), so
+## it is projected once and only invalidated when the viewport resizes.
+var _screen_polygon_cache := PackedVector2Array()
+var _screen_polygon_valid := false
+
 
 ## Grid lines over the island, shown while placing.
 class GridLines extends Node2D:
+	var _was_placing := false
+
 	func _process(_delta: float) -> void:
-		queue_redraw()
+		# Redraw only when placement starts or ends, not every frame.
+		if Game.placing != _was_placing:
+			_was_placing = Game.placing
+			queue_redraw()
 
 	func _draw() -> void:
 		if not Game.placing:
@@ -55,10 +65,9 @@ func _ready() -> void:
 	var grid := GridLines.new()
 	grid.name = "GridLines"
 	add_child(grid)
-
-
-func _process(_delta: float) -> void:
-	queue_redraw()
+	get_viewport().size_changed.connect(_invalidate_screen_polygon)
+	# The camera is added after the ground, so refresh once the scene is built.
+	call_deferred("_invalidate_screen_polygon")
 
 
 func _draw() -> void:
@@ -89,8 +98,16 @@ func _map_transform(island: PackedVector2Array) -> Transform2D:
 
 ## The visible screen area in this node's coordinates (camera included).
 func _screen_polygon() -> PackedVector2Array:
-	var to_local := get_global_transform_with_canvas().affine_inverse()
-	var rect := get_viewport_rect()
-	return PackedVector2Array([
-		to_local * rect.position, to_local * Vector2(rect.end.x, rect.position.y),
-		to_local * rect.end, to_local * Vector2(rect.position.x, rect.end.y)])
+	if not _screen_polygon_valid:
+		var to_local := get_global_transform_with_canvas().affine_inverse()
+		var rect := get_viewport_rect()
+		_screen_polygon_cache = PackedVector2Array([
+			to_local * rect.position, to_local * Vector2(rect.end.x, rect.position.y),
+			to_local * rect.end, to_local * Vector2(rect.position.x, rect.end.y)])
+		_screen_polygon_valid = true
+	return _screen_polygon_cache
+
+
+func _invalidate_screen_polygon() -> void:
+	_screen_polygon_valid = false
+	queue_redraw()

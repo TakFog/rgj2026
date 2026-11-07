@@ -21,6 +21,10 @@ const SEGMENTS := 20
 
 static var _facing := SpriteFacing.new(FACING_CENTER, deg_to_rad(FACING_AXIS_DEG), FACING_LENGTH, deg_to_rad(MAX_TILT_DEG))
 
+## Projected circle and its top, reused every frame (fixed projection).
+var _ellipses: Dictionary = {}
+var _tops: Dictionary = {}
+
 var radius_world := 22.0
 ## Swimming direction in screen space.
 var heading := Vector2.RIGHT:
@@ -41,24 +45,34 @@ var leaving := false:
 
 
 func _draw() -> void:
-	var body := _ellipse(radius_world)
 	var length := radius_world * BODY_LENGTH_RADII * Game.VIEW_SETTINGS.pixels_per_unit
 	draw_set_transform_matrix(_facing.transform(heading, length))
 	draw_texture(TEXTURE, Vector2.ZERO, LEAVING_TINT if leaving else Color.WHITE)
 	draw_set_transform_matrix(Transform2D.IDENTITY)
 	if leaving:
 		return
-	var top := -length * SPRITE_HALF_HEIGHT
-	for point in body:
-		top = minf(top, point.y)
+	var top := minf(-length * SPRITE_HALF_HEIGHT, _top(radius_world))
 	var back := Rect2(Vector2(-BAR_SIZE.x * 0.5, top - 10.0), BAR_SIZE)
 	draw_rect(back, BAR_BACK)
 	draw_rect(Rect2(back.position, Vector2(BAR_SIZE.x * satiety_ratio, BAR_SIZE.y)), BAR_FILL)
 
 
-## A world-space circle of `radius` around the predator, projected to screen space.
+## A world-space circle of `radius` around the predator, projected to screen
+## space. Cached: the predator redraws every frame while it swims.
 func _ellipse(radius: float) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for i in SEGMENTS:
-		points.append(Vector2.from_angle(TAU * i / SEGMENTS) * radius)
-	return Game.projection.project_polygon(points, Vector2.ZERO)
+	if not _ellipses.has(radius):
+		var points := PackedVector2Array()
+		for i in SEGMENTS:
+			points.append(Vector2.from_angle(TAU * i / SEGMENTS) * radius)
+		_ellipses[radius] = Game.projection.project_polygon(points, Vector2.ZERO)
+	return _ellipses[radius]
+
+
+## Screen-space top of the ellipse, for placing the satiety bar.
+func _top(radius: float) -> float:
+	if not _tops.has(radius):
+		var top := INF
+		for point in _ellipse(radius):
+			top = minf(top, point.y)
+		_tops[radius] = top
+	return _tops[radius]

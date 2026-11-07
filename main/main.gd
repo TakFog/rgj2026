@@ -9,6 +9,7 @@ extends Node
 const DevASystems := preload("res://main/dev_a_systems.gd")
 const DevBSystems := preload("res://main/dev_b_systems.gd")
 const DebugOverlay := preload("res://core/debug_overlay.gd")
+const PathDebug := preload("res://core/path_debug.gd")
 const Music := preload("res://systems/b_music.gd")
 const Ground := preload("res://main/ground.gd")
 
@@ -53,6 +54,11 @@ func _ready() -> void:
 	Game.view = view
 	Game.ui = ui
 	Game.factory = EntityFactory.new()
+
+	# F3 debug view: planned routes of fish, predators and turtles.
+	var path_debug := PathDebug.new()
+	path_debug.name = "PathDebug"
+	view.add_child(path_debug)
 
 	_build_walls(world)
 	Level01.populate(Game.factory)

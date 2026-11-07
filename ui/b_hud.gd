@@ -5,10 +5,16 @@ extends Control
 
 const NAMES := {&"corals": "Coralli", &"algae": "Alghe", &"fish": "Pesci", &"nests": "Nidi"}
 const CRITICAL_COLOR := Color(1.0, 0.3, 0.3)
+## The warning only needs to change when the displayed second changes; the
+## countdown itself advances every frame in the tracker.
+const WARNING_REFRESH_SECONDS := 0.1
 
 var monitor: PopulationMonitor
 var _score_label: Label
 var _warning_label: Label
+var _warning_elapsed := WARNING_REFRESH_SECONDS
+var _warning_text := ""
+var _warning_visible := false
 
 
 static func display_name(population: StringName) -> String:
@@ -46,7 +52,11 @@ func _ready() -> void:
 	_warning_label.visible = false
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_warning_elapsed += delta
+	if _warning_elapsed < WARNING_REFRESH_SECONDS:
+		return
+	_warning_elapsed = 0.0
 	_update_warning()
 
 
@@ -55,11 +65,18 @@ func _update_warning() -> void:
 		return
 	var population := monitor.tracker.most_urgent()
 	if population == &"":
-		_warning_label.visible = false
+		if _warning_visible:
+			_warning_label.visible = false
+			_warning_visible = false
 		return
 	var hatch := monitor.soonest_hatch_seconds() if population == Groups.FISH else -1.0
-	_warning_label.text = warning_text(population, monitor.tracker.time_left(population), hatch)
-	_warning_label.visible = true
+	var text := warning_text(population, monitor.tracker.time_left(population), hatch)
+	if text != _warning_text:
+		_warning_text = text
+		_warning_label.text = text
+	if not _warning_visible:
+		_warning_label.visible = true
+		_warning_visible = true
 
 
 func _on_score_changed(seconds: float) -> void:

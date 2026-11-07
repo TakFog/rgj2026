@@ -111,9 +111,10 @@ func _steer_inward(heading: float, delta: float) -> float:
 
 
 ## Inside the visible seabed, grown so threats spawn and leave fully off screen.
+## The grown polygon is cached by Game: this runs every physics frame.
 func _in_alive_area() -> bool:
-	var grown := Geometry2D.offset_polygon(Game.visible_world_polygon(), radius * 2.0 + EXIT_MARGIN)
-	return not grown.is_empty() and Geometry2D.is_point_in_polygon(position, grown[0])
+	var grown := Game.visible_world_polygon_grown(radius * 2.0 + EXIT_MARGIN)
+	return not grown.is_empty() and Geometry2D.is_point_in_polygon(position, grown)
 
 
 ## Instant contact resolution. Safe to call several times in one physics step.
