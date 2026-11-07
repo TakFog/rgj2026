@@ -42,7 +42,7 @@ minacce ──► CO2, buste, cicloni (annunciati prima di entrare)
 - Come ci si salva, per ogni popolazione:
   - **Pesci**: un nido con uova che si schiudono entro il timeout (*sono morti tutti i pesci, ma le uova stanno per schiudersi → ti salvi*). I pesci non arrivano dall'inventario.
   - **Alghe / coralli / nidi**: piazzandone uno dall'inventario, se c'è o se uno slot si ricarica in tempo.
-- Interfaccia: mentre è attivo un conto alla rovescia, al centro in alto compare un avviso rosso con l'icona della popolazione e i secondi rimasti. Il contatore di quella popolazione lampeggia. Per i pesci, se c'è un nido con uova, l'avviso mostra anche il tempo che manca alla schiusa, così il giocatore capisce subito se si salverà.
+- Interfaccia: mentre è attivo un conto alla rovescia, al centro in alto compare un avviso rosso con l'icona della popolazione e i secondi rimasti. Per i pesci, se c'è un nido con uova, l'avviso mostra anche il tempo che manca alla schiusa, così il giocatore capisce subito se si salverà.
 - **Punteggio** = secondi sopravvissuti (MVP). Mostrato nell'interfaccia e nella schermata di game over.
 
 ## 4. Mappa iniziale
@@ -215,7 +215,6 @@ Le combinazioni non elencate **non fanno nulla**.
 Danni dal più debole al più forte: alga (10) < busta (35) < CO2 (50). Tutti i danni sono **istantanei al contatto**, nessuno è al secondo.
 
 ## 9. Interfaccia
-- **In alto a sinistra**: contatori di coralli, alghe, pesci e nidi; ognuno lampeggia in rosso quando è ≤ 1.
 - **In alto a destra**: termometro.
 - **In alto al centro**: punteggio / tempo.
 - **In basso**: 4 slot dell'inventario, con il tempo di ricarica mostrato come radiale.

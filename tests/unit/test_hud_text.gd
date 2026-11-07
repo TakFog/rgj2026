@@ -6,12 +6,6 @@ func test_format_time() -> void:
 	assert_eq(Hud.format_time(125.7), "02:05")
 
 
-func test_is_critical() -> void:
-	assert_true(Hud.is_critical(0))
-	assert_true(Hud.is_critical(1))
-	assert_false(Hud.is_critical(2))
-
-
 func test_warning_text_for_coral() -> void:
 	assert_eq(Hud.warning_text(&"corals", 6.2, -1.0), "Coralli a zero! Collasso tra 7 s")
 

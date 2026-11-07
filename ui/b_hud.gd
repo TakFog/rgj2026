@@ -1,18 +1,14 @@
 class_name Hud
 extends Control
-## Population counters (top left, flashing red when <= 1), survival time (top
-## centre) and the collapse warning below it (GDD §3, §9, roadmap contract #10).
+## Survival time (top centre) and the collapse warning below it (GDD §3, §9,
+## roadmap contract #10).
 
 const NAMES := {&"corals": "Coralli", &"algae": "Alghe", &"fish": "Pesci", &"nests": "Nidi"}
-const FLASH_PERIOD := 0.5
 const CRITICAL_COLOR := Color(1.0, 0.3, 0.3)
 
 var monitor: PopulationMonitor
-var _counter_labels: Dictionary = {} # StringName -> Label
-var _counts: Dictionary = {} # StringName -> int
 var _score_label: Label
 var _warning_label: Label
-var _flash_time := 0.0
 
 
 static func display_name(population: StringName) -> String:
@@ -22,10 +18,6 @@ static func display_name(population: StringName) -> String:
 static func format_time(seconds: float) -> String:
 	var whole := floori(seconds)
 	return "%02d:%02d" % [floori(whole / 60.0), whole % 60]
-
-
-static func is_critical(count: int) -> bool:
-	return count <= 1
 
 
 ## Collapse warning text. `hatch_seconds` < 0 means "no eggs" (no hint shown).
@@ -40,7 +32,6 @@ static func warning_text(population: StringName, seconds_left: float, hatch_seco
 ## Connect to a monitor. Safe to call before the HUD enters the tree.
 func bind(p_monitor: PopulationMonitor) -> void:
 	monitor = p_monitor
-	monitor.counts_changed.connect(_on_counts_changed)
 	monitor.score_changed.connect(_on_score_changed)
 
 
@@ -48,7 +39,6 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_build_counters()
 	_score_label = _make_centered_label(12.0, 32)
 	_score_label.text = format_time(0.0)
 	_warning_label = _make_centered_label(56.0, 24)
@@ -56,13 +46,7 @@ func _ready() -> void:
 	_warning_label.visible = false
 
 
-func _process(delta: float) -> void:
-	_flash_time += delta
-	var flash_on := fmod(_flash_time, FLASH_PERIOD) < FLASH_PERIOD * 0.5
-	for population: StringName in _counter_labels:
-		var label: Label = _counter_labels[population]
-		var critical := is_critical(_counts.get(population, 99))
-		label.modulate = CRITICAL_COLOR if critical and flash_on else Color.WHITE
+func _process(_delta: float) -> void:
 	_update_warning()
 
 
@@ -78,29 +62,8 @@ func _update_warning() -> void:
 	_warning_label.visible = true
 
 
-func _on_counts_changed(counts: Dictionary) -> void:
-	_counts = counts
-	for population: StringName in counts:
-		if _counter_labels.has(population):
-			var label: Label = _counter_labels[population]
-			label.text = "%s: %d" % [display_name(population), counts[population]]
-
-
 func _on_score_changed(seconds: float) -> void:
 	_score_label.text = format_time(seconds)
-
-
-func _build_counters() -> void:
-	var box := VBoxContainer.new()
-	box.position = Vector2(16, 16)
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(box)
-	for population in PopulationMonitor.POPULATIONS:
-		var label := Label.new()
-		label.add_theme_font_size_override("font_size", 22)
-		label.text = "%s: -" % display_name(population)
-		box.add_child(label)
-		_counter_labels[population] = label
 
 
 func _make_centered_label(top: float, font_size: int) -> Label:
