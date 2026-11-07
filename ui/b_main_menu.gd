@@ -7,13 +7,15 @@ extends ColorRect
 
 const BUTTON_SIZE := SeaStyle.BUTTON_SIZE
 const SCREEN_MARGIN := 24.0
-const TITLE_HEIGHT := 80.0
+## The title screen shows the painted logo instead of the game name.
+const LOGO_TEXTURE: Texture2D = preload("res://assets/ui/logo.png")
+const LOGO_HEIGHT := 260.0
 const TITLE_Y_FRACTION := 0.25
 
-## Player-facing name and credits, kept in one place so the title screen and
-## the credits panel cannot drift apart.
+## Player-facing name and credits, kept in one place so the credits panel and
+## the rest of the UI cannot drift apart.
 const GAME_TITLE := "BalanSea"
-const CREDITS_TEXT := "Un gestionale di barriera corallina.\nTema del game jam: SUBIRE.\n\nRealizzato con Godot 4.7.2."
+const CREDITS_TEXT := "Un gestionale di barriera corallina.\nSviluppato durante la Rome Game Jam 2026 a tema SUBIRE.\n\nFlavio De Benedictis — Developer\nLorenzo Patané — Developer\nMaria Elena Papale — Artist\nMateusz Kulesza — Music, Developer"
 ## User command-line argument (after `--`) that skips the title screen and
 ## starts a run straight away, so tools/smoke.sh exercises real gameplay.
 const SMOKE_PLAY_ARG := "--smoke-play"
@@ -89,21 +91,23 @@ func _build_menu_panel() -> Control:
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Title across the full width, vertically centred on 1/4 of the screen.
-	var title := Label.new()
-	title.text = GAME_TITLE
-	SeaStyle.style_title(title, SeaStyle.HERO_TITLE_FONT_SIZE)
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(title)
-	title.anchor_left = 0.0
-	title.anchor_right = 1.0
-	title.anchor_top = TITLE_Y_FRACTION
-	title.anchor_bottom = TITLE_Y_FRACTION
-	title.offset_left = 0.0
-	title.offset_right = 0.0
-	title.offset_top = -TITLE_HEIGHT * 0.5
-	title.offset_bottom = TITLE_HEIGHT * 0.5
+	# Logo across the full width, vertically centred on 1/4 of the screen.
+	var logo := TextureRect.new()
+	logo.name = "Logo"
+	logo.texture = LOGO_TEXTURE
+	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(logo)
+	logo.anchor_left = 0.0
+	logo.anchor_right = 1.0
+	logo.anchor_top = TITLE_Y_FRACTION
+	logo.anchor_bottom = TITLE_Y_FRACTION
+	logo.offset_left = 0.0
+	logo.offset_right = 0.0
+	logo.offset_top = -LOGO_HEIGHT * 0.5
+	logo.offset_bottom = LOGO_HEIGHT * 0.5
 
 	# Play, centred both horizontally and vertically.
 	var play_btn := _button("Gioca")
