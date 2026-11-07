@@ -1,0 +1,56 @@
+extends Node
+## Global service locator (autoload "Game"). Shared contract: change only
+## after telling the other developer.
+
+signal temperature_changed(value: float)
+
+const ECOSYSTEM: BalanceEcosystem = preload("res://data/balance_ecosystem.tres")
+const ACTORS: BalanceActors = preload("res://data/balance_actors.tres")
+const VIEW_SETTINGS: ViewSettings = preload("res://data/view_settings.tres")
+
+var eco: BalanceEcosystem = ECOSYSTEM
+var actors: BalanceActors = ACTORS
+var grid: GridModel
+var projection: ViewProjection
+## Logical physics world (top-down). Set by Main. Entities live here.
+var world: Node2D
+## Y-sorted screen-space node holding all visuals. Set by Main.
+var view: Node2D
+## UI CanvasLayer. Set by Main.
+var ui: CanvasLayer
+var factory: EntityFactory
+## True while the player is placing an inventory item (fish orders are ignored).
+var placing := false
+## Normalised temperature 0..1. Written only by Dev A's TemperatureSystem.
+var temperature := 0.0:
+	set(value):
+		temperature = value
+		temperature_changed.emit(value)
+
+var _actions_registered := false
+
+
+func _ready() -> void:
+	if not _actions_registered:
+		InputActions.register()
+		_actions_registered = true
+	reset()
+
+
+## Fresh state for a new run. Called by Main._ready (also after a restart).
+func reset() -> void:
+	grid = GridModel.new(eco.grid_size, eco.cell_size)
+	projection = ViewProjection.from_settings(VIEW_SETTINGS)
+	placing = false
+	temperature = 0.0
+	get_tree().paused = false
+
+
+## Mouse position in logical world coordinates.
+func mouse_world() -> Vector2:
+	return projection.to_world(view.get_global_mouse_position())
+
+
+## Linear interpolation by current temperature (cold value at 0, hot value at 1).
+func by_temperature(cold: float, hot: float) -> float:
+	return lerpf(cold, hot, clampf(temperature, 0.0, 1.0))
