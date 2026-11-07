@@ -53,3 +53,21 @@ func test_third_finger_toggles_debug_only_on_touch() -> void:
 
 func test_fish_touch_radius_is_wider_than_mouse() -> void:
 	assert_true(Game.actors.fish_touch_radius > Game.actors.fish_click_radius)
+
+
+func test_touch_mouse_bindings_accept_taps() -> void:
+	# Taps arrive as clicks from the emulation device (-1).
+	assert_eq(InputActions.mouse_event(MOUSE_BUTTON_LEFT, true).device, InputActions.ALL_DEVICES)
+
+
+func test_mouse_bindings_unchanged_outside_touch() -> void:
+	# Exactly the binding a plain new event gives, as before the Android port.
+	assert_eq(InputActions.mouse_event(MOUSE_BUTTON_LEFT, false).device, InputEventMouseButton.new().device)
+	assert_eq(InputActions.mouse_event(MOUSE_BUTTON_RIGHT, false).button_index, MOUSE_BUTTON_RIGHT)
+
+
+func test_no_preview_before_the_first_tap() -> void:
+	var placement := PlacementController.new()
+	var cells: Array[Vector2i] = placement.preview_cells(PlacementController.NO_CELL)
+	assert_true(cells.is_empty())
+	placement.free()

@@ -116,11 +116,18 @@ func _preview_origin() -> Vector2i:
 	return Game.grid.world_to_cell(Game.mouse_world())
 
 
+## Cells the ghost covers at `origin`; none before the first touch tap.
+func preview_cells(origin: Vector2i) -> Array[Vector2i]:
+	if origin == NO_CELL:
+		return []
+	return footprint(origin)
+
+
 func _physics_process(delta: float) -> void:
 	if active_slot < 0:
 		return
 	var origin := _preview_origin()
-	var cells: Array[Vector2i] = [] if origin == NO_CELL else footprint(origin)
+	var cells := preview_cells(origin)
 	if cells != _ghost_cells:
 		# The mouse entered another cell (or the item changed): follow it and
 		# revalidate at once, exactly like the original every-frame preview.
