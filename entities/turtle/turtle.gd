@@ -1,10 +1,11 @@
 class_name Turtle
 extends CharacterBody2D
 ## Sea turtle helper (issue #4): enters from the edge of the screen and helps
-## the reef. Its priority is defending the fish: it rams the predator, which
-## then leaves the island, and removes a plastic bag (then leaves itself). With
-## no threat around it eats algae, much faster than fish. It leaves when its
-## stay runs out. Rules live in TurtleBrain; routes reuse PredatorPathfinder
+## the reef. Its priority is defending the fish: it goes after a predator or a
+## plastic bag only when it is nearby (a different aggro radius for each), and
+## rams the predator (which then leaves the island) or removes the bag (then
+## leaves itself). With no threat nearby it eats algae, much faster than fish.
+## It leaves when its stay runs out. Rules live in TurtleBrain; routes reuse PredatorPathfinder
 ## (like the predator it is big: one-cell coral corridors keep it out).
 ## Physics: a body on the THREAT layer (so nothing is placed on it) but in no
 ## threat group, so threats and cyclones ignore it. Blocked only by corals: it
@@ -140,9 +141,9 @@ func _finish_algae() -> void:
 	_replan_timer = 0.0
 
 
-## Picks the next job (nearest reachable threat, else nearest reachable algae)
-## and plans the route to it. With `threats_only` (while eating) it only
-## switches job if a threat is reachable. With nothing to do, roams.
+## Picks the next job (nearest reachable threat nearby, else nearest reachable
+## algae) and plans the route to it. With `threats_only` (while eating) it only
+## switches job if a threat is in range. With nothing to do, roams.
 func _plan(threats_only := false) -> void:
 	_replan_timer = _cfg.turtle_replan_seconds
 	if not _pathfinder.plan_from(global_position):
@@ -151,12 +152,16 @@ func _plan(threats_only := false) -> void:
 		return
 	var threats: Array[Node2D] = []
 	var threat_costs := []
+	var threat_distances := []
+	var threat_radii := []
 	# Predators are threats too: this covers predators and bags.
 	for node in get_tree().get_nodes_in_group(Groups.THREATS):
 		if not _is_valid_target(node):
 			continue
 		threats.append(node)
 		threat_costs.append(_pathfinder.reach_cost(node.global_position, _reach_of(node)))
+		threat_distances.append(global_position.distance_to(node.global_position))
+		threat_radii.append(_aggro_radius(node))
 	var algae: Array[Node2D] = []
 	var algae_costs := []
 	if not threats_only:
@@ -165,7 +170,9 @@ func _plan(threats_only := false) -> void:
 				continue
 			algae.append(node)
 			algae_costs.append(_pathfinder.reach_cost(node.global_position, _reach_of(node)))
-	var job := TurtleBrain.pick(threat_costs, algae_costs)
+	# A threat it is already chasing stays its job until resolved.
+	var job := TurtleBrain.pick(threat_costs, threat_distances, threat_radii, algae_costs,
+			threats.find(_target))
 	match job["task"]:
 		TurtleBrain.Task.THREAT:
 			brain.stop_eating()
@@ -242,6 +249,13 @@ func _move(motion: Vector2, straight: Vector2) -> bool:
 func _in_alive_area() -> bool:
 	var grown := Geometry2D.offset_polygon(Game.visible_world_polygon(), _cfg.turtle_radius * 2.0 + EXIT_MARGIN)
 	return not grown.is_empty() and Geometry2D.is_point_in_polygon(global_position, grown[0])
+
+
+## Straight-line range within which a threat makes the turtle drop its algae.
+func _aggro_radius(target: Node2D) -> float:
+	if target is Predator:
+		return _cfg.turtle_predator_aggro_radius
+	return _cfg.turtle_bag_aggro_radius
 
 
 ## Centre distance at which the turtle touches `target`.

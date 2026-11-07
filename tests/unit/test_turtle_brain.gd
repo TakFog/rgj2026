@@ -13,25 +13,57 @@ func before_each() -> void:
 
 
 func test_threat_beats_closer_algae() -> void:
-	var job := TurtleBrain.pick([500.0], [10.0])
+	var job := TurtleBrain.pick([500.0], [10.0], [160.0], [10.0])
 	assert_eq(job["task"], TurtleBrain.Task.THREAT)
 	assert_eq(job["index"], 0)
 
 
 func test_nearest_reachable_threat_wins() -> void:
-	var job := TurtleBrain.pick([INF, 300.0, 100.0], [])
+	var job := TurtleBrain.pick([INF, 300.0, 100.0], [10.0, 10.0, 10.0], [160.0, 160.0, 160.0], [])
 	assert_eq(job["task"], TurtleBrain.Task.THREAT)
 	assert_eq(job["index"], 2)
 
 
 func test_unreachable_threats_fall_back_to_nearest_algae() -> void:
-	var job := TurtleBrain.pick([INF], [80.0, 40.0, INF])
+	var job := TurtleBrain.pick([INF], [10.0], [160.0], [80.0, 40.0, INF])
 	assert_eq(job["task"], TurtleBrain.Task.ALGAE)
 	assert_eq(job["index"], 1)
 
 
+func test_threat_outside_its_aggro_radius_is_ignored() -> void:
+	var job := TurtleBrain.pick([10.0], [500.0], [160.0], [80.0])
+	assert_eq(job["task"], TurtleBrain.Task.ALGAE)
+	assert_eq(job["index"], 0)
+
+
+func test_each_threat_uses_its_own_aggro_radius() -> void:
+	# A predator out of reach (index 0), a bag in reach even though farther (index 1).
+	var job := TurtleBrain.pick([10.0, 20.0], [200.0, 300.0], [160.0, 320.0], [])
+	assert_eq(job["task"], TurtleBrain.Task.THREAT)
+	assert_eq(job["index"], 1)
+
+
+func test_nearest_threat_inside_range_wins() -> void:
+	var job := TurtleBrain.pick([100.0, 20.0], [50.0, 300.0], [160.0, 320.0], [])
+	assert_eq(job["task"], TurtleBrain.Task.THREAT)
+	assert_eq(job["index"], 1)
+
+
+func test_locked_threat_is_kept_outside_its_radius() -> void:
+	# Already chasing a predator that drifted out of range: keep it (no flip-flop).
+	var job := TurtleBrain.pick([10.0], [500.0], [160.0], [80.0], 0)
+	assert_eq(job["task"], TurtleBrain.Task.THREAT)
+	assert_eq(job["index"], 0)
+
+
+func test_locked_unreachable_threat_is_dropped() -> void:
+	var job := TurtleBrain.pick([INF], [10.0], [160.0], [80.0], 0)
+	assert_eq(job["task"], TurtleBrain.Task.ALGAE)
+	assert_eq(job["index"], 0)
+
+
 func test_nothing_to_do() -> void:
-	var job := TurtleBrain.pick([INF], [INF])
+	var job := TurtleBrain.pick([INF], [10.0], [160.0], [INF])
 	assert_eq(job["task"], TurtleBrain.Task.NONE)
 	assert_eq(job["index"], -1)
 
