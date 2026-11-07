@@ -99,7 +99,7 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 - L'ossigeno appartiene **al corallo intero**, non alla singola cella. Quando muore libera tutte le sue celle.
 - **Ossigeno** da 0 a 100. A 0 si **sgretola**: animazione, poi viene rimosso.
 - **Recupero lento**: `+coral_regen_per_sec` (0.5/s) sempre.
-- Danni (vedi tabella delle interazioni): alga che si espande addosso, CO2, busta, ciclone.
+- Danni (vedi tabella delle interazioni): alga che si espande addosso, CO2, busta, ciclone. **Tutti i danni sono istantanei e avvengono al contatto**: non esistono danni al secondo.
 - Rallenta la salita della temperatura **in proporzione alle celle che occupa** (§6): un corallo grande protegge di più dal caldo, ma blocca di più i pesci.
 
 ### 5.3 Alga
@@ -170,7 +170,7 @@ Le combinazioni non elencate **non fanno nulla**.
 | Agente | Bersaglio | Effetto |
 |---|---|---|
 | Alga (espansione) | Corallo | Corallo −`algae_coral_damage` (10) ossigeno |
-| CO2 | Corallo | Corallo −`co2_coral_dps` (25/s) ossigeno finché la nube **lo tocca**: basta un contatto parziale con una qualsiasi delle sue celle, non serve coprirlo tutto |
+| CO2 | Corallo | Corallo −`co2_coral_damage` (50) ossigeno **una sola volta, al primo contatto**: basta toccare una qualsiasi delle sue celle. La nube prosegue e non danneggia di nuovo lo stesso corallo |
 | CO2 | Alga | La CO2 viene **assorbita** (sparisce) e l'alga **si espande subito** |
 | CO2 | Nido con uova | Le uova muoiono, il nido torna `EMPTY` |
 | Busta | Pesce | Il pesce **muore**, la busta resta |
@@ -180,7 +180,7 @@ Le combinazioni non elencate **non fanno nulla**.
 | Ciclone | CO2 / Busta | Rimosse |
 | Ciclone | Corallo | Il corallo **muore**, il ciclone **sparisce** |
 
-Danni dal più debole al più forte: alga < busta < CO2.
+Danni dal più debole al più forte: alga (10) < busta (35) < CO2 (50). Tutti i danni sono **istantanei al contatto**, nessuno è al secondo.
 
 ## 9. Interfaccia
 - **In alto a sinistra**: contatori di coralli, alghe, pesci e nidi; ognuno lampeggia in rosso quando è ≤ 1.
