@@ -35,7 +35,7 @@ const TAKES := {
 		"res://assets/audio/wind_hit.wav",
 	],
 	&"co2_gone": [ # a CO2 cloud disappears
-		"res://assets/audio/co2/fart.wav",
+		"res://assets/audio/co2/bubble_pop.mp3",
 	],
 	&"bag_destroyed": [ # a plastic bag pops
 		"res://assets/audio/busta/b0.wav",
