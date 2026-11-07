@@ -5,8 +5,10 @@ extends StaticBody2D
 
 signal destroyed
 
-const HEALTHY_COLOR := Color(1.0, 0.45, 0.55)
-const SUFFOCATED_COLOR := Color(0.45, 0.42, 0.42)
+## Footprint under the sprites: a faint tint of the coral state (health).
+const FOOTPRINT_ALPHA := 0.3
+const HEALTHY_COLOR := Color(1.0, 0.45, 0.55, FOOTPRINT_ALPHA)
+const SUFFOCATED_COLOR := Color(0.45, 0.42, 0.42, FOOTPRINT_ALPHA)
 ## Tint of the (grayscale) coral art: red at full oxygen, fading to its own gray at 0.
 ## Red is overbright (> 1) so the mid-gray art reads as a vivid, bright red.
 const CORAL_HEALTHY_TINT := Color(1.6, 0.25, 0.25)
