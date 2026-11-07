@@ -11,6 +11,9 @@ extends CharacterBody2D
 ## swims over algae (eating them) and nests.
 
 signal destroyed
+## Used by the audio system (systems/b_audio.gd).
+signal ate_algae
+signal rammed
 
 ## Distance (world units) at which a waypoint counts as reached.
 const ARRIVE_DISTANCE := 3.0
@@ -116,6 +119,7 @@ func _try_touch() -> bool:
 	if _target is Predator:
 		(_target as Predator).scare()
 		_target = null
+		rammed.emit()
 	elif _target is PlasticBag:
 		(_target as PlasticBag).destroy()
 		_target = null
@@ -130,6 +134,7 @@ func _try_touch() -> bool:
 func _finish_algae() -> void:
 	if _is_valid_target(_target) and _target is Algae:
 		(_target as Algae).destroy()
+		ate_algae.emit()
 	_target = null
 	_path.clear()
 	_replan_timer = 0.0

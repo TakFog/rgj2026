@@ -3,6 +3,9 @@ extends ColorRect
 ## Full-screen game-over overlay: which population collapsed, survival time and
 ## a Restart button (GDD §3, roadmap contract #11). Works while the tree is paused.
 
+## Used by the audio system (systems/b_audio.gd).
+signal restart_pressed
+
 var _title: Label
 var _score: Label
 
@@ -43,5 +46,6 @@ func _add_label(parent: Control, font_size: int) -> Label:
 
 
 func _on_restart_pressed() -> void:
+	restart_pressed.emit()
 	get_tree().paused = false
 	get_tree().reload_current_scene()

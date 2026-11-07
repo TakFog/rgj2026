@@ -4,6 +4,11 @@ extends Node
 ## send it straight there. Right click / Esc deselects. Ignored while placing
 ## (contract #8).
 
+## Used by the audio system (systems/b_audio.gd).
+signal fish_selected
+signal fish_ordered
+signal selection_cleared
+
 var selected: Fish = null
 
 
@@ -27,6 +32,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(InputActions.CANCEL) and is_instance_valid(selected):
 		_select(null)
+		selection_cleared.emit()
 		get_viewport().set_input_as_handled()
 
 
@@ -34,8 +40,10 @@ func _on_command(click: Vector2) -> void:
 	var fish := _fish_at(click)
 	if fish != null:
 		_select(fish)
+		fish_selected.emit()
 	elif is_instance_valid(selected):
 		selected.order(click.clamp(Vector2.ZERO, Game.grid.world_size()))
+		fish_ordered.emit()
 		_select(null)
 
 

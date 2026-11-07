@@ -4,6 +4,8 @@ extends StaticBody2D
 ## CONTRACT (used by Dev B threats): cells, oxygen, apply_oxygen_damage(), destroy().
 
 signal destroyed
+## Used by the audio system (systems/b_audio.gd).
+signal damaged
 
 ## Footprint under the sprites: a faint tint of the coral state (health).
 const FOOTPRINT_ALPHA := 0.3
@@ -82,6 +84,7 @@ func _process(delta: float) -> void:
 func apply_oxygen_damage(amount: float) -> void:
 	if _dead:
 		return
+	damaged.emit()
 	_oxygen.damage(amount)
 
 

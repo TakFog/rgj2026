@@ -7,6 +7,10 @@ extends Node
 signal placement_started
 ## Emitted after a successful placement, with the kind of the placed item.
 signal placement_finished(kind: StringName)
+## Emitted when the player cancels placement (right click / Esc).
+signal placement_cancelled
+## Emitted when a click cannot place the item (blocked or out of bounds).
+signal placement_failed
 
 const VALID_COLOR := Color(0.3, 1.0, 0.4, 0.45)
 const INVALID_COLOR := Color(1.0, 0.25, 0.25, 0.45)
@@ -67,6 +71,7 @@ func try_place_at(origin: Vector2i) -> bool:
 		return false
 	var cells := footprint(origin)
 	if not can_place(cells):
+		placement_failed.emit()
 		return false
 	var item := inventory.model.take(active_slot)
 	match item["kind"]:
@@ -97,6 +102,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(InputActions.CANCEL):
 		cancel()
+		placement_cancelled.emit()
 		get_viewport().set_input_as_handled()
 
 

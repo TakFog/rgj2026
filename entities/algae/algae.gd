@@ -5,6 +5,8 @@ extends StaticBody2D
 ## eater / is_taken_by_other() (one fish reserves an algae at a time).
 
 signal destroyed
+## Used by the audio system (systems/b_audio.gd).
+signal spread
 
 ## Temporary art, until the designer's algae sprite is ready.
 const TEXTURE := preload("res://assets/sprites/temp/algae.png")
@@ -59,6 +61,7 @@ func try_expand() -> void:
 	match result["outcome"]:
 		AlgaeSpread.Outcome.SPAWN:
 			Game.factory.spawn_algae(result["cell"])
+			spread.emit()
 		AlgaeSpread.Outcome.DAMAGE_CORAL:
 			(result["target"] as Coral).apply_oxygen_damage(Game.eco.algae_coral_damage)
 
