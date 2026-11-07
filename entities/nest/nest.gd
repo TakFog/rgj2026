@@ -40,7 +40,12 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	_cycle.tick(delta)
+	var hazard := 0.0
+	if has_eggs():
+		var death_chance := clampf(Game.by_temperature(
+			Game.eco.egg_death_chance_cold, Game.eco.egg_death_chance_hot), 0.0, 1.0)
+		hazard = NestCycle.hazard_from_chance(death_chance, _cycle.hatch_seconds)
+	_cycle.tick(delta, hazard)
 	_visual.color = EGGS_COLOR if has_eggs() else EMPTY_COLOR
 
 

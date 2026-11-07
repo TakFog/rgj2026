@@ -10,6 +10,9 @@ extends Resource
 @export_group("Coral")
 @export var coral_max_oxygen := 100.0
 @export var coral_regen_per_sec := 0.5
+## Oxygen per second at temperature 1.0. Negative values drain oxygen, so
+## corals slowly die in hot water.
+@export var coral_regen_hot_per_sec := -0.3
 
 @export_group("Algae")
 @export var algae_growth_interval_cold := 12.0
@@ -21,6 +24,11 @@ extends Resource
 @export_group("Nest")
 @export var nest_hatch_seconds := 20.0
 @export var nest_hatch_count := 3
+## Chance that a clutch dies before hatching at temperature 0.0 / 1.0,
+## assuming that temperature for the whole incubation. Values are clamped
+## to 0..1, so the negative cold value means no deaths at the beginning.
+@export var egg_death_chance_cold := -0.2
+@export var egg_death_chance_hot := 0.6
 
 @export_group("Inventory")
 @export var inventory_slots := 4

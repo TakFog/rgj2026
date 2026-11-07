@@ -54,7 +54,10 @@ func _build_visuals() -> void:
 func _process(delta: float) -> void:
 	if _dead:
 		return
+	_oxygen.regen_per_sec = Game.by_temperature(Game.eco.coral_regen_per_sec, Game.eco.coral_regen_hot_per_sec)
 	_oxygen.tick(delta)
+	if _dead:
+		return
 	var tint := SUFFOCATED_COLOR.lerp(HEALTHY_COLOR, _oxygen.ratio())
 	for visual in _visuals:
 		visual.color = tint

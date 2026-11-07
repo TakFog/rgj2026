@@ -26,11 +26,15 @@ func damage(amount: float) -> void:
 		depleted.emit()
 
 
-## Slow regeneration, capped at max_oxygen. Dead corals do not regenerate.
+## Slow regeneration, capped at max_oxygen. A negative regen drains oxygen
+## and kills the coral at 0 (hot water). Dead corals do not tick.
 func tick(delta: float) -> void:
 	if dead:
 		return
-	value = minf(value + regen_per_sec * delta, max_oxygen)
+	value = clampf(value + regen_per_sec * delta, 0.0, max_oxygen)
+	if value <= 0.0:
+		dead = true
+		depleted.emit()
 
 
 func ratio() -> float:
