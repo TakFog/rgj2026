@@ -105,11 +105,12 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 ### 5.3 Alga
 - Occupa **1 cella**, ostacolo solido per i pesci (collisione quadrata a cella piena, quindi i muri di alghe non hanno buchi).
 - **Espansione**: ogni `algae_growth_interval` (con variazione casuale ±20%, ridotto dalla temperatura) l'alga prova a generarne una nuova:
-  1. sceglie a caso una delle **4 celle adiacenti** (sopra, sotto, sinistra, destra) non ancora provate;
+  1. prova le **4 celle adiacenti** (sopra, sotto, sinistra, destra) in **ordine casuale**;
   2. controlla la cella:
      - **vuota** → nasce la nuova alga;
      - **corallo** → l'alga non nasce, il corallo perde `algae_coral_damage` ossigeno;
-     - **qualsiasi altra cosa** (alga, nido, fuori mappa, pesce o minaccia sopra la cella) → riprova con un'altra cella adiacente, **al massimo 3 tentativi**, poi l'espansione fallisce.
+     - **qualsiasi altra cosa** (alga, nido, fuori mappa, pesce o minaccia sopra la cella) → passa alla cella adiacente successiva.
+  3. Se **nessuna** delle 4 celle è utilizzabile, l'espansione si ferma. Al prossimo intervallo l'alga riprova, perché nel frattempo una cella potrebbe essersi liberata (es. un pesce ha mangiato un'alga vicina).
 - Tetto massimo di alghe in gioco: `algae_max_count` (200), sia per le prestazioni sia per il bilanciamento.
 - Può essere mangiata dai pesci.
 
@@ -169,7 +170,7 @@ Le combinazioni non elencate **non fanno nulla**.
 | Agente | Bersaglio | Effetto |
 |---|---|---|
 | Alga (espansione) | Corallo | Corallo −`algae_coral_damage` (10) ossigeno |
-| CO2 | Corallo | Corallo −`co2_coral_dps` (25/s) ossigeno finché si sovrappongono |
+| CO2 | Corallo | Corallo −`co2_coral_dps` (25/s) ossigeno finché la nube **lo tocca**: basta un contatto parziale con una qualsiasi delle sue celle, non serve coprirlo tutto |
 | CO2 | Alga | La CO2 viene **assorbita** (sparisce) e l'alga **si espande subito** |
 | CO2 | Nido con uova | Le uova muoiono, il nido torna `EMPTY` |
 | Busta | Pesce | Il pesce **muore**, la busta resta |
