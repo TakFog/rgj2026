@@ -1,0 +1,118 @@
+name: CD
+
+# Builds the Web (single-threaded) export and pushes it to itch.io.
+# Runs only after CI has passed on main, or manually.
+#
+# Required repository settings:
+#   secrets.BUTLER_API_KEY  - itch.io API key (https://itch.io/user/settings/api-keys)
+#   vars.ITCH_TARGET        - itch.io "user/game" slug, e.g. "someone/ideologia-marina"
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-itch
+  cancel-in-progress: false
+
+env:
+  GODOT_VERSION: "4.7.2"
+  ITCH_CHANNEL: html5
+
+jobs:
+  deploy:
+    name: Web export and itch.io push
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check itch.io configuration
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_TARGET: ${{ vars.ITCH_TARGET }}
+        run: |
+          if [ -z "$BUTLER_API_KEY" ] || [ -z "$ITCH_TARGET" ]; then
+            echo "::error::Set secret BUTLER_API_KEY and variable ITCH_TARGET (user/game) in the repository settings."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Download Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          curl -fsSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+          chmod +x ~/godot/godot
+
+      - name: Cache Web export template
+        id: cache-templates
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-templates-web-nothreads-${{ env.GODOT_VERSION }}
+
+      - name: Download Web export template
+        if: steps.cache-templates.outputs.cache-hit != 'true'
+        run: |
+          dest=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$dest"
+          curl -fsSL -o /tmp/templates.tpz \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          # Only the single-threaded web templates are needed.
+          unzip -j -q /tmp/templates.tpz \
+            templates/web_nothreads_release.zip \
+            templates/web_nothreads_debug.zip \
+            -d "$dest"
+          rm /tmp/templates.tpz
+
+      - name: Export Web build
+        run: |
+          mkdir -p build/web
+          ~/godot/godot --headless --import || true
+          ~/godot/godot --headless --export-release "Web" build/web/index.html
+          test -f build/web/index.html
+          test -f build/web/index.wasm
+          test -f build/web/index.pck
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+          retention-days: 7
+
+      - name: Install butler
+        run: |
+          mkdir -p ~/butler
+          curl -fsSL -o /tmp/butler.zip \
+            https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q /tmp/butler.zip -d ~/butler
+          chmod +x ~/butler/butler
+          ~/butler/butler -V
+
+      - name: Push to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_TARGET: ${{ vars.ITCH_TARGET }}
+        run: |
+          ~/butler/butler push build/web "${ITCH_TARGET}:${ITCH_CHANNEL}" \
+            --userversion "$(git rev-parse --short HEAD)"
