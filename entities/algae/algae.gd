@@ -27,7 +27,9 @@ func _ready() -> void:
 	add_to_group(Groups.ALGAE)
 	Game.grid.occupy([cell], self)
 	CellShapes.add_collision(self, [cell], cell)
-	ViewFollower.attach(self, PlaceholderShape.cell(position, Color(0.3, 0.8, 0.35)))
+	# Flat ground cover: drawn below the y-sorted actors, so the predator and
+	# the turtle swimming over an algae stay on top of it.
+	ViewFollower.attach(self, PlaceholderShape.cell(position, Color(0.3, 0.8, 0.35))).z_index = -1
 	_rng.randomize()
 	_reset_timer()
 
