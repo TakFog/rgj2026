@@ -10,6 +10,9 @@ const CORNER_RADIUS := 16
 const CAPTION_HEIGHT := 24.0
 const CAPTION_FONT_SIZE := 15
 const ICON_PADDING := 12.0
+## Radius of the keyboard-shortcut badge drawn in the top-left corner.
+const SHORTCUT_RADIUS := 11.0
+const SHORTCUT_FONT_SIZE := 13
 ## Hover and selection lift the card, in pixels; eased toward the target.
 const HOVER_LIFT := 4.0
 const SELECTED_LIFT := 9.0
@@ -34,6 +37,8 @@ const NAMES := {
 var item: Dictionary = {}
 var refill_ratio := 1.0
 var selected := false
+## Keyboard shortcut shown on the card (1-4); 0 hides the badge.
+var hotkey := 0
 
 var _lift := 0.0
 var _style := StyleBoxFlat.new()
@@ -103,7 +108,22 @@ func _draw() -> void:
 	else:
 		_draw_icon(_icon_rect())
 		_draw_caption()
+	_draw_shortcut()
 	draw_set_transform(Vector2.ZERO)
+
+
+## Number badge in the top-left corner so the 1-4 shortcuts are discoverable.
+func _draw_shortcut() -> void:
+	if hotkey <= 0:
+		return
+	var center := Vector2(SHORTCUT_RADIUS + 4.0, SHORTCUT_RADIUS + 4.0)
+	draw_circle(center, SHORTCUT_RADIUS, Color(BG_COLOR, 0.95))
+	draw_arc(center, SHORTCUT_RADIUS, 0.0, TAU, 24, Color(RIM_COLOR, 0.8), 2.0, true)
+	var font := get_theme_default_font()
+	var text := str(hotkey)
+	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, SHORTCUT_FONT_SIZE)
+	var baseline := center + Vector2(-text_size.x * 0.5, SHORTCUT_FONT_SIZE * 0.35)
+	draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, SHORTCUT_FONT_SIZE, CAPTION_COLOR)
 
 
 func _draw_frame() -> void:

@@ -21,8 +21,8 @@ const EXIT_MARGIN := 32.0
 ## Screen pixels the threat body floats above its ground shadow.
 const HOVER_PX := 18.0
 ## Max radians per second the heading is pulled toward the island center while
-## outside the playable area, on top of the (reduced) drift noise. This forces
-## the movement vector to point back inside instead of drifting away.
+## outside the playable area and not yet arrived, on top of the (reduced) drift
+## noise. This forces the movement vector to point inside instead of drifting away.
 const INWARD_STEER := 4.0
 
 var kind: int = ThreatSchedule.Type.CO2
@@ -42,6 +42,9 @@ var sprite_height_radii := 2.5
 var heading := 0.0
 
 var _in_view := false
+## Set once the threat first reaches the island: from then on it is no longer
+## steered inward, so it can drift off the seabed and be removed (GDD §7).
+var _entered_island := false
 var _drift: DriftMotion
 var _body: Node2D
 var _hit := {} # target instance id -> true
@@ -80,11 +83,11 @@ func _physics_process(delta: float) -> void:
 		heading = _steer_inward(heading, delta)
 	position += Vector2.from_angle(heading) * speed * delta
 	_animate_body(delta)
-	var in_view := _in_alive_area()
+	var in_view := _in_visible_area()
 	if in_view != _in_view:
 		_in_view = in_view
 		view_changed.emit(in_view)
-	if not in_view:
+	if not _in_alive_area():
 		destroy(End.OFF_SCREEN)
 
 
@@ -96,18 +99,27 @@ func _turn_scale() -> float:
 	return 1.0 if island.has_point(position) else outside_turn_scale
 
 
-## Pulls the heading back toward the island center while outside the playable
-## area, so the threat always heads inside instead of drifting off the seabed.
-## A no-op once the threat is inside the island grid.
-func _steer_inward(heading: float, delta: float) -> float:
+## Pulls the heading toward the island center until the threat first reaches
+## the playable area, so it always arrives instead of drifting off the seabed.
+## A no-op from then on: after crossing the island it drifts away and leaves.
+func _steer_inward(p_heading: float, delta: float) -> float:
+	if _entered_island:
+		return p_heading
 	var island := Rect2(Vector2.ZERO, Game.grid.world_size())
 	if island.has_point(position):
-		return heading
+		_entered_island = true
+		return p_heading
 	var center := island.position + island.size * 0.5
 	var target := (center - position).angle()
-	var diff := wrapf(target - heading, -PI, PI)
+	var diff := wrapf(target - p_heading, -PI, PI)
 	var step := clampf(diff, -INWARD_STEER * delta, INWARD_STEER * delta)
-	return heading + step
+	return p_heading + step
+
+
+## Whether any part of the threat overlaps the visible seabed (drives view_changed).
+func _in_visible_area() -> bool:
+	var grown := Game.visible_world_polygon_grown(radius)
+	return not grown.is_empty() and Geometry2D.is_point_in_polygon(position, grown)
 
 
 ## Inside the visible seabed, grown so threats spawn and leave fully off screen.

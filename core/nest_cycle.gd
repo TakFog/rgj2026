@@ -54,11 +54,11 @@ func tick(delta: float, death_hazard_per_sec: float = 0.0) -> void:
 
 
 ## Converts a desired chance over the whole incubation into a per-second hazard.
-static func hazard_from_chance(chance_per_hatch: float, hatch_seconds: float) -> float:
-	if chance_per_hatch <= 0.0 or hatch_seconds <= 0.0:
+static func hazard_from_chance(chance_per_hatch: float, p_hatch_seconds: float) -> float:
+	if chance_per_hatch <= 0.0 or p_hatch_seconds <= 0.0:
 		return 0.0
 	var chance := minf(chance_per_hatch, 0.999)
-	return -log(1.0 - chance) / hatch_seconds
+	return -log(1.0 - chance) / p_hatch_seconds
 
 
 ## Probability of dying during `delta` seconds at the given hazard.

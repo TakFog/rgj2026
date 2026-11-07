@@ -245,6 +245,9 @@ arp_full_hostiles = 6
 music_gain_db = 7.0
 ; Global effects level: every effect event gets this on top of its own gain.
 effects_gain_db = 2.0
+; While paused, the music is low-passed to this cutoff (0 disables).
+pause_music_low_pass_hz = 900.0
+pause_filter_fade_seconds = 0.2
 ; The cyclone wind fades in when a cyclone enters the screen and out when it leaves.
 cyclone_wind_fade_seconds = 1.0
 ; Played once when the run is lost (the loop above stops first).

@@ -72,7 +72,7 @@ func _build_visuals() -> void:
 		_visuals.append(visual)
 		visual.add_sprite(BASE_TEXTURE)
 		_sprites.append(visual.add_sprite(CORAL_TEXTURE))
-		_followers.append(ViewFollower.attach(marker, visual))
+		_followers.append(ViewFollower.attach(marker, visual, true))
 
 
 func _process(delta: float) -> void:

@@ -34,3 +34,6 @@ desktop.ini
 *~
 /addons/orca
 /video
+
+# Temporary file written by tools/lint.sh
+override.cfg

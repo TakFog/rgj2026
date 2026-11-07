@@ -32,8 +32,8 @@ func _init(p_max_speed: float, rng: RandomNumberGenerator) -> void:
 	_rng = rng
 	angle = _rng.randf_range(-PI, PI)
 	if max_speed > 0.0:
-		var sign := 1.0 if _rng.randf() < 0.5 else -1.0
-		rate = _rng.randf_range(0.3, 1.0) * max_speed * sign
+		var direction := 1.0 if _rng.randf() < 0.5 else -1.0
+		rate = _rng.randf_range(0.3, 1.0) * max_speed * direction
 		_pick_target()
 
 
@@ -56,6 +56,6 @@ func _pick_target() -> void:
 		_target = 0.0
 		_time_to_retarget = _rng.randf_range(STALL_SECONDS_MIN, STALL_SECONDS_MAX)
 		return
-	var sign := 1.0 if _rng.randf() < 0.5 else -1.0
-	_target = _rng.randf_range(0.2, 1.0) * max_speed * sign
+	var direction := 1.0 if _rng.randf() < 0.5 else -1.0
+	_target = _rng.randf_range(0.2, 1.0) * max_speed * direction
 	_time_to_retarget = _rng.randf_range(SPIN_SECONDS_MIN, SPIN_SECONDS_MAX)

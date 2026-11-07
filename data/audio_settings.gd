@@ -46,6 +46,11 @@ const SILENCE_DB := -80.0
 @export_range(-80.0, 24.0, 0.1) var outro_gain_db := 0.0
 @export_range(0.0, 21000.0, 10.0) var music_high_pass_hz := 0.0
 @export_range(0.0, 21000.0, 10.0) var music_low_pass_hz := 0.0
+## While the pause menu is open the music gets an extra low-pass at this cutoff
+## (Hz), so the reef sounds distant. 0.0 disables the effect.
+@export_range(0.0, 21000.0, 10.0) var pause_music_low_pass_hz := 900.0
+## Seconds the pause filter takes to close/open.
+@export_range(0.0, 4.0, 0.05) var pause_filter_fade_seconds := 0.2
 
 @export_group("Effects")
 ## Applied to every effect, on top of the per-event gain. The takes peak around

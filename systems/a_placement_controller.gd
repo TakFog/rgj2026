@@ -118,6 +118,14 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# 1-4 pick the matching inventory slot, even while another item is being
+	# placed (pressing another number switches to it).
+	for i in InputActions.SLOTS.size():
+		if event.is_action_pressed(InputActions.SLOTS[i]):
+			if i < inventory.model.slots.size():
+				begin(i)
+				get_viewport().set_input_as_handled()
+			return
 	if active_slot < 0:
 		return
 	if event.is_action_pressed(InputActions.COMMAND):

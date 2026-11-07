@@ -21,6 +21,10 @@ const OPEN_SEABED := Color8(6, 18, 23)
 const MAP_EDGE_FADE := Vector2(0.1, 0.08)
 const GRID_LINE := Color(1, 1, 1, 0.12)
 const SEABED_SHADER := preload("res://main/seabed.gdshader")
+## Screen px (at zoom <= 1) the open-seabed fill extends past the viewport, so
+## the camera shake (core/juice.gd, offset up to 9 units) never uncovers the
+## clear colour.
+const SHAKE_MARGIN := 16.0
 
 ## The open-seabed polygon is static during a run (the camera does not move), so
 ## it is projected once and only invalidated when the viewport resizes.
@@ -58,7 +62,10 @@ func _ready() -> void:
 	map.texture = MAP
 	map.centered = false
 	map.transform = _map_transform(Game.projection.project_polygon(corners, Vector2.ZERO))
-	material = _seabed_material()
+	var fill := _seabed_material()
+	# The plain fill has no sand: skip the caustics there.
+	fill.set_shader_parameter("caustics_enabled", false)
+	material = fill
 	map.material = _seabed_material()
 	map.material.set_shader_parameter("edge_fade", MAP_EDGE_FADE)
 	add_child(map)
@@ -96,14 +103,15 @@ func _map_transform(island: PackedVector2Array) -> Transform2D:
 	return grown * sand.affine_inverse()
 
 
-## The visible screen area in this node's coordinates (camera included).
+## The visible screen area in this node's coordinates (camera included), grown
+## by SHAKE_MARGIN (scaled by the zoom, as the shake offsets the camera).
 func _screen_polygon() -> PackedVector2Array:
 	if not _screen_polygon_valid:
-		var to_local := get_global_transform_with_canvas().affine_inverse()
-		var rect := get_viewport_rect()
+		var canvas_to_local := get_global_transform_with_canvas().affine_inverse()
+		var rect := get_viewport_rect().grow(SHAKE_MARGIN * maxf(Game.VIEW_SETTINGS.zoom, 1.0))
 		_screen_polygon_cache = PackedVector2Array([
-			to_local * rect.position, to_local * Vector2(rect.end.x, rect.position.y),
-			to_local * rect.end, to_local * Vector2(rect.position.x, rect.end.y)])
+			canvas_to_local * rect.position, canvas_to_local * Vector2(rect.end.x, rect.position.y),
+			canvas_to_local * rect.end, canvas_to_local * Vector2(rect.position.x, rect.end.y)])
 		_screen_polygon_valid = true
 	return _screen_polygon_cache
 

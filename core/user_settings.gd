@@ -9,6 +9,8 @@ const MUSIC_KEY := "music_db"
 const EFFECTS_KEY := "effects_db"
 const TUTORIAL_SECTION := "tutorial"
 const TUTORIAL_KEY := "seen"
+const SCORE_SECTION := "score"
+const BEST_SECONDS_KEY := "best_seconds"
 ## Slider range: -80 dB is silent, 0 dB leaves the designed mix untouched.
 const MIN_DB := -80.0
 const MAX_DB := 0.0
@@ -55,6 +57,25 @@ static func mark_tutorial_seen(path := PATH) -> void:
 	config.load(path)
 	config.set_value(TUTORIAL_SECTION, TUTORIAL_KEY, true)
 	config.save(path)
+
+
+## Best survival time in seconds, or 0.0 when no run has been recorded.
+static func best_seconds(path := PATH) -> float:
+	var config := ConfigFile.new()
+	if config.load(path) != OK:
+		return 0.0
+	return maxf(0.0, float(config.get_value(SCORE_SECTION, BEST_SECONDS_KEY, 0.0)))
+
+
+## Stores `seconds` when it beats the current best. Returns true on a new record.
+static func submit_best(seconds: float, path := PATH) -> bool:
+	if seconds <= best_seconds(path):
+		return false
+	var config := ConfigFile.new()
+	config.load(path)
+	config.set_value(SCORE_SECTION, BEST_SECONDS_KEY, seconds)
+	config.save(path)
+	return true
 
 
 ## Slider position (0..100) -> bus level. Linear in amplitude, so 50% is -6 dB.

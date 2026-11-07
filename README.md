@@ -21,13 +21,14 @@ The full game design document (in Italian) is in [`docs/GDD.md`](docs/GDD.md).
 | Input | Action |
 | --- | --- |
 | Left click | Select a fish, give it an order, confirm a placement |
+| 1 / 2 / 3 / 4 | Pick the matching inventory slot (number row or keypad) |
 | Right click / Esc | Cancel placement / deselect |
 | Space / Esc | Pause (Esc pauses only when there is nothing to cancel) |
 | F3 | Debug overlay (SHOW PATHS draws planned fish/predator/turtle routes) |
 
 ## Requirements
 
-- [Godot **4.7.2** stable](https://godotengine.org/download/archive/) (standard build, no .NET needed).
+- [Godot **4.7.2** stable](https://godotengine.org/download/archive/4.7.2-stable/) (standard build, no .NET needed).
   Other versions may work but are not tested; CI uses exactly 4.7.2.
 
 ## Running the game

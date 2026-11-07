@@ -29,6 +29,10 @@ const BUTTON_SIZE := Vector2(220, 60)
 const MENU_SEPARATION := 16
 ## Same translucent navy backdrop for every full-screen menu overlay.
 const OVERLAY_COLOR := Color(0.02, 0.05, 0.1, 0.85)
+## Opaque deep-sea backdrop for the painted title screen: the art has a
+## transparent background, so it needs a flat colour behind it (the letterbox
+## bars at non-16:9 window sizes use the same colour).
+const MENU_BACKDROP_COLOR := Color(0.02, 0.05, 0.1)
 ## Divider under a menu title: a thin aqua line at 35 % opacity.
 const DIVIDER_COLOR := Color(0.25, 0.85, 0.9, 0.35)
 

@@ -1,19 +1,26 @@
 class_name MainMenuScreen
 extends ColorRect
 ## Main menu overlay shown at game start (GDD §9, roadmap: title screen).
-## Title at one quarter of the screen height, Play at the centre of the
-## screen, Credits bottom right, Exit bottom left (Exit hidden in web builds).
-## Works while the tree is paused; clicking Play unpauses and hides the menu.
+## The whole screen is the artist's painted menu; its five painted buttons are
+## invisible hotspots (MenuHotspots), so the art is the interface. Works while
+## the tree is paused; clicking Inizia unpauses and hides the menu.
 
-const BUTTON_SIZE := SeaStyle.BUTTON_SIZE
-const SCREEN_MARGIN := 24.0
-const TITLE_HEIGHT := 80.0
-const TITLE_Y_FRACTION := 0.25
+## The painted menu: the master is `video/MENU.png`, this is the web-sized copy.
+const MENU_TEXTURE: Texture2D = preload("res://assets/ui/menu.png")
+## How much the hover/focus glow brightens a painted button.
+const GLOW_ALPHA := 0.22
+## How much further it brightens while the button is held down.
+const GLOW_ALPHA_PRESSED := 0.4
+## Margin around the ESCI pill that the web cover blanks out.
+const EXIT_COVER_MARGIN := 6.0
 
-## Player-facing name and credits, kept in one place so the title screen and
-## the credits panel cannot drift apart.
+## Player-facing name and credits, kept in one place so the credits panel and
+## the rest of the UI cannot drift apart.
 const GAME_TITLE := "BalanSea"
-const CREDITS_TEXT := "Un gestionale di barriera corallina.\nTema del game jam: SUBIRE.\n\nRealizzato con Godot 4.7.2."
+const CREDITS_TEXT := "Un gestionale di barriera corallina.\nSviluppato durante la Rome Game Jam 2026 a tema SUBIRE.\n\nFlavio De Benedictis — Developer\nLorenzo Patané — Developer\nMaria Elena Papale — Artist\nMateusz Kulesza — Music, Developer"
+## User command-line argument (after `--`) that skips the title screen and
+## starts a run straight away, so tools/smoke.sh exercises real gameplay.
+const SMOKE_PLAY_ARG := "--smoke-play"
 
 signal play_pressed
 signal exit_pressed
@@ -32,11 +39,20 @@ static var _skip_next_open := false
 var _menu_panel: Control
 var _credits_panel: Control
 var _settings_panel: SettingsPanel
+var _play_button: Button
+## The painting, fitted and centred on screen; its hotspots are its children.
+var _art_box: Control
+## Hotspot key (see MenuHotspots.RECTS) -> its invisible Button.
+var _hotspots: Dictionary = {}
+## Web builds blank the painted ESCI pill with this backdrop-coloured cover.
+var _exit_cover: ColorRect
+## Shared additive material that makes the glow brighten the painted shape.
+var _glow_material: CanvasItemMaterial
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	color = SeaStyle.OVERLAY_COLOR
+	color = SeaStyle.MENU_BACKDROP_COLOR
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	visible = true
@@ -57,7 +73,7 @@ func _ready() -> void:
 	# Auto-open when the menu enters the tree (game start). Calling open()
 	# from DevBSystems would race: Game.ui is not in the tree yet when
 	# DevBSystems._ready runs, so _ready here hasn't fired yet.
-	if _skip_next_open:
+	if _skip_next_open or OS.get_cmdline_user_args().has(SMOKE_PLAY_ARG):
 		_skip_next_open = false
 		_start_without_menu()
 	else:
@@ -79,83 +95,118 @@ func _start_without_menu() -> void:
 	play_pressed.emit.call_deferred()
 
 
-func _build_menu_panel() -> Control:
+func _build_menu_panel(web_build: bool = OS.has_feature("web")) -> Control:
 	var panel := Control.new()
 	panel.name = "MenuPanel"
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The painting is refitted whenever the window changes size.
+	panel.resized.connect(_layout_art)
 
-	# Title across the full width, vertically centred on 1/4 of the screen.
-	var title := Label.new()
-	title.text = GAME_TITLE
-	SeaStyle.style_title(title, SeaStyle.HERO_TITLE_FONT_SIZE)
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(title)
-	title.anchor_left = 0.0
-	title.anchor_right = 1.0
-	title.anchor_top = TITLE_Y_FRACTION
-	title.anchor_bottom = TITLE_Y_FRACTION
-	title.offset_left = 0.0
-	title.offset_right = 0.0
-	title.offset_top = -TITLE_HEIGHT * 0.5
-	title.offset_bottom = TITLE_HEIGHT * 0.5
+	_art_box = Control.new()
+	_art_box.name = "ArtBox"
+	_art_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(_art_box)
 
-	# Play, centred both horizontally and vertically.
-	var play_btn := _button("Gioca")
-	play_btn.pressed.connect(_on_play_pressed)
-	panel.add_child(play_btn)
-	play_btn.set_anchors_preset(Control.PRESET_CENTER)
-	play_btn.offset_left = -BUTTON_SIZE.x * 0.5
-	play_btn.offset_right = BUTTON_SIZE.x * 0.5
-	play_btn.offset_top = -BUTTON_SIZE.y * 0.5
-	play_btn.offset_bottom = BUTTON_SIZE.y * 0.5
+	var art := TextureRect.new()
+	art.name = "Art"
+	art.texture = MENU_TEXTURE
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_SCALE
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_art_box.add_child(art)
+	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	# Settings, just below Play.
-	var settings_btn := _button("Impostazioni")
-	settings_btn.pressed.connect(_on_settings_pressed)
-	panel.add_child(settings_btn)
-	settings_btn.set_anchors_preset(Control.PRESET_CENTER)
-	settings_btn.offset_left = -BUTTON_SIZE.x * 0.5
-	settings_btn.offset_right = BUTTON_SIZE.x * 0.5
-	settings_btn.offset_top = BUTTON_SIZE.y * 0.5 + SeaStyle.MENU_SEPARATION
-	settings_btn.offset_bottom = BUTTON_SIZE.y * 1.5 + SeaStyle.MENU_SEPARATION
+	_glow_material = CanvasItemMaterial.new()
+	_glow_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 
-	# How to play, just below Settings.
-	var tutorial_btn := _button("Come si gioca")
-	tutorial_btn.add_theme_font_size_override("font_size", 22)
-	tutorial_btn.pressed.connect(_on_tutorial_pressed)
-	panel.add_child(tutorial_btn)
-	tutorial_btn.set_anchors_preset(Control.PRESET_CENTER)
-	tutorial_btn.offset_left = -BUTTON_SIZE.x * 0.5
-	tutorial_btn.offset_right = BUTTON_SIZE.x * 0.5
-	tutorial_btn.offset_top = BUTTON_SIZE.y * 1.5 + 32.0
-	tutorial_btn.offset_bottom = BUTTON_SIZE.y * 2.5 + 32.0
+	# One invisible hotspot per painted button, in MenuHotspots focus order.
+	var handlers := {
+		"play": _on_play_pressed,
+		"tutorial": _on_tutorial_pressed,
+		"settings": _on_settings_pressed,
+		"credits": _on_credits_pressed,
+		"exit": _on_exit_pressed,
+	}
+	for key: String in MenuHotspots.RECTS:
+		var button := _build_hotspot(key, handlers[key])
+		_hotspots[key] = button
+		_art_box.add_child(button)
+	_play_button = _hotspots["play"]
 
-	# Exit, bottom left of the screen.
-	var exit_btn := _button("Esci")
-	exit_btn.pressed.connect(_on_exit_pressed)
-	# Web builds cannot quit the host page, so the exit button is hidden there.
-	if OS.has_feature("web"):
-		exit_btn.visible = false
-	panel.add_child(exit_btn)
-	exit_btn.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	exit_btn.offset_left = SCREEN_MARGIN
-	exit_btn.offset_right = SCREEN_MARGIN + BUTTON_SIZE.x
-	exit_btn.offset_top = -SCREEN_MARGIN - BUTTON_SIZE.y
-	exit_btn.offset_bottom = -SCREEN_MARGIN
+	# Web builds cannot quit the host page, so the painted ESCI pill is
+	# blanked out instead of looking clickable, and its hotspot is taken out of
+	# focus traversal so keyboard players cannot trigger a hidden quit.
+	var exit_button: Button = _hotspots["exit"]
+	exit_button.visible = not web_build
+	exit_button.focus_mode = (
+		Control.FOCUS_NONE if web_build else Control.FOCUS_ALL)
 
-	# Credits, bottom right of the screen.
-	var credits_btn := _button("Crediti")
-	credits_btn.pressed.connect(_on_credits_pressed)
-	panel.add_child(credits_btn)
-	credits_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	credits_btn.offset_left = -SCREEN_MARGIN - BUTTON_SIZE.x
-	credits_btn.offset_right = -SCREEN_MARGIN
-	credits_btn.offset_top = -SCREEN_MARGIN - BUTTON_SIZE.y
-	credits_btn.offset_bottom = -SCREEN_MARGIN
+	_exit_cover = ColorRect.new()
+	_exit_cover.name = "ExitCover"
+	_exit_cover.color = SeaStyle.MENU_BACKDROP_COLOR
+	_exit_cover.mouse_filter = Control.MOUSE_FILTER_STOP
+	_exit_cover.visible = web_build
+	_art_box.add_child(_exit_cover)
 
+	_layout_art()
 	return panel
+
+
+## An invisible button sitting exactly on one painted button. Hover and focus
+## brighten the painted shape by re-drawing its region of the art additively:
+## the art's transparent background stays transparent, so only the pill lights
+## up.
+func _build_hotspot(key: String, handler: Callable) -> Button:
+	var button := Button.new()
+	button.name = "Hotspot_" + key
+	button.focus_mode = Control.FOCUS_ALL
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	for item in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(item, StyleBoxEmpty.new())
+	button.pressed.connect(handler)
+
+	var glow := TextureRect.new()
+	var region := AtlasTexture.new()
+	region.atlas = MENU_TEXTURE
+	region.region = MenuHotspots.hotspot_region(key)
+	glow.texture = region
+	glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	glow.stretch_mode = TextureRect.STRETCH_SCALE
+	glow.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	glow.material = _glow_material
+	glow.modulate = Color(1, 1, 1, GLOW_ALPHA)
+	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	glow.visible = false
+	button.add_child(glow)
+	glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	button.mouse_entered.connect(func() -> void: glow.visible = true)
+	button.mouse_exited.connect(func() -> void: glow.visible = false)
+	button.focus_entered.connect(func() -> void: glow.visible = true)
+	button.focus_exited.connect(func() -> void: glow.visible = false)
+	button.button_down.connect(
+		func() -> void: glow.modulate = Color(1, 1, 1, GLOW_ALPHA_PRESSED))
+	button.button_up.connect(
+		func() -> void: glow.modulate = Color(1, 1, 1, GLOW_ALPHA))
+	return button
+
+
+## Fit the painting (and therefore its hotspots) into the window, centred.
+func _layout_art() -> void:
+	var art := MenuHotspots.art_box(size)
+	_art_box.position = art.position
+	_art_box.size = art.size
+	for key: String in _hotspots:
+		var rect := MenuHotspots.hotspot_rect(size, key)
+		var button: Button = _hotspots[key]
+		button.position = rect.position - art.position
+		button.size = rect.size
+	var cover_rect := MenuHotspots.hotspot_rect(size, "exit").grow(EXIT_COVER_MARGIN)
+	_exit_cover.position = cover_rect.position - art.position
+	_exit_cover.size = cover_rect.size
+
 
 
 func _build_credits_panel() -> Control:
@@ -220,6 +271,7 @@ func _on_settings_pressed() -> void:
 
 func _on_settings_closed() -> void:
 	_menu_panel.visible = true
+	_play_button.grab_focus.call_deferred()
 
 
 func _on_credits_pressed() -> void:
@@ -232,6 +284,7 @@ func _on_back_pressed() -> void:
 	button_pressed.emit()
 	_credits_panel.visible = false
 	_menu_panel.visible = true
+	_play_button.grab_focus.call_deferred()
 
 
 func _on_exit_pressed() -> void:
@@ -241,9 +294,15 @@ func _on_exit_pressed() -> void:
 
 ## The run is paused behind the menu, so swallow the pause key: otherwise
 ## Space/Esc would unpause the game underneath the still-visible menu.
+## On the credits screen, Esc goes back to the menu.
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed(InputActions.PAUSE):
+	if not visible:
+		return
+	var cancel := event.is_action_pressed(InputActions.CANCEL)
+	if cancel or event.is_action_pressed(InputActions.PAUSE):
 		get_viewport().set_input_as_handled()
+		if cancel and _credits_panel.visible:
+			_on_back_pressed()
 
 
 ## Play / How-to-play hides the menu but leaves the run paused for the tutorial.
@@ -260,6 +319,8 @@ func open() -> void:
 	_menu_panel.visible = true
 	_set_gameplay_hud_visible(false)
 	get_tree().paused = true
+	# Keyboard/gamepad players can start without the mouse.
+	_play_button.grab_focus.call_deferred()
 
 
 ## Hide the menu and resume the game.

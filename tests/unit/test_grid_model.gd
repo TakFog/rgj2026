@@ -55,5 +55,5 @@ func test_count_cells_with_predicate() -> void:
 	var cells_b: Array[Vector2i] = [Vector2i(3, 2)]
 	grid.occupy(cells_a, a)
 	grid.occupy(cells_b, b)
-	assert_eq(grid.count_cells(func(e): return e == a), 2)
-	assert_eq(grid.count_cells(func(e): return true), 3)
+	assert_eq(grid.count_cells(func(_e): return _e == a), 2)
+	assert_eq(grid.count_cells(func(_e): return true), 3)

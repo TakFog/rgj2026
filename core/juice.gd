@@ -27,11 +27,6 @@ const EGG_RING_RADIUS_CELLS := 0.55
 const EGG_RING_MIN_ALPHA := 0.10
 const EGG_RING_MAX_ALPHA := 0.38
 
-const BLOOD_COLORS := [
-	Color(0.85, 0.06, 0.10, 0.9),
-	Color(0.62, 0.02, 0.05, 0.9),
-	Color(1.0, 0.22, 0.20, 0.8),
-]
 const BUBBLE_COLOR := Color(0.75, 0.92, 1.0, 0.8)
 const CORAL_SPARK_COLORS := [
 	Color(1.0, 0.45, 0.5, 0.9),
@@ -343,16 +338,13 @@ func _coral_ring(coral: Coral) -> Dictionary:
 
 # --- Effects ---------------------------------------------------------------
 
+## Shared with the tutorial vignettes: core/blood_burst.gd.
 func _blood(world_position: Vector2) -> void:
-	var center := _screen_of(world_position)
-	_burst(center, BLOOD_COLORS, 20, Vector2(25.0, 85.0),
-			Vector2(2.0, 5.0), Vector2(0.45, 0.9), 55.0, 1.2, -15.0)
-	# A softer, larger cloud behind the droplets.
-	for i in 4:
-		var offset := Vector2(_rng.randf_range(-8.0, 8.0), _rng.randf_range(-8.0, 8.0))
-		_add_particle(center + offset, Vector2(_rng.randf_range(-8.0, 8.0), _rng.randf_range(-15.0, 0.0)),
-				Color(0.55, 0.02, 0.04, 0.35), _rng.randf_range(7.0, 12.0),
-				_rng.randf_range(0.45, 0.75), -5.0, 0.8)
+	var burst := BloodBurst.new()
+	burst.position = _screen_of(world_position)
+	# The old pooled blood froze with the game; keep that behaviour.
+	burst.process_mode = Node.PROCESS_MODE_PAUSABLE
+	add_child(burst)
 
 
 func _bubbles(world_position: Vector2) -> void:

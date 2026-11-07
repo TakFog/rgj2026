@@ -15,7 +15,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not Game.actors.turtle_enabled:
 		return
-	_progress += delta / Game.actors.turtle_interval
+	_progress += Game.frame_step(delta) / Game.actors.turtle_interval
 	if _progress < 1.0:
 		return
 	_progress -= 1.0

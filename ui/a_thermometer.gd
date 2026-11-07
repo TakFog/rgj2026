@@ -90,6 +90,9 @@ static func glass_outline(x: float, half_width: float, top: float, bulb_y: float
 
 
 func _ready() -> void:
+	# The UI layer runs ALWAYS; the bubbles and alarm pulse freeze with the run
+	# (pause, menus, game over) instead of redrawing every frame behind them.
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 	custom_minimum_size = CARD_SIZE
 	size = CARD_SIZE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -190,9 +193,9 @@ func _draw_liquid(t: float, color: Color) -> void:
 	if travel <= 0.0:
 		return
 	var speed := 14.0 + 40.0 * t
-	var visible := maxi(1, roundi(BUBBLE_COUNT * (0.4 + 0.6 * t)))
-	for i in range(visible):
-		var phase := fposmod(_time * speed / travel + float(i) / visible, 1.0)
+	var bubble_count := maxi(1, roundi(BUBBLE_COUNT * (0.4 + 0.6 * t)))
+	for i in range(bubble_count):
+		var phase := fposmod(_time * speed / travel + float(i) / bubble_count, 1.0)
 		var y := BULB_CENTER_Y - phase * travel
 		var x := TUBE_X + sin(_time * 3.0 + i * 1.7) * half * 0.45
 		var radius := 1.2 + 0.8 * fposmod(i * 0.37, 1.0)

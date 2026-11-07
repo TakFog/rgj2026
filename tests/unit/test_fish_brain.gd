@@ -19,8 +19,8 @@ func before_each() -> void:
 	nest = RefCounted.new()
 
 
-func _make_brain(adult: bool) -> FishBrain:
-	var b := FishBrain.new(cfg, adult)
+func _make_brain(adult: bool, reproduce_cooldown := -1.0) -> FishBrain:
+	var b := FishBrain.new(cfg, adult, reproduce_cooldown)
 	var s_log := starved_log
 	var m_log := matured_log
 	var e_log := eaten
@@ -232,3 +232,103 @@ func test_seeking_fish_can_switch_target() -> void:
 	brain.seek_food(other)
 	assert_eq(brain.state, FishBrain.State.SEEKING_FOOD)
 	assert_true(brain.food == other)
+
+
+func test_waits_for_reproduce_cooldown() -> void:
+	var ready := _make_brain(true, 5.0)
+	assert_false(ready.wants_to_seek_nest(), "not ready right after creation")
+	ready.tick(5.1)
+	assert_true(ready.wants_to_seek_nest())
+
+
+func test_newly_mature_waits_for_reproduce_cooldown() -> void:
+	var cfg2 := BalanceActors.new()
+	cfg2.starve_seconds = 60.0
+	cfg2.maturity_seconds = 5.0
+	cfg2.reproduce_cooldown_seconds = 20.0
+	var young := FishBrain.new(cfg2, false, 5.0)
+	young.tick(5.1) # cooldown expired while juvenile, then maturation resets it
+	assert_true(young.is_adult())
+	assert_false(young.wants_to_seek_nest(), "a new adult must wait before reproducing")
+	young.tick(5.1)
+	assert_true(young.wants_to_seek_nest())
+
+
+func test_juvenile_never_seeks_nest() -> void:
+	assert_false(_make_brain(false, 0.0).wants_to_seek_nest())
+
+
+func test_hungry_adult_does_not_seek_nest() -> void:
+	var ready := _make_brain(true, 0.0)
+	ready.tick(30.0) # 30 / 45 = 67 % > seek_food_threshold
+	assert_false(ready.wants_to_seek_nest())
+
+
+func test_seek_nest_holds_target() -> void:
+	var ready := _make_brain(true, 0.0)
+	ready.seek_nest(nest)
+	assert_eq(ready.state, FishBrain.State.SEEKING_NEST)
+	assert_true(ready.nest == nest)
+	assert_true(ready.wants_to_move())
+	assert_false(ready.wants_to_seek_nest())
+
+
+func test_nest_reached_starts_fertilizing_and_restarts_cooldown() -> void:
+	var ready := _make_brain(true, 5.0)
+	ready.tick(5.1)
+	ready.seek_nest(nest)
+	ready.nest_reached(nest)
+	assert_eq(ready.state, FishBrain.State.FERTILIZING)
+	ready.tick(3.1)
+	assert_eq(ready.state, FishBrain.State.WANDER)
+	assert_eq(fertilized, [nest])
+	assert_false(ready.wants_to_seek_nest(), "cooldown restarted after success")
+
+
+func test_nest_reached_without_empty_nest_abandons() -> void:
+	var ready := _make_brain(true, 0.0)
+	ready.seek_nest(nest)
+	ready.nest_reached(null)
+	assert_eq(ready.state, FishBrain.State.WANDER)
+	assert_false(ready.wants_to_seek_nest(), "waits before retrying")
+
+
+func test_nest_lost_waits_before_retrying() -> void:
+	var ready := _make_brain(true, 0.0)
+	ready.seek_nest(nest)
+	ready.nest_lost()
+	assert_eq(ready.state, FishBrain.State.WANDER)
+	assert_false(ready.wants_to_seek_nest())
+	ready.tick(cfg.seek_retry_seconds + 0.1)
+	assert_true(ready.wants_to_seek_nest())
+
+
+func test_hungry_fish_abandons_nest() -> void:
+	var ready := _make_brain(true, 0.0)
+	ready.seek_nest(nest)
+	ready.tick(cfg.starve_seconds * cfg.seek_food_threshold + 0.1)
+	assert_eq(ready.state, FishBrain.State.WANDER)
+	assert_true(ready.nest == null, "hunger has priority over reproduction")
+
+
+func test_order_cancels_nest_seek() -> void:
+	var ready := _make_brain(true, 0.0)
+	ready.seek_nest(nest)
+	ready.order(Vector2(10, 0))
+	assert_eq(ready.state, FishBrain.State.ORDERED)
+	assert_true(ready.nest == null)
+
+
+func test_nest_seek_blocked_returns_to_wander_with_retry() -> void:
+	var ready := _make_brain(true, 0.0)
+	ready.seek_nest(nest)
+	ready.blocked_by_other()
+	assert_eq(ready.state, FishBrain.State.WANDER)
+	assert_false(ready.wants_to_seek_nest())
+
+
+func test_effective_cooldown_is_twice_hatch_at_least() -> void:
+	var cfg2 := BalanceActors.new()
+	cfg2.reproduce_cooldown_seconds = 40.0
+	assert_almost(FishBrain.effective_reproduce_cooldown(cfg2, 25.0), 50.0)
+	assert_almost(FishBrain.effective_reproduce_cooldown(cfg2, 10.0), 40.0)

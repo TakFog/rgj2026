@@ -30,13 +30,13 @@ func _stems(settings: AudioSettings) -> String:
 			settings.music_track.resource_path, loop, settings.music_track.get_length(),
 			settings.music_gain_db, settings.music_pitch,
 			_hz(settings.music_high_pass_hz), _hz(settings.music_low_pass_hz)]
-	var loop := ""
+	var stems_loop := ""
 	if not settings.drums.is_empty():
 		var wav := settings.drums[0] as AudioStreamWAV
 		if wav != null:
-			loop = "loop %.2f s" % (wav.loop_end / float(wav.mix_rate))
+			stems_loop = "loop %.2f s" % (wav.loop_end / float(wav.mix_rate))
 	return "drums %d, arp half %d, arp full %d (%s)  music %+.1f dB, drums %+.1f dB, arp %+.1f dB, full at %d hostiles, fade %.1f s / drums %.1f s" % [
-		settings.drums.size(), settings.arp_half.size(), settings.arp_full.size(), loop,
+		settings.drums.size(), settings.arp_half.size(), settings.arp_full.size(), stems_loop,
 		settings.music_gain_db, settings.drums_gain_db, settings.arp_gain_db,
 		settings.arp_full_hostiles, settings.music_fade_seconds, settings.drum_fade_seconds]
 

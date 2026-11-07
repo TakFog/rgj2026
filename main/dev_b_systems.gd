@@ -6,9 +6,6 @@ const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
 const PredatorSpawner := preload("res://systems/b_predator_spawner.gd")
 const TurtleSpawner := preload("res://systems/b_turtle_spawner.gd")
 const AudioSystem := preload("res://systems/b_audio.gd")
-const Juice := preload("res://core/juice.gd")
-const MainMenuScreen := preload("res://ui/b_main_menu.gd")
-const TutorialScreen := preload("res://ui/b_tutorial_screen.gd")
 
 var _main_menu: MainMenuScreen
 var _tutorial: TutorialScreen
@@ -57,7 +54,8 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	var game_over := GameOverScreen.new()
 	game_over.name = "GameOver"
 	Game.ui.add_child(game_over)
-	monitor.game_over.connect(game_over.show_result)
+	monitor.game_over.connect(func(population: StringName, seconds: float) -> void:
+		game_over.show_result(population, seconds, monitor.counts))
 
 	# Title screen: shown at game start, pauses the run until Play is pressed.
 	# MainMenuScreen opens itself from its own _ready once it is in the tree.
@@ -81,6 +79,11 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	pause.name = "PauseController"
 	pause.monitor = monitor
 	pause.commander = commander
+	# Game over pauses the tree directly (not through this controller), so its
+	# outro stays clear while a player pause muffles the music.
+	var music := get_tree().get_first_node_in_group(Groups.MUSIC) as MusicSystem
+	if music != null:
+		pause.pause_toggled.connect(music.set_paused)
 	add_child(pause)
 
 

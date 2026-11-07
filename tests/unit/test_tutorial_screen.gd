@@ -34,6 +34,14 @@ func test_right_click_skips_in_start_mode() -> void:
 	_close_screen(screen)
 
 
+func test_auto_advance_moves_to_the_next_interaction() -> void:
+	var screen := _open_screen(TutorialScreen.Mode.REVIEW)
+	assert_eq(screen.get("_selected_index"), 0)
+	screen._process(TutorialScreen.LOOP_SECONDS + 0.1)
+	assert_eq(screen.get("_selected_index"), 1)
+	_close_screen(screen)
+
+
 func test_right_click_goes_back_in_review_mode() -> void:
 	var screen := _open_screen(TutorialScreen.Mode.REVIEW)
 	var closed := [false]
@@ -60,9 +68,10 @@ func _open_screen(mode: TutorialScreen.Mode) -> TutorialScreen:
 	InputActions.register()
 	var tree := Engine.get_main_loop() as SceneTree
 	var screen := TutorialScreen.new()
-	# The test runner calls tests before the first frame, so _ready has not run.
-	screen._ready()
 	tree.root.add_child(screen)
+	# _ready only runs on add_child once the tree itself is ready.
+	if not screen.is_node_ready():
+		screen._ready()
 	screen.open(mode)
 	return screen
 
