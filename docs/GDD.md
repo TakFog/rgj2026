@@ -132,7 +132,7 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 ### 5.5 Nido
 - Occupa **1 cella**. È un Area2D, quindi i pesci possono passarci sopra.
 - Stati: `EMPTY` → (fecondazione) → `EGGS` → dopo `hatch_seconds` (20 s) nascono `hatch_count` (2) pesci giovani → `EMPTY`.
-- Con il caldo le uova possono morire prima della schiusa. La probabilità è interpolata sulla temperatura: `egg_death_chance_cold` = −0.2 a T=0 (clampata a 0, quindi all'inizio non muoiono mai) e `egg_death_chance_hot` = 0.6 a T=1 (60% di probabilità sull'intera incubazione).
+- Con il caldo le uova possono morire prima della schiusa. La probabilità è interpolata sulla temperatura: `egg_death_chance_cold` = −0.2 a T=0 (clampata a 0, quindi all'inizio non muoiono mai) e `egg_death_chance_hot` = 0.85 a T=1 (85% di probabilità sull'intera incubazione).
 - Si ottiene dall'inventario con probabilità bassa (vedi §5.1).
 
 ## 6. Temperatura
@@ -140,17 +140,17 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 - **Sale sempre**: `dT/dt = temp_base_rate × (1 − coral_slowdown)`
   - `coral_slowdown = min(celle_di_corallo × temp_slow_per_cell, temp_max_slowdown)` con `temp_max_slowdown` = 0.45, quindi la temperatura **non si ferma mai e non scende mai**.
   - `celle_di_corallo` = numero totale di celle occupate da coralli vivi, letto da `GridModel`. Default `temp_slow_per_cell` = 0.03, quindi il rallentamento massimo si raggiunge con 15 celle di corallo.
-  - `temp_base_rate` è tarato in modo che, senza coralli, si arrivi a T=1 in circa 5 minuti.
+  - `temp_base_rate` (0.004) è tarato in modo che, senza coralli, si arrivi a T=1 in circa 4 minuti; con il rallentamento massimo dei coralli servono circa 7 minuti e mezzo.
 - Effetti (interpolazione lineare in base a T):
 
 | Effetto | T = 0 | T = 1 |
 |---|---|---|
-| Intervallo di crescita alghe | 20 s | 8 s |
-| Intervallo di spawn CO2 | 22 s | 8 s |
-| Intervallo di spawn ciclone | 70 s | 30 s |
-| Velocità pesci | 100% | 50% |
+| Intervallo di crescita alghe | 20 s | 5 s |
+| Intervallo di spawn CO2 | 22 s | 5 s |
+| Intervallo di spawn ciclone | 70 s | 18 s |
+| Velocità pesci | 100% | 35% |
 | Recupero ossigeno dei coralli | +0.3/s | −1.5/s |
-| Probabilità che le uova muoiano prima della schiusa | 0% (valore freddo negativo, azzerato) | 60% |
+| Probabilità che le uova muoiano prima della schiusa | 0% (valore freddo negativo, azzerato) | 85% |
 
 - Le buste di plastica hanno una frequenza fissa (`bag_spawn_interval` 28 s).
 

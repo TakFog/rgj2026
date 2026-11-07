@@ -13,6 +13,8 @@ signal destroyed(end: int)
 signal view_changed(in_view: bool)
 ## Emitted when this threat destroys something (see ThreatRules), with the victim.
 signal hit(victim: Node2D)
+## Emitted on any damaging contact (used by the audio system).
+signal impacted(victim: Node2D)
 
 ## Distance beyond the visible seabed (on top of 2 × radius) before a threat is removed.
 const EXIT_MARGIN := 32.0
@@ -131,6 +133,9 @@ func _on_contact(other: Node2D) -> void:
 			(other as Algae).on_co2_absorbed()
 		ThreatRules.Effect.KILL_EGGS:
 			(other as Nest).kill_eggs()
+	if outcome.effect != ThreatRules.Effect.NOTHING \
+			and outcome.effect != ThreatRules.Effect.ABSORB_CO2:
+		impacted.emit(other)
 	if outcome.threat_dies:
 		destroy()
 

@@ -12,6 +12,8 @@ const TITLE_Y_FRACTION := 0.25
 
 signal play_pressed
 signal exit_pressed
+## Any menu button was pressed (used by the audio system).
+signal button_pressed
 
 var _menu_panel: Control
 var _credits_panel: Control
@@ -133,21 +135,25 @@ func _button(text: String) -> Button:
 
 
 func _on_play_pressed() -> void:
+	button_pressed.emit()
 	close()
 	play_pressed.emit()
 
 
 func _on_credits_pressed() -> void:
+	button_pressed.emit()
 	_menu_panel.visible = false
 	_credits_panel.visible = true
 
 
 func _on_back_pressed() -> void:
+	button_pressed.emit()
 	_credits_panel.visible = false
 	_menu_panel.visible = true
 
 
 func _on_exit_pressed() -> void:
+	button_pressed.emit()
 	exit_pressed.emit()
 
 

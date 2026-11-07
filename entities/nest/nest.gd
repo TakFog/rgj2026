@@ -5,6 +5,10 @@ extends Area2D
 ## fertilize(), kill_eggs(), eggs_time_left(), destroy().
 
 signal destroyed
+## Used by the audio system (systems/b_audio.gd).
+signal fertilized
+signal eggs_hatched(count: int)
+signal eggs_died
 
 ## Footprint under the sprites, faint so the art reads first.
 const FOOTPRINT_ALPHA := 0.3
@@ -48,6 +52,7 @@ func _ready() -> void:
 	CellShapes.add_collision(self, [cell], cell)
 	_cycle = NestCycle.new(Game.eco.nest_hatch_seconds, Game.eco.nest_hatch_count)
 	_cycle.hatched.connect(_on_hatched)
+	_cycle.eggs_died.connect(func() -> void: eggs_died.emit())
 	_visual = PlaceholderShape.cell(position, EMPTY_COLOR)
 	_sprite = _visual.add_sprite(EMPTY_TEXTURE, SPRITE_HEIGHT_CELLS)
 	_update_sprite()
@@ -88,12 +93,15 @@ func has_eggs() -> bool:
 
 ## Called by a fish that stayed on the nest for fertilize_seconds.
 func fertilize() -> void:
-	_cycle.fertilize()
+	if _cycle.fertilize():
+		fertilized.emit()
 
 
 ## Called by CO2: eggs die, nest becomes empty.
 func kill_eggs() -> void:
-	_cycle.kill_eggs()
+	if has_eggs():
+		_cycle.kill_eggs()
+		eggs_died.emit()
 
 
 ## Seconds until the eggs hatch, or -1.0 if there are no eggs.
@@ -111,6 +119,7 @@ func destroy() -> void:
 
 
 func _on_hatched(count: int) -> void:
+	eggs_hatched.emit(count)
 	for i in count:
 		var offset := Vector2.from_angle(TAU * i / count) * HATCH_SPREAD
 		Game.factory.spawn_fish.call_deferred(position + offset, false)

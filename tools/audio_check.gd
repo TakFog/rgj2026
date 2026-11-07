@@ -13,8 +13,8 @@ func _init() -> void:
 	print("Music stems: ", _stems(settings))
 	print("Outro: ", _outro(settings))
 	print()
-	print("%-16s %-10s %8s %6s %10s %10s  %s" % [
-		"event", "in .tres", "gain", "pitch", "high-pass", "low-pass", "takes / bus"])
+	print("%-16s %-10s %8s %11s %10s %10s  %s" % [
+		"event", "in .tres", "gain", "pitch±jit", "high-pass", "low-pass", "takes / bus"])
 	for name: StringName in events:
 		_print_event(settings, name, events[name])
 	quit()
@@ -73,9 +73,10 @@ func _print_event(settings: AudioSettings, name: StringName, paths: Array) -> vo
 	for i in AudioServer.get_bus_effect_count(bus_index):
 		var effect := AudioServer.get_bus_effect(bus_index, i)
 		effects.append("%s %s" % [effect.get_class().replace("AudioEffect", ""), _hz(effect.cutoff_hz)])
-	print("%-16s %-10s %+8.1f %6.2f %10s %10s  %d/%d takes, bus %s%s" % [
+	print("%-16s %-10s %+8.1f %11s %10s %10s  %d/%d takes, bus %s%s" % [
 		name, "yes" if settings.events.has(name) else "NO", settings.effect_gain_db(name),
-		event.pitch, _hz(event.high_pass_hz), _hz(event.low_pass_hz), found, paths.size(), bus,
+		"%.2f±%.2f" % [event.pitch, event.pitch_jitter],
+		_hz(event.high_pass_hz), _hz(event.low_pass_hz), found, paths.size(), bus,
 		": " + ", ".join(effects) if not effects.is_empty() else ""])
 
 

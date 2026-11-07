@@ -12,6 +12,8 @@ extends CharacterBody2D
 signal destroyed
 ## Emitted when it bites a fish or a nest's eggs (the eat sound, GDD §7.4).
 signal ate
+## Used by the audio system (systems/b_audio.gd).
+signal left
 
 ## Distance (world units) at which a waypoint counts as reached.
 const ARRIVE_DISTANCE := 3.0
@@ -68,6 +70,8 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	var was_leaving := brain.state == PredatorBrain.State.LEAVING
 	brain.tick(delta, Rect2(Vector2.ZERO, Game.grid.world_size()).has_point(global_position))
+	if not was_leaving and brain.state == PredatorBrain.State.LEAVING:
+		left.emit()
 	_replan_timer -= delta
 	match brain.state:
 		PredatorBrain.State.HUNTING:

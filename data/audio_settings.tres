@@ -23,53 +23,210 @@
 ; Slightly high-passed.
 [sub_resource type="Resource" id="AudioEvent_placement"]
 script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
 gain_db = -12.0
 high_pass_hz = 400.0
 
 ; Placing a nest (assets/audio/nido).
 [sub_resource type="Resource" id="AudioEvent_placement_nest"]
 script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
 gain_db = -12.0
 
 ; Placing an algae (assets/audio/alga). Its take is much quieter than the
 ; others (peak -26 dBFS), so it gets a big boost to sit at the same level.
 [sub_resource type="Resource" id="AudioEvent_placement_algae"]
 script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
 gain_db = 4.0
 
 ; A predator eats a fish or a nest's eggs (assets/audio/eat).
 [sub_resource type="Resource" id="AudioEvent_predator_ate"]
 script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
 gain_db = -12.0
 
 ; Clicking an inventory item to place it, and a slot refilling (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_hover"]
 script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
 gain_db = -8.0
 high_pass_hz = 400.0
 
 ; An inventory slot refills (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_available"]
 script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
 gain_db = -12.0
 
 ; A cyclone on screen (loops while it is visible) and its impact, very quiet.
 [sub_resource type="Resource" id="AudioEvent_cyclone_wind"]
 script = ExtResource("2_audio_event")
+pitch_jitter = 0.00
 gain_db = -8.0
 
 [sub_resource type="Resource" id="AudioEvent_cyclone_hit"]
 script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
 gain_db = -16.0
 
 ; A CO2 cloud disappears (assets/audio/co2).
 [sub_resource type="Resource" id="AudioEvent_co2_gone"]
 script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
 gain_db = -12.0
 
 ; A plastic bag pops (assets/audio/busta).
 [sub_resource type="Resource" id="AudioEvent_bag_destroyed"]
 script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+
+; Menu, pause and restart buttons (assets/audio/ui_click).
+[sub_resource type="Resource" id="AudioEvent_ui_click"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -15.0
+
+; Cancelling placement or a fish selection (assets/audio/ui_cancel).
+[sub_resource type="Resource" id="AudioEvent_ui_cancel"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -17.0
+
+; Invalid placement (assets/audio/ui_denied).
+[sub_resource type="Resource" id="AudioEvent_ui_denied"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -18.0
+
+; Selecting a fish (assets/audio/fish_select).
+[sub_resource type="Resource" id="AudioEvent_fish_select"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -17.0
+
+; Sending a fish somewhere (assets/audio/fish_order).
+[sub_resource type="Resource" id="AudioEvent_fish_order"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -17.0
+
+; A fish eats an algae (assets/audio/fish_eat).
+[sub_resource type="Resource" id="AudioEvent_fish_eat"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.06
+gain_db = -15.0
+
+; The turtle eats an algae, slower and lower than a fish (same takes).
+[sub_resource type="Resource" id="AudioEvent_turtle_eat"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.06
+gain_db = -15.0
+pitch = 0.8
+
+; A fish fertilizes a nest (assets/audio/eggs_laid).
+[sub_resource type="Resource" id="AudioEvent_eggs_laid"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -17.0
+
+; Nest eggs hatch (assets/audio/eggs_hatched).
+[sub_resource type="Resource" id="AudioEvent_eggs_hatched"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -17.0
+
+; Nest eggs die (assets/audio/eggs_died).
+[sub_resource type="Resource" id="AudioEvent_eggs_died"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -17.0
+pitch = 0.9
+
+; A juvenile fish matures (assets/audio/fish_matured).
+[sub_resource type="Resource" id="AudioEvent_fish_matured"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -17.0
+
+; A fish starves (assets/audio/fish_died).
+[sub_resource type="Resource" id="AudioEvent_fish_died"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -15.0
+pitch = 0.9
+
+; A coral takes damage (assets/audio/coral_hit).
+[sub_resource type="Resource" id="AudioEvent_coral_hit"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -15.0
+
+; A coral dies and crumbles (assets/audio/coral_destroyed).
+[sub_resource type="Resource" id="AudioEvent_coral_destroyed"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -11.0
+
+; Algae spreads to a new cell (assets/audio/algae_spread).
+[sub_resource type="Resource" id="AudioEvent_algae_spread"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.06
+gain_db = -20.0
+
+; A predator enters the island (assets/audio/predator_arrive).
+[sub_resource type="Resource" id="AudioEvent_predator_arrive"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.03
+gain_db = -13.0
+
+; A predator leaves (assets/audio/predator_leave).
+[sub_resource type="Resource" id="AudioEvent_predator_leave"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.03
+gain_db = -17.0
+
+; A plastic bag drifts into view (assets/audio/bag_arrive).
+[sub_resource type="Resource" id="AudioEvent_bag_arrive"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.04
+gain_db = -17.0
+
+; A CO2 cloud drifts into view (assets/audio/co2_arrive).
+[sub_resource type="Resource" id="AudioEvent_co2_arrive"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.04
+gain_db = -17.0
+
+; A bag or CO2 cloud hits something (assets/audio/threat_impact).
+[sub_resource type="Resource" id="AudioEvent_threat_impact"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.05
+gain_db = -15.0
+
+; The sea turtle arrives (assets/audio/turtle_arrive).
+[sub_resource type="Resource" id="AudioEvent_turtle_arrive"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.03
+gain_db = -15.0
+
+; The turtle rams a predator (assets/audio/turtle_ram).
+[sub_resource type="Resource" id="AudioEvent_turtle_ram"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.03
+gain_db = -13.0
+
+; A population collapse countdown starts (assets/audio/collapse_warning).
+[sub_resource type="Resource" id="AudioEvent_collapse_warning"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.00
+gain_db = -17.0
+
+; A population recovers before collapsing (assets/audio/collapse_cancelled).
+[sub_resource type="Resource" id="AudioEvent_collapse_cancelled"]
+script = ExtResource("2_audio_event")
+pitch_jitter = 0.00
+gain_db = -17.0
 
 [resource]
 script = ExtResource("1_audio_settings")
@@ -85,12 +242,14 @@ drums_gain_db = 0.0
 arp_gain_db = -4.0
 ; Half arp with 1-5 hostiles, full from 6 on.
 arp_full_hostiles = 6
-music_gain_db = 3.0
+music_gain_db = 5.0
+; Global effects level: every effect event gets this on top of its own gain.
+effects_gain_db = 2.0
 ; The cyclone wind fades in when a cyclone enters the screen and out when it leaves.
 cyclone_wind_fade_seconds = 1.0
 ; Played once when the run is lost (the loop above stops first).
 outro_track = ExtResource("9_outro_track")
-outro_gain_db = -6.0
+outro_gain_db = -9.0
 ; One entry per event, keyed by its event name.
 events = Dictionary[StringName, ExtResource("2_audio_event")]({
 &"placement": SubResource("AudioEvent_placement"),
@@ -102,5 +261,29 @@ events = Dictionary[StringName, ExtResource("2_audio_event")]({
 &"cyclone_wind": SubResource("AudioEvent_cyclone_wind"),
 &"cyclone_hit": SubResource("AudioEvent_cyclone_hit"),
 &"co2_gone": SubResource("AudioEvent_co2_gone"),
-&"bag_destroyed": SubResource("AudioEvent_bag_destroyed")
+&"bag_destroyed": SubResource("AudioEvent_bag_destroyed"),
+&"ui_click": SubResource("AudioEvent_ui_click"),
+&"ui_cancel": SubResource("AudioEvent_ui_cancel"),
+&"ui_denied": SubResource("AudioEvent_ui_denied"),
+&"fish_select": SubResource("AudioEvent_fish_select"),
+&"fish_order": SubResource("AudioEvent_fish_order"),
+&"fish_eat": SubResource("AudioEvent_fish_eat"),
+&"turtle_eat": SubResource("AudioEvent_turtle_eat"),
+&"eggs_laid": SubResource("AudioEvent_eggs_laid"),
+&"eggs_hatched": SubResource("AudioEvent_eggs_hatched"),
+&"eggs_died": SubResource("AudioEvent_eggs_died"),
+&"fish_matured": SubResource("AudioEvent_fish_matured"),
+&"fish_died": SubResource("AudioEvent_fish_died"),
+&"coral_hit": SubResource("AudioEvent_coral_hit"),
+&"coral_destroyed": SubResource("AudioEvent_coral_destroyed"),
+&"algae_spread": SubResource("AudioEvent_algae_spread"),
+&"predator_arrive": SubResource("AudioEvent_predator_arrive"),
+&"predator_leave": SubResource("AudioEvent_predator_leave"),
+&"bag_arrive": SubResource("AudioEvent_bag_arrive"),
+&"co2_arrive": SubResource("AudioEvent_co2_arrive"),
+&"threat_impact": SubResource("AudioEvent_threat_impact"),
+&"turtle_arrive": SubResource("AudioEvent_turtle_arrive"),
+&"turtle_ram": SubResource("AudioEvent_turtle_ram"),
+&"collapse_warning": SubResource("AudioEvent_collapse_warning"),
+&"collapse_cancelled": SubResource("AudioEvent_collapse_cancelled")
 })

@@ -40,6 +40,9 @@ func _ready() -> void:
 		Game.AUDIO_SETTINGS.event_bus(name) # Create the filter buses up front.
 	for i in VOICES:
 		var player := AudioStreamPlayer.new()
+		# UI feedback must be audible on the title screen and pause menu, when
+		# the tree is paused; gameplay takes simply finish if a pause starts.
+		player.process_mode = Node.PROCESS_MODE_ALWAYS
 		add_child(player)
 		_players.append(player)
 
@@ -53,6 +56,8 @@ func _ready() -> void:
 	add_child(_outro)
 	if monitor != null:
 		monitor.game_over.connect(_on_game_over)
+		monitor.countdown_started.connect(func(_population: StringName) -> void: play(&"collapse_warning"))
+		monitor.countdown_cancelled.connect(func(_population: StringName) -> void: play(&"collapse_cancelled"))
 
 	_wind = AudioStreamPlayer.new()
 	_wind.name = "CycloneWind"
@@ -64,9 +69,16 @@ func _ready() -> void:
 	if placement != null:
 		placement.placement_started.connect(func() -> void: play(&"item_hover"))
 		placement.placement_finished.connect(_on_placement_finished)
+		placement.placement_cancelled.connect(func() -> void: play(&"ui_cancel"))
+		placement.placement_failed.connect(func() -> void: play(&"ui_denied"))
 	if inventory != null:
 		inventory.model.item_available.connect(func(_index: int) -> void: play(&"item_available"))
-	# Entities spawned during the run (the level's starting ones are already in).
+	_connect_ui()
+	_connect_commander()
+	# Entities spawned during the run plus the level's starting ones.
+	for group: StringName in [Groups.FISH, Groups.NESTS, Groups.CORALS, Groups.ALGAE]:
+		for node in get_tree().get_nodes_in_group(group):
+			_on_entity_added(node)
 	Game.world.child_entered_tree.connect(_on_entity_added)
 
 
@@ -121,16 +133,79 @@ func _on_placement_finished(kind: StringName) -> void:
 	play(AudioEvents.placement_event(kind))
 
 
-## Threats vanish (bags, CO2) and predators bite (GDD §7.1, §7.2, §7.4).
+## Menu buttons, the pause key and the game-over restart button.
+func _connect_ui() -> void:
+	var menu := Game.ui.get_node_or_null("MainMenu") as MainMenuScreen
+	if menu != null:
+		menu.button_pressed.connect(func() -> void: play(&"ui_click"))
+	var game_over := Game.ui.get_node_or_null("GameOver") as GameOverScreen
+	if game_over != null:
+		game_over.restart_pressed.connect(func() -> void: play(&"ui_click"))
+	var pause := get_parent().get_node_or_null("PauseController") as PauseController
+	if pause != null:
+		pause.pause_toggled.connect(func(_paused: bool) -> void: play(&"ui_click"))
+
+
+## Selecting a fish, sending it somewhere and clearing the selection.
+func _connect_commander() -> void:
+	var commander := get_parent().get_node_or_null("FishCommander") as FishCommander
+	if commander == null:
+		return
+	commander.fish_selected.connect(func() -> void: play(&"fish_select"))
+	commander.fish_ordered.connect(func() -> void: play(&"fish_order"))
+	commander.selection_cleared.connect(func() -> void: play(&"ui_cancel"))
+
+
+## Hooks the audio of one entity. Called for starting entities in _ready and for
+## every node spawned into Game.world afterwards.
 func _on_entity_added(node: Node) -> void:
 	if node is PlasticBag:
-		_play_when_in_play((node as PlasticBag).destroyed, &"bag_destroyed")
+		var bag := node as PlasticBag
+		_play_when_in_play(bag.destroyed, &"bag_destroyed")
+		_play_when_in_view(bag, &"bag_arrive")
+		bag.impacted.connect(func(_victim: Node2D) -> void: play(&"threat_impact"))
 	elif node is Co2Cloud:
-		_play_when_in_play((node as Co2Cloud).destroyed, &"co2_gone")
+		var co2 := node as Co2Cloud
+		_play_when_in_play(co2.destroyed, &"co2_gone")
+		_play_when_in_view(co2, &"co2_arrive")
+		co2.impacted.connect(func(_victim: Node2D) -> void: play(&"threat_impact"))
 	elif node is Predator:
-		(node as Predator).ate.connect(func() -> void: play(&"predator_ate"))
+		var predator := node as Predator
+		predator.ate.connect(func() -> void: play(&"predator_ate"))
+		predator.left.connect(func() -> void: play(&"predator_leave"))
+		play(&"predator_arrive")
+	elif node is Turtle:
+		var turtle := node as Turtle
+		turtle.ate_algae.connect(func() -> void: play(&"turtle_eat"))
+		turtle.rammed.connect(func() -> void: play(&"turtle_ram"))
+		play(&"turtle_arrive")
 	elif node is Cyclone:
 		_on_cyclone_added(node as Cyclone)
+	elif node is Fish:
+		var fish := node as Fish
+		fish.ate_algae.connect(func() -> void: play(&"fish_eat"))
+		fish.matured.connect(func() -> void: play(&"fish_matured"))
+		fish.starved.connect(func() -> void: play(&"fish_died"))
+	elif node is Nest:
+		var nest := node as Nest
+		nest.fertilized.connect(func() -> void: play(&"eggs_laid"))
+		nest.eggs_hatched.connect(func(_count: int) -> void: play(&"eggs_hatched"))
+		nest.eggs_died.connect(func() -> void: play(&"eggs_died"))
+	elif node is Coral:
+		var coral := node as Coral
+		coral.damaged.connect(func() -> void: play(&"coral_hit"))
+		coral.destroyed.connect(func() -> void: play(&"coral_destroyed"))
+	elif node is Algae:
+		(node as Algae).spread.connect(func() -> void: play(&"algae_spread"))
+
+
+## A threat entering the visible seabed for the first time.
+func _play_when_in_view(threat: Threat, event: StringName) -> void:
+	var played := false
+	threat.view_changed.connect(func(in_view: bool) -> void:
+		if in_view and not played:
+			played = true
+			play(event))
 
 
 ## A cyclone has its own wind loop while it is on screen and a very quiet hit

@@ -30,13 +30,44 @@ so the mix can be rebalanced without touching a script. The rules below apply to
 | `co2_gone` | a CO2 cloud disappears on screen (not when it drifts off it) | `assets/audio/co2/` (bubble pop) |
 | `bag_destroyed` | a plastic bag pops on screen (not when it drifts off it) | `assets/audio/busta/` |
 
+Player and ecosystem feedback:
+
+| Event | Plays when | Files |
+|---|---|---|
+| `ui_click` | a menu, pause or restart button is pressed | `assets/audio/ui_click/` |
+| `ui_cancel` | placement or a fish selection is cancelled | `assets/audio/ui_cancel/` |
+| `ui_denied` | an invalid placement is clicked | `assets/audio/ui_denied/` |
+| `fish_select` | a fish is clicked to control it | `assets/audio/fish_select/` |
+| `fish_order` | a selected fish is sent somewhere | `assets/audio/fish_order/` |
+| `fish_eat` | a fish eats an algae | `assets/audio/fish_eat/` |
+| `turtle_eat` | the turtle eats an algae (lower pitch) | `assets/audio/turtle_eat/` |
+| `eggs_laid` | a fish fertilizes a nest | `assets/audio/eggs_laid/` |
+| `eggs_hatched` | nest eggs hatch into juveniles | `assets/audio/eggs_hatched/` |
+| `eggs_died` | nest eggs die from heat or CO2 | `assets/audio/eggs_died/` |
+| `fish_matured` | a juvenile becomes an adult | `assets/audio/fish_matured/` |
+| `fish_died` | a fish starves | `assets/audio/fish_died/` |
+| `coral_hit` | a coral takes damage | `assets/audio/coral_hit/` |
+| `coral_destroyed` | a coral suffocates and crumbles | `assets/audio/coral_destroyed/` |
+| `algae_spread` | an algae expands to a new cell | `assets/audio/algae_spread/` |
+| `predator_arrive` | a predator enters the island | `assets/audio/predator_arrive/` |
+| `predator_leave` | a sated or scared predator swims away | `assets/audio/predator_leave/` |
+| `bag_arrive` / `co2_arrive` | a bag or CO2 cloud drifts into view | `assets/audio/bag_arrive/`, `assets/audio/co2_arrive/` |
+| `threat_impact` | a bag or CO2 cloud hits something | `assets/audio/threat_impact/` |
+| `turtle_arrive` | the sea turtle arrives to help | `assets/audio/turtle_arrive/` |
+| `turtle_ram` | the turtle rams the predator away | `assets/audio/turtle_ram/` |
+| `collapse_warning` / `collapse_cancelled` | a population collapse countdown starts / is cancelled | `assets/audio/collapse_warning/`, `assets/audio/collapse_cancelled/` |
+
+The new takes were sourced as CC0 previews from Freesound; see
+`assets/audio/SFX_SOURCES.md` for the original sound pages.
+
 ## Levels
 
 All levels are in **dB**: `0.0` is unmodified, `-6.0` is half as loud, positive
 values boost, `-80.0` and below is silent. `effects_gain_db` is the global effects
 level and is added to every event; each event's `gain_db` then balances it
-against the others. The quiet effect takes (peaking around -10 dBFS) rely on the
-default `effects_gain_db = 8.0` to sit under the music.
+against the others. The quiet effect takes (peaking around -10 dBFS) rely on
+`effects_gain_db` (currently `2.0` in `data/audio_settings.tres`) to sit under
+the music.
 
 The current tuning lives in `data/audio_settings.tres` — run `tools/audio.sh` to
 see the resolved values without opening the game.
@@ -45,7 +76,8 @@ see the resolved values without opening the game.
 
 `pitch` is a speed multiplier (`0.5` an octave down, `2.0` an octave up; pitch and
 speed move together). `pitch_jitter` adds a random ± spread on every play, handy
-for sounds that repeat a lot — `0.0` keeps the pitch fixed.
+for sounds that repeat a lot — `0.0` keeps the pitch fixed. The repeated effects
+use small spreads (0.03–0.06) so they do not sound identical every time.
 
 ## Filters
 

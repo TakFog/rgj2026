@@ -8,6 +8,10 @@ extends CharacterBody2D
 ## signal destroyed. Added for the commander: order(), selected.
 
 signal destroyed
+## Used by the audio system (systems/b_audio.gd).
+signal ate_algae
+signal matured
+signal starved
 
 ## Distance (world units) at which a waypoint counts as reached.
 const ARRIVE_DISTANCE := 2.0
@@ -49,7 +53,7 @@ func _ready() -> void:
 	add_child(shape)
 
 	brain = FishBrain.new(Game.actors, adult)
-	brain.starved.connect(destroy)
+	brain.starved.connect(_on_starved)
 	brain.matured.connect(_on_matured)
 	brain.eat_finished.connect(_on_eat_finished)
 	brain.fertilize_finished.connect(_on_fertilize_finished)
@@ -250,12 +254,19 @@ func _check_targets_still_exist() -> void:
 func _on_matured() -> void:
 	adult = true
 	_visual.adult = true
+	matured.emit()
+
+
+func _on_starved() -> void:
+	starved.emit()
+	destroy()
 
 
 ## Contract #7: the eaten algae disappears.
 func _on_eat_finished(algae: Variant) -> void:
 	if _alive_in(algae, Groups.ALGAE):
 		(algae as Algae).destroy()
+		ate_algae.emit()
 
 
 ## Contract #4: the nest receives the eggs if it is still there and empty.

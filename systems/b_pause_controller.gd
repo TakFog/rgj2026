@@ -5,6 +5,9 @@ extends Node
 ## Esc also yields to the fish commander while a fish is selected (deselect first).
 ## PROCESS_MODE_ALWAYS so it can unpause.
 
+## Used by the audio system (systems/b_audio.gd).
+signal pause_toggled(paused: bool)
+
 var monitor: PopulationMonitor
 var commander: FishCommander
 var overlay: Control
@@ -38,6 +41,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func set_paused(value: bool) -> void:
 	get_tree().paused = value
 	overlay.visible = value
+	pause_toggled.emit(value)
 
 
 func _build_overlay() -> Control:

@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+fish_speed_hot_factor = 0.35
 starve_seconds = 45.0
 maturity_seconds = 60.0
 predator_interval = 45.0
@@ -11,5 +12,7 @@ predator_satiety = 8.0
 turtle_interval = 90.0
 collapse_grace_seconds = 7.0
 co2_interval_cold = 22.0
+co2_interval_hot = 5.0
 bag_interval = 28.0
 cyclone_interval_cold = 70.0
+cyclone_interval_hot = 18.0
