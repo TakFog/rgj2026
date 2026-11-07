@@ -65,7 +65,13 @@ func _draw() -> void:
 		var top := minf(-length * SPRITE_HALF_HEIGHT, _top(radius))
 		var back := Rect2(Vector2(-BAR_SIZE.x * 0.5, top - 8.0), BAR_SIZE)
 		draw_rect(back, BAR_BACK)
-		draw_rect(Rect2(back.position, Vector2(BAR_SIZE.x * hunger_ratio, BAR_SIZE.y)), BAR_FILL)
+		draw_rect(Rect2(back.position, Vector2(BAR_SIZE.x * fullness_ratio(hunger_ratio), BAR_SIZE.y)), BAR_FILL)
+
+
+## Bar fill, opposite to hunger: full when fed, empty when about to starve
+## (the same full-means-sated logic as the predator's satiety bar).
+static func fullness_ratio(p_hunger_ratio: float) -> float:
+	return 1.0 - clampf(p_hunger_ratio, 0.0, 1.0)
 
 
 ## A world-space circle of `radius` around the fish, projected to screen space.
