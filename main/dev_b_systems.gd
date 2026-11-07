@@ -6,6 +6,7 @@ const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
 const PredatorSpawner := preload("res://systems/b_predator_spawner.gd")
 const TurtleSpawner := preload("res://systems/b_turtle_spawner.gd")
 const AudioSystem := preload("res://systems/b_audio.gd")
+const MainMenuScreen := preload("res://ui/b_main_menu.gd")
 
 
 func _ready() -> void:
@@ -50,6 +51,12 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	game_over.name = "GameOver"
 	Game.ui.add_child(game_over)
 	monitor.game_over.connect(game_over.show_result)
+
+	# Title screen: shown at game start, pauses the run until Play is pressed.
+	# MainMenuScreen opens itself from its own _ready once it is in the tree.
+	var main_menu := MainMenuScreen.new()
+	main_menu.name = "MainMenu"
+	Game.ui.add_child(main_menu)
 
 	var pause := PauseController.new()
 	pause.name = "PauseController"
