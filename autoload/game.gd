@@ -35,6 +35,19 @@ var debug_mode := false:
 
 signal debug_mode_changed(enabled: bool)
 
+## When true, the debug overlay's temperature slider overrides the automatic
+## TemperatureSystem (roadmap contract #1: only Game writes Game.temperature,
+## conditionally here).
+var debug_temperature_manual := false:
+	set(value):
+		debug_temperature_manual = value
+
+## Manual temperature value (0..1), applied by TemperatureSystem when
+## debug_temperature_manual is true (debug overlay slider).
+var debug_temperature_value := 0.0:
+	set(value):
+		debug_temperature_value = clampf(value, 0.0, 1.0)
+
 var _actions_registered := false
 
 

@@ -30,3 +30,13 @@ The game design document is `docs/GDD.md`.
    git push origin main
    ```
 5. **Never delete feature branches**, even after they have been merged. Keep them for reference.
+
+## Feature flags
+
+Every feature flag must be exposed in the debug overlay (F3, `res://core/debug_overlay.gd`)
+so it can be inspected and toggled at runtime. When adding a new feature flag:
+1. Add the `@export` flag to the relevant balance resource (`data/balance_*.gd`/`*.tres`).
+2. Add a read-only (or toggleable) entry to the "Feature flags" section of `DebugOverlay`.
+3. Gate the feature on `Game.actors.<flag>` (or `Game.eco.<flag>`) in the system that uses it.
+
+Current flags: `co2_dies_on_coral`, `predator_enabled`.

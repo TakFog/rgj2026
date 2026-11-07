@@ -12,7 +12,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	model.tick(delta, Game.grid.count_cells(_is_coral))
-	Game.temperature = model.value
+	# Debug override: the F3 temperature slider takes over (roadmap contract
+	# #1: only Game writes Game.temperature, conditionally here).
+	Game.temperature = Game.debug_temperature_value if Game.debug_temperature_manual else model.value
 
 
 func _is_coral(entity: Object) -> bool:
