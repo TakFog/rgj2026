@@ -7,6 +7,11 @@ extends Resource
 @export var fish_radius := 10.0
 @export var fish_click_radius := 24.0
 @export var fish_speed := 60.0
+## Turning radius (world units) when changing direction: higher = wider curves.
+@export var fish_turn_radius := 16.0
+## Fraction of a frame's move that must survive sliding along an obstacle the
+## fish grazed while following a route; less counts as blocked.
+@export var fish_min_slide_ratio := 0.3
 ## Speed multiplier at temperature 1.0 (linear from 1.0 at temperature 0).
 @export var fish_speed_hot_factor := 0.5
 @export var fish_wander_min_seconds := 1.5

@@ -2,7 +2,8 @@ class_name Fish
 extends CharacterBody2D
 ## Fish (GDD §5.4): wanders, obeys orders, eats algae, fertilizes nests, starves.
 ## Rules live in FishBrain; this node moves, senses and draws. Orders and food
-## seeking follow a route planned by ReefPathfinder around corals and algae.
+## seeking follow a route planned by ReefPathfinder around corals and algae,
+## swum in curves (PathSteering) rather than straight grid segments.
 ## CONTRACT (used by Dev A nest, Dev B threats): setup(), is_adult(), destroy(),
 ## signal destroyed. Added for the commander: order(), selected.
 
@@ -27,6 +28,8 @@ var _pathfinder: ReefPathfinder
 ## Remaining waypoints (world units) while ORDERED or SEEKING_FOOD.
 var _path := PackedVector2Array()
 var _replans_left := 0
+## Current swimming direction (unit vector); turns gradually.
+var _heading := Vector2.RIGHT
 
 
 func setup(world_position: Vector2, p_adult: bool) -> void:
@@ -54,7 +57,8 @@ func _ready() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	_wander = WanderSteering.new(rng, Game.actors.fish_wander_min_seconds, Game.actors.fish_wander_max_seconds)
-	_pathfinder = ReefPathfinder.new(Game.grid, _blocks_fish)
+	_heading = _wander.heading
+	_pathfinder = ReefPathfinder.new(Game.grid, _blocks_fish, Game.actors.fish_radius)
 
 	_visual = FishVisual.new()
 	_visual.radius_world = Game.actors.fish_radius
@@ -73,7 +77,7 @@ func _physics_process(delta: float) -> void:
 			if brain.wants_to_seek_food():
 				_seek_food()
 			if brain.state == FishBrain.State.WANDER:
-				_move(_wander.tick(delta), _speed() * delta)
+				_swim_wander(delta)
 		FishBrain.State.ORDERED, FishBrain.State.SEEKING_FOOD:
 			_follow_path(_speed() * delta)
 	_visual.hunger_ratio = brain.hunger_ratio()
@@ -130,19 +134,31 @@ func _reserve(algae: Algae) -> void:
 	algae.eater = self
 
 
-## Swims up to `budget` world units along the waypoints.
+## Wandering: curve toward the wander heading; a bounce turns at once.
+func _swim_wander(delta: float) -> void:
+	var step := _speed() * delta
+	var wanted := _wander.tick(delta)
+	# Far virtual target: the full turning radius applies.
+	_heading = PathSteering.turn(_heading, wanted * Game.grid.cell_size * 100.0, step, Game.actors.fish_turn_radius)
+	if not _move(_heading, step):
+		_heading = _wander.heading
+
+
+## Swims up to `budget` world units along the waypoints, curving between them.
 func _follow_path(budget: float) -> void:
 	while budget > 0.0:
 		if _path.is_empty():
 			_on_path_end()
 			return
 		var to_next := _path[0] - global_position
-		if to_next.length() <= ARRIVE_DISTANCE:
+		var distance := to_next.length()
+		if distance <= ARRIVE_DISTANCE:
 			_path.remove_at(0)
 			continue
-		var step := minf(budget, to_next.length())
+		var step := minf(budget, distance)
+		_heading = PathSteering.turn(_heading, to_next, step, Game.actors.fish_turn_radius)
 		var state_before := brain.state
-		if not _move(to_next.normalized(), step) or brain.state != state_before:
+		if not _move(_heading, step, to_next / distance) or brain.state != state_before:
 			return
 		budget -= step
 
@@ -156,11 +172,18 @@ func _on_path_end() -> void:
 
 
 ## Moves and reacts to collisions. Returns false if the fish was blocked.
-func _move(direction: Vector2, distance: float) -> bool:
+## `toward` (route only) is the straight direction to the next waypoint.
+func _move(direction: Vector2, distance: float, toward := Vector2.ZERO) -> bool:
 	var collision := move_and_collide(direction * distance)
 	if collision == null:
 		return true
 	var collider := collision.get_collider()
+	if brain.state != FishBrain.State.WANDER and _slide(collision, distance):
+		return true
+	if toward.dot(collision.get_normal()) > 0.0 and move_and_collide(toward * distance) == null:
+		# Still facing the obstacle while the route leads away: turn on the spot.
+		_heading = toward
+		return true
 	if brain.state == FishBrain.State.WANDER:
 		_wander.on_blocked(collision.get_normal())
 	elif collider is Algae and not (collider as Algae).is_taken_by_other(self):
@@ -173,6 +196,17 @@ func _move(direction: Vector2, distance: float) -> bool:
 	else:
 		brain.blocked_by_other()
 	return false
+
+
+## A route grazed a coral, an algae or a wall: slide along it. True if most of
+## the move survived, so only a head-on hit counts as blocked (or as reaching
+## the algae to eat).
+func _slide(collision: KinematicCollision2D, distance: float) -> bool:
+	var travelled := collision.get_travel().length()
+	var slide := collision.get_remainder().slide(collision.get_normal())
+	var second := move_and_collide(slide)
+	travelled += slide.length() if second == null else second.get_travel().length()
+	return travelled >= distance * Game.actors.fish_min_slide_ratio
 
 
 ## Something unexpected (a newly placed coral) blocks the route: plan again.

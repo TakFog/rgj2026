@@ -4,26 +4,36 @@ extends RefCounted
 ## the grid; fish move freely between them). Pure: no scene access.
 ## The A* grid is rebuilt from GridModel on every query: the map is small and
 ## changes constantly (algae spread), so there is nothing to keep in sync.
+## Routes are smoothed: waypoints the fish can skip in a straight line (with
+## `clearance` to spare on both sides) are dropped, so it never zigzags along
+## the grid in open water.
+
+## Sampling step along a shortcut, as a fraction of the cell size.
+const SAMPLE_FRACTION := 0.25
 
 var _grid: GridModel
 ## `is_solid(occupant: Object) -> bool`: whether a grid occupant blocks fish.
 var _is_solid: Callable
+## Half-width (world units) of the corridor a straight shortcut must keep free.
+var _clearance: float
 var _astar := AStarGrid2D.new()
 
 
-func _init(grid: GridModel, is_solid: Callable) -> void:
+func _init(grid: GridModel, is_solid: Callable, clearance := 0.0) -> void:
 	_grid = grid
 	_is_solid = is_solid
+	_clearance = clearance
 	_astar.region = Rect2i(Vector2i.ZERO, grid.size)
 	_astar.cell_size = Vector2.ONE * grid.cell_size
 	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	_astar.update()
 
 
-## Waypoints (world units) from `from` to `to`: cell centres, ending exactly at
-## `to`. If `to` is inside a solid cell or sealed off, the route ends in the
-## reachable cell closest to it and the last segment still aims at `to`, so the
-## fish touches whatever is there. Starting inside a solid cell: just `[to]`.
+## Waypoints (world units) from `from` to `to` (excluding `from`): smoothed
+## cell centres, ending exactly at `to`. If `to` is inside a solid cell or sealed
+## off, the route ends in the reachable cell closest to it and the last segment
+## still aims at `to`, so the fish touches whatever is there. Starting inside a
+## solid cell: just `[to]`.
 func find_path(from: Vector2, to: Vector2) -> PackedVector2Array:
 	_refresh()
 	var start := _clamp_cell(_grid.world_to_cell(from))
@@ -37,12 +47,12 @@ func find_path(from: Vector2, to: Vector2) -> PackedVector2Array:
 		path[path.size() - 1] = to
 	else:
 		path.append(to)
-	return path
+	return _smooth(from, path)
 
 
 ## Nearest occupant (by path length) for which `predicate(occupant) -> bool`.
-## Returns `{occupant, path}` where the path ends at the centre of the touched
-## occupant cell, or `{}` if none is reachable.
+## Returns `{occupant, path}` where the (smoothed) path ends at the centre of
+## the touched occupant cell, or `{}` if none is reachable.
 func nearest_occupant(from: Vector2, predicate: Callable) -> Dictionary:
 	_refresh()
 	var start := _clamp_cell(_grid.world_to_cell(from))
@@ -60,7 +70,7 @@ func nearest_occupant(from: Vector2, predicate: Callable) -> Dictionary:
 			visited[next] = true
 			var occupant := _grid.occupant(next)
 			if occupant != null and predicate.call(occupant):
-				return {"occupant": occupant, "path": _path_to_touch(start, cell, next)}
+				return {"occupant": occupant, "path": _smooth(from, _path_to_touch(start, cell, next))}
 			if not _astar.is_point_solid(next):
 				queue.append(next)
 	return {}
@@ -72,6 +82,49 @@ func _path_to_touch(start: Vector2i, stand: Vector2i, touch: Vector2i) -> Packed
 		path = _cells_to_world(_astar.get_id_path(start, stand))
 	path.append(_grid.cell_to_world(touch))
 	return path
+
+
+## Clear straight line between two points, `clearance` wide on each side.
+## Only grid occupants count: the map border is left to physics. The cell of
+## `b` itself is ignored when `touch_b` (the route ends by bumping into it).
+func is_clear(a: Vector2, b: Vector2, touch_b := false) -> bool:
+	_refresh()
+	return _is_clear(a, b, touch_b)
+
+
+func _is_clear(a: Vector2, b: Vector2, touch_b: bool) -> bool:
+	var offset := (b - a).orthogonal().normalized() * _clearance
+	var skip := _grid.world_to_cell(b) if touch_b else Vector2i(-1, -1)
+	var steps := maxi(1, ceili(a.distance_to(b) / (_grid.cell_size * SAMPLE_FRACTION)))
+	for i in steps + 1:
+		var point := a.lerp(b, float(i) / steps)
+		for probe in [point, point + offset, point - offset]:
+			if _solid_at(probe, skip):
+				return false
+	return true
+
+
+## String pulling: from each kept point, jump to the farthest waypoint in
+## clear sight. The start point `from` itself is not part of the result.
+func _smooth(from: Vector2, path: PackedVector2Array) -> PackedVector2Array:
+	var result := PackedVector2Array()
+	var anchor := from
+	var i := 0
+	while i < path.size():
+		var farthest := i
+		for j in range(path.size() - 1, i, -1):
+			if _is_clear(anchor, path[j], j == path.size() - 1):
+				farthest = j
+				break
+		result.append(path[farthest])
+		anchor = path[farthest]
+		i = farthest + 1
+	return result
+
+
+func _solid_at(point: Vector2, skip: Vector2i) -> bool:
+	var cell := _grid.world_to_cell(point)
+	return cell != skip and _grid.in_bounds(cell) and _astar.is_point_solid(cell)
 
 
 func _refresh() -> void:
