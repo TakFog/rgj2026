@@ -4,8 +4,8 @@ extends RefCounted
 ## island to help: threats nearby (a predator or a bag, each with its own aggro
 ## radius) make it defend the fish (ram the predator away, remove the bag);
 ## otherwise it cleans algae, much faster than fish.
-## It leaves after removing a bag, after eating turtle_max_algae algae (if > 0),
-## or after turtle_stay_seconds on the island.
+## It leaves after removing a bag, after eating its algae cap (turtle_max_algae
+## or the per-turtle override, if > 0), or after turtle_stay_seconds on the island.
 
 enum State { HELPING, EATING, LEAVING }
 ## What the turtle swims to: a threat (predator or bag) beats any algae.
@@ -17,11 +17,17 @@ var stay_time := 0.0
 var algae_eaten := 0
 
 var _cfg: BalanceActors
+## Per-turtle algae cap override; -1 means "use cfg.turtle_max_algae".
+var _max_algae_override := -1
 var _eat_timer := 0.0
 
 
-func _init(cfg: BalanceActors) -> void:
+## `max_algae` overrides `cfg.turtle_max_algae` for this turtle (-1 = use the
+## balance value). The early rush uses it to make its group leave after a few
+## algae instead of eating without limit.
+func _init(cfg: BalanceActors, max_algae := -1) -> void:
 	_cfg = cfg
+	_max_algae_override = max_algae
 
 
 ## Picks the next job from route lengths (INF = unreachable): the nearest
@@ -58,7 +64,8 @@ func tick(delta: float, on_island := true) -> bool:
 			finished = true
 			algae_eaten += 1
 			state = State.HELPING
-			if _cfg.turtle_max_algae > 0 and algae_eaten >= _cfg.turtle_max_algae:
+			var max_algae := _cfg.turtle_max_algae if _max_algae_override < 0 else _max_algae_override
+			if max_algae > 0 and algae_eaten >= max_algae:
 				state = State.LEAVING
 	if stay_time >= _cfg.turtle_stay_seconds:
 		state = State.LEAVING

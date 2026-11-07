@@ -37,6 +37,8 @@ const LEAVE_TIMEOUT := 60.0
 var brain: TurtleBrain
 
 var _cfg: BalanceActors
+## Per-turtle algae cap override (-1 = use the balance value).
+var _max_algae := -1
 var _pathfinder: PredatorPathfinder
 var _path := PackedVector2Array()
 var _heading := Vector2.RIGHT
@@ -55,8 +57,11 @@ var _exit_failures := 0
 var _ignore_corals := false
 
 
-## Places the turtle just off screen at `entry`. Call before adding it to the tree.
-func setup(entry: EdgeEntry) -> void:
+## Places the turtle just off screen at `entry`. Call before adding it to the
+## tree. `max_algae` lets one turtle (the early rush) leave after fewer algae
+## than the balance default; -1 keeps the default.
+func setup(entry: EdgeEntry, max_algae := -1) -> void:
+	_max_algae = max_algae
 	_heading = Vector2.from_angle(entry.heading)
 	position = entry.point - _heading * Game.actors.turtle_radius
 
@@ -74,7 +79,7 @@ func _ready() -> void:
 	shape.shape = circle
 	add_child(shape)
 
-	brain = TurtleBrain.new(_cfg)
+	brain = TurtleBrain.new(_cfg, _max_algae)
 	_pathfinder = PredatorPathfinder.new(Game.grid, _blocks_turtle, _cfg.turtle_radius)
 
 	_visual = TurtleVisual.new()

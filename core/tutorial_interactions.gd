@@ -35,8 +35,8 @@ const ROWS: Array[Dictionary] = [
 	{
 		"id": &"co2_coral", "group": "CO₂", "agent": "CO₂",
 		"agent_id": &"co2", "target": "Corallo", "target_id": &"coral",
-		"short": "−ossigeno, via", "color": Color(0.75, 0.78, 0.82),
-		"agent_end": "vanish", "target_end": "damage",
+		"short": "−ossigeno, passa", "color": Color(0.75, 0.78, 0.82),
+		"agent_end": "pass", "target_end": "damage",
 	},
 	{
 		"id": &"co2_algae", "group": "CO₂", "agent": "CO₂",

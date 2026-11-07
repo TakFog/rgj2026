@@ -26,7 +26,7 @@ minacce ──► CO2, buste, cicloni (annunciati prima di entrare)
 ```
 
 - Troppe alghe → soffocano i coralli → coralli a zero → game over
-- Troppi pesci → finiscono le alghe → alghe a zero → game over
+- Troppi pesci o un'ondata di tartarughe → finiscono le alghe → alghe a zero → game over
 - Troppi coralli → i pesci restano bloccati e non arrivano al cibo → muoiono di fame → game over
 - Pochi pesci → bisogna fecondare i nidi in fretta
 
@@ -162,6 +162,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 ### 7.1 CO2
 - Nube (raggio 60 unità), si muove **quasi dritta con curve casuali** (direzione + rumore sull'angolo).
 - Fuori dall'isola (fondale aperto) il rumore è ridotto (`co2_outside_turn_scale`, 10%) e la direzione viene forzata verso il centro dell'isola: la nube attraversa il fondale quasi in linea retta e punta sempre verso la zona giocabile, iniziando a curvare solo una volta dentro.
+- **Attraversa i coralli**: ogni corallo toccato perde ossigeno una volta sola e la nube continua la sua corsa. Con `co2_dies_on_coral = true` (solo per debug) sparisce invece al primo corallo.
 
 ### 7.2 Busta di plastica
 - Lenta, si muove in modo **più casuale** della CO2 (cambi di direzione più ampi e frequenti).
@@ -183,6 +184,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 ### 7.5 Tartaruga marina (aiutante)
 - **Feature flag**: `turtle_enabled` in `balance_actors.tres` (default `true`).
 - Arriva ogni `turtle_interval` (90 s), al massimo `turtle_max_count` (1) alla volta, dal bordo dello schermo come le minacce. Non è una minaccia: aiuta il giocatore.
+- **Ondata iniziale (rara)**: con probabilità `turtle_rush_chance` (25%) una piccola ondata di `turtle_rush_count` (2) tartarughe arriva dopo `turtle_rush_seconds` (15 s), una ogni `turtle_rush_spacing_seconds` (1,5 s). Ogni tartaruga dell'ondata se ne va dopo `turtle_rush_max_algae` (4) alghe, anche se `turtle_max_algae` è 0; l'ondata ignora `turtle_max_count`. Arrivano prima che le alghe si siano diffuse: se il giocatore non reagisce (piazza alghe o isola le ultime con i coralli), le alghe possono andare a zero e la barriera collassa con "Le alghe si sono estinte."
 - **Priorità**: prima difende i pesci, poi pulisce. Una minaccia conta solo se è **vicina** (distanza in linea d'aria): un predatore che sta cacciando entro `turtle_predator_aggro_radius` (160 = 5 celle) o una busta di plastica entro `turtle_bag_aggro_radius` (320 = 10 celle). Tra quelle nel proprio raggio va verso la **minaccia raggiungibile più vicina** lungo il percorso; una volta puntata la insegue finché non la elimina, anche se esce dal raggio. Se non ce ne sono, verso l'**alga raggiungibile più vicina**. Ricalcola ogni `turtle_replan_seconds` (0.5 s); mentre mangia un'alga la lascia se compare una minaccia nel suo raggio.
 - **Predatore**: gli va addosso e lo allontana (il predatore smette di cacciare e lascia l'isola). La tartaruga resta.
 - **Busta**: la elimina toccandola, poi **se ne va**.
@@ -198,7 +200,7 @@ Le combinazioni non elencate **non fanno nulla**.
 | Agente | Bersaglio | Effetto |
 |---|---|---|
 | Alga (espansione) | Corallo | Corallo −`algae_coral_damage` (10) ossigeno |
-| CO2 | Corallo | Corallo −`co2_coral_damage` (50) ossigeno al primo contatto (basta toccare una qualsiasi delle sue celle), la nube **sparisce**. Con `co2_dies_on_coral = false` la nube invece prosegue e danneggia ogni corallo una sola volta |
+| CO2 | Corallo | Corallo −`co2_coral_damage` (50) ossigeno al primo contatto (basta toccare una qualsiasi delle sue celle); la nube **prosegue** e danneggia ogni corallo una sola volta. Con `co2_dies_on_coral = true` la nube sparisce al primo corallo |
 | CO2 | Alga | La CO2 viene **assorbita** (sparisce) e l'alga **si espande subito** |
 | CO2 | Nido con uova | Le uova muoiono, il nido torna `EMPTY` |
 | Busta | Pesce | Il pesce **muore**, la busta resta |
