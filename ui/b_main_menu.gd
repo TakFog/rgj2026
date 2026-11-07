@@ -95,7 +95,7 @@ func _start_without_menu() -> void:
 	play_pressed.emit.call_deferred()
 
 
-func _build_menu_panel() -> Control:
+func _build_menu_panel(web_build: bool = OS.has_feature("web")) -> Control:
 	var panel := Control.new()
 	panel.name = "MenuPanel"
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -136,12 +136,18 @@ func _build_menu_panel() -> Control:
 	_play_button = _hotspots["play"]
 
 	# Web builds cannot quit the host page, so the painted ESCI pill is
-	# blanked out instead of looking clickable.
+	# blanked out instead of looking clickable, and its hotspot is taken out of
+	# focus traversal so keyboard players cannot trigger a hidden quit.
+	var exit_button: Button = _hotspots["exit"]
+	exit_button.visible = not web_build
+	exit_button.focus_mode = (
+		Control.FOCUS_NONE if web_build else Control.FOCUS_ALL)
+
 	_exit_cover = ColorRect.new()
 	_exit_cover.name = "ExitCover"
 	_exit_cover.color = SeaStyle.MENU_BACKDROP_COLOR
 	_exit_cover.mouse_filter = Control.MOUSE_FILTER_STOP
-	_exit_cover.visible = OS.has_feature("web")
+	_exit_cover.visible = web_build
 	_art_box.add_child(_exit_cover)
 
 	_layout_art()
