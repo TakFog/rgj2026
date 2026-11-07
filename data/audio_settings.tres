@@ -43,6 +43,7 @@ gain_db = -12.0
 ; Clicking an inventory item to place it, and a slot refilling (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_hover"]
 script = ExtResource("2_audio_event")
+gain_db = -6.0
 
 ; An inventory slot refills (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_available"]
