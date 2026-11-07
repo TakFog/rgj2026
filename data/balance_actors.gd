@@ -98,6 +98,9 @@ extends Resource
 @export var bag_radius := 16.0
 @export var bag_speed := 20.0
 @export var bag_turn_noise := 2.0
+## Cosmetic tumble of the bag sprite around its centre, in radians per second
+## (peak). 0 freezes the bag. Never affects movement.
+@export var bag_spin_speed := 1.5
 @export var bag_interval := 40.0
 @export var bag_coral_damage := 35.0
 @export var cyclone_radius := 40.0

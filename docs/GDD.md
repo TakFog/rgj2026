@@ -164,6 +164,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 
 ### 7.2 Busta di plastica
 - Lenta, si muove in modo **più casuale** della CO2 (cambi di direzione più ampi e frequenti).
+- Puramente estetico: la sprite ruota attorno al suo centro con verso e velocità casuali, come una busta nella corrente, e non ha ombra a terra.
 
 ### 7.3 Ciclone marino
 - Raggio 40 unità, veloce, va **dritto**.
