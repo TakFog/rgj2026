@@ -44,8 +44,10 @@ script = ExtResource("2_audio_event")
 script = ExtResource("1_audio_settings")
 ; The looping background track: point this at another .wav in assets/audio.
 music_track = ExtResource("3_music_track")
+music_gain_db = 3.0
 ; Played once when the run is lost (the loop above stops first).
 outro_track = ExtResource("4_outro_track")
+outro_gain_db = -6.0
 ; One entry per event, keyed by its event name.
 events = Dictionary[StringName, ExtResource("2_audio_event")]({
 &"placement": SubResource("AudioEvent_placement"),
