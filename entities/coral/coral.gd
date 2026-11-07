@@ -1,14 +1,25 @@
 class_name Coral
 extends StaticBody2D
 ## Coral: multi-cell static obstacle with oxygen. It only "suffers" (GDD §5.2).
-## CONTRACT (used by Dev B threats): cells, apply_oxygen_damage(), destroy().
+## CONTRACT (used by Dev B threats): cells, oxygen, apply_oxygen_damage(), destroy().
 
 signal destroyed
+
+const HEALTHY_COLOR := Color(1.0, 0.45, 0.55)
+const SUFFOCATED_COLOR := Color(0.45, 0.42, 0.42)
+const CRUMBLE_SECONDS := 0.6
 
 var shape_id: StringName
 var origin_cell: Vector2i
 var cells: Array[Vector2i] = []
-var oxygen := 0.0
+var oxygen: float:
+	get:
+		return _oxygen.value if _oxygen else 0.0
+
+var _oxygen: CoralOxygen
+var _visuals: Array[PlaceholderShape] = []
+var _followers: Array[ViewFollower] = []
+var _dead := false
 
 
 func setup(p_shape_id: StringName, p_origin_cell: Vector2i) -> void:
@@ -24,7 +35,8 @@ func _ready() -> void:
 	add_to_group(Groups.CORALS)
 	Game.grid.occupy(cells, self)
 	CellShapes.add_collision(self, cells, origin_cell)
-	oxygen = Game.eco.coral_max_oxygen
+	_oxygen = CoralOxygen.new(Game.eco.coral_max_oxygen, Game.eco.coral_regen_per_sec)
+	_oxygen.depleted.connect(destroy)
 	_build_visuals()
 
 
@@ -34,22 +46,42 @@ func _build_visuals() -> void:
 		var marker := Marker2D.new()
 		marker.position = Vector2(cell - origin_cell) * Game.grid.cell_size
 		add_child(marker)
-		ViewFollower.attach(marker, PlaceholderShape.cell(Game.grid.cell_to_world(cell), Color(1.0, 0.45, 0.55)))
+		var visual := PlaceholderShape.cell(Game.grid.cell_to_world(cell), HEALTHY_COLOR)
+		_visuals.append(visual)
+		_followers.append(ViewFollower.attach(marker, visual))
+
+
+func _process(delta: float) -> void:
+	if _dead:
+		return
+	_oxygen.tick(delta)
+	var tint := SUFFOCATED_COLOR.lerp(HEALTHY_COLOR, _oxygen.ratio())
+	for visual in _visuals:
+		visual.color = tint
 
 
 ## Instant damage on contact. Kills the coral at 0 oxygen.
 func apply_oxygen_damage(amount: float) -> void:
-	if is_queued_for_deletion():
+	if _dead:
 		return
-	oxygen = maxf(oxygen - amount, 0.0)
-	if oxygen <= 0.0:
-		destroy()
+	_oxygen.damage(amount)
 
 
+## Dies immediately for gameplay (group, grid, collisions), then crumbles visually.
 func destroy() -> void:
-	if is_queued_for_deletion():
+	if _dead:
 		return
+	_dead = true
 	remove_from_group(Groups.CORALS)
 	Game.grid.release(cells)
+	set_deferred("collision_layer", 0)
 	destroyed.emit()
-	queue_free()
+	_crumble()
+
+
+func _crumble() -> void:
+	var tween := create_tween().set_parallel(true)
+	for follower in _followers:
+		tween.tween_property(follower, "modulate:a", 0.0, CRUMBLE_SECONDS)
+		tween.tween_property(follower, "scale", Vector2(1.0, 0.3), CRUMBLE_SECONDS)
+	tween.chain().tween_callback(queue_free)
