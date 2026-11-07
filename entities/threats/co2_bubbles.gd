@@ -12,8 +12,8 @@ const BODY_RADII := 0.8
 ## Soft blobs that make up the nebula.
 const BLOB_COUNT := 6
 ## Fizz bubbles spawned per second (at the reference size).
-const FIZZ_RATE := 22.0
-const FIZZ_MAX := 48
+const FIZZ_RATE := 7.0
+const FIZZ_MAX := 16
 const FIZZ_MIN_PX := 1.5
 const FIZZ_MAX_PX := 3.5
 const FIZZ_SPEED := Vector2(28.0, 60.0) # px/s, min..max
