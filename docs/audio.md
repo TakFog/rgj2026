@@ -8,12 +8,23 @@ so the mix can be rebalanced without touching a script. The rules below apply to
 
 | File | What it is |
 |---|---|
-| `assets/audio/` | The audio assets. One folder per sound: `corallo/` (placing an item), `item/` (an inventory slot refills), `busta/` (a plastic bag pops). `game_loop.wav` is the music. |
+| `assets/audio/` | The audio assets, one folder per sound (see Events below). The `game_loop*.wav`, `intro.wav` and `outro.wav` files are music. |
 | `core/audio_events.gd` | `AudioEvents.TAKES`: event name -> **takes** (file paths), one of which is played at random per play. |
 | `systems/b_audio.gd` | The SFX node that plays those events (pool of voices, one bus per event). |
 | `data/audio_event.gd` | One event's `gain_db`, `pitch`, `pitch_jitter`, `high_pass_hz` and `low_pass_hz` (an `AudioEvent` resource). |
 | `data/audio_settings.gd` / `.tres` | It all comes together here: the music settings, a global effects level, and one `AudioEvent` per event. **Tune in `data/audio_settings.tres`** (open it in the inspector); its entries are named after the events (`AudioEvent_placement`, ...) and the file starts with a short legend. |
 | `autoload/game.gd` | Exposes the resource as `Game.AUDIO_SETTINGS`. |
+
+## Events
+
+| Event | Plays when | Files |
+|---|---|---|
+| `placement_nest` | placing a nest | `assets/audio/nido/` |
+| `placement_algae` | placing an algae | `assets/audio/alga/` |
+| `placement` | placing a coral (or any kind without its own event) | `assets/audio/corallo/` |
+| `predator_ate` | a predator bites a fish or a nest's eggs | `assets/audio/eat/` |
+| `item_available` | an inventory slot refills | `assets/audio/item/` |
+| `bag_destroyed` | a plastic bag pops | `assets/audio/busta/` |
 
 ## Levels
 

@@ -10,6 +10,8 @@ extends CharacterBody2D
 ## swims over algae and nests, so only corals can shelter fish and eggs.
 
 signal destroyed
+## Emitted when it bites a fish or a nest's eggs (the eat sound, GDD §7.4).
+signal ate
 
 ## Distance (world units) at which a waypoint counts as reached.
 const ARRIVE_DISTANCE := 3.0
@@ -125,6 +127,7 @@ func _try_bite() -> bool:
 	_path.clear()
 	_replan_timer = 0.0
 	brain.ate(amount)
+	ate.emit()
 	return true
 
 
