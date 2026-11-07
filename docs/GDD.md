@@ -98,7 +98,7 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 - È un ostacolo solido per i pesci: ogni cella ha una collisione quadrata.
 - L'ossigeno appartiene **al corallo intero**, non alla singola cella. Quando muore libera tutte le sue celle.
 - **Ossigeno** da 0 a 100. A 0 si **sgretola**: animazione, poi viene rimosso.
-- **Recupero lento**: `+coral_regen_per_sec` (0.3/s) a temperatura ambiente. Il recupero dipende dalla temperatura e diventa **negativo** con l'acqua calda (`coral_regen_hot_per_sec`, −0.3/s a T=1): i coralli muoiono lentamente se il mare si surriscalda.
+- **Recupero lento**: `+coral_regen_per_sec` (0.3/s) a temperatura ambiente. Il recupero dipende dalla temperatura e diventa **negativo** con l'acqua calda (`coral_regen_hot_per_sec`, −1.5/s a T=1): i coralli muoiono in fretta se il mare si surriscalda (il recupero diventa negativo già sopra T≈0.17).
 - Danni (vedi tabella delle interazioni): alga che si espande addosso, CO2, busta, ciclone. **Tutti i danni sono istantanei e avvengono al contatto**: non esistono danni al secondo.
 - Rallenta la salita della temperatura **in proporzione alle celle che occupa** (§6): un corallo grande protegge di più dal caldo, ma blocca di più i pesci.
 
@@ -111,7 +111,7 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 	 - **corallo** → l'alga non nasce, il corallo perde `algae_coral_damage` ossigeno;
 	 - **qualsiasi altra cosa** (alga, nido, fuori mappa, pesce o minaccia sopra la cella) → passa alla cella adiacente successiva.
   3. Se **nessuna** delle 4 celle è utilizzabile, l'espansione si ferma. Al prossimo intervallo l'alga riprova, perché nel frattempo una cella potrebbe essersi liberata (es. un pesce ha mangiato un'alga vicina).
-- Tetto massimo di alghe in gioco: `algae_max_count` (200), sia per le prestazioni sia per il bilanciamento.
+- Tetto massimo di alghe in gioco: `algae_max_count` (120), sia per le prestazioni sia per il bilanciamento.
 - Può essere mangiata dai pesci.
 
 ### 5.4 Pesce
@@ -145,11 +145,11 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 
 | Effetto | T = 0 | T = 1 |
 |---|---|---|
-| Intervallo di crescita alghe | 12 s | 4 s |
+| Intervallo di crescita alghe | 20 s | 8 s |
 | Intervallo di spawn CO2 | 22 s | 8 s |
 | Intervallo di spawn ciclone | 70 s | 30 s |
 | Velocità pesci | 100% | 50% |
-| Recupero ossigeno dei coralli | +0.3/s | −0.3/s |
+| Recupero ossigeno dei coralli | +0.3/s | −1.5/s |
 | Probabilità che le uova muoiano prima della schiusa | 0% (valore freddo negativo, azzerato) | 60% |
 
 - Le buste di plastica hanno una frequenza fissa (`bag_spawn_interval` 28 s).

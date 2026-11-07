@@ -10,3 +10,7 @@ slot_refill_seconds = 14.0
 weight_coral = 40.0
 temp_base_rate = 0.0033333334
 temp_max_slowdown = 0.45
+coral_regen_hot_per_sec = -1.5
+algae_growth_interval_cold = 20.0
+algae_growth_interval_hot = 8.0
+algae_max_count = 120
