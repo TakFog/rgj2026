@@ -8,6 +8,8 @@ signal destroyed
 
 ## Temporary art, until the designer's algae sprite is ready.
 const TEXTURE := preload("res://assets/sprites/temp/algae.png")
+## Alpha of the coloured cell drawn under the sprite.
+const FOOTPRINT_ALPHA := 0.3
 
 var cell: Vector2i
 ## Last fish that reserved this algae (to swim to it or eat it), or null. It
@@ -32,7 +34,8 @@ func _ready() -> void:
 	CellShapes.add_collision(self, [cell], cell)
 	# Flat ground cover: drawn below the y-sorted actors, so the predator and
 	# the turtle swimming over an algae stay on top of it.
-	var visual := PlaceholderShape.cell(position, Color(0.3, 0.8, 0.35))
+	# Faint footprint: the sprite does the reading, the cell only grounds it.
+	var visual := PlaceholderShape.cell(position, Color(0.3, 0.8, 0.35, FOOTPRINT_ALPHA))
 	visual.add_sprite(TEXTURE, 0.8)
 	ViewFollower.attach(self, visual).z_index = -1
 	_rng.randomize()

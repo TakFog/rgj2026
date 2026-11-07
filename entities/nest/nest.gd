@@ -6,8 +6,10 @@ extends Area2D
 
 signal destroyed
 
-const EMPTY_COLOR := Color(0.95, 0.85, 0.4)
-const EGGS_COLOR := Color(1.0, 0.55, 0.2)
+## Footprint under the sprites, faint so the art reads first.
+const FOOTPRINT_ALPHA := 0.3
+const EMPTY_COLOR := Color(0.95, 0.85, 0.4, FOOTPRINT_ALPHA)
+const EGGS_COLOR := Color(1.0, 0.55, 0.2, FOOTPRINT_ALPHA)
 ## Temporary art, until the designer's nest sprites are ready.
 const EMPTY_TEXTURE := preload("res://assets/sprites/temp/nest_empty.png")
 const EGGS_TEXTURE := preload("res://assets/sprites/temp/nest_eggs.png")
