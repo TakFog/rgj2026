@@ -11,7 +11,7 @@ so the mix can be rebalanced without touching a script. The rules below apply to
 | `assets/audio/` | The audio assets. One folder per sound: `corallo/` (placing an item), `item/` (an inventory slot refills), `busta/` (a plastic bag pops). `game_loop.wav` is the music. |
 | `systems/b_audio.gd` | The SFX node. Its `EVENTS` dictionary maps an event name to the **takes** (file paths) played at random, one per play. |
 | `data/audio_event.gd` | One event's `gain_db`, `pitch`, `pitch_jitter`, `high_pass_hz` and `low_pass_hz` (an `AudioEvent` resource). |
-| `data/audio_settings.gd` / `.tres` | It all comes together here: the music settings, a global effects level, and one `AudioEvent` per event. **Tune in `data/audio_settings.tres`** (open it in the inspector). |
+| `data/audio_settings.gd` / `.tres` | It all comes together here: the music settings, a global effects level, and one `AudioEvent` per event. **Tune in `data/audio_settings.tres`** (open it in the inspector); its entries are named after the events (`AudioEvent_placement`, ...) and the file starts with a short legend. |
 | `autoload/game.gd` | Exposes the resource as `Game.AUDIO_SETTINGS`. |
 
 ## Levels
