@@ -18,6 +18,9 @@ var _streams := {} # StringName -> Array[AudioStream]
 var _players: Array[AudioStreamPlayer] = []
 var _outro: AudioStreamPlayer
 var _wind: AudioStreamPlayer
+## Linear fade of the cyclone wind: 0 = silent, 1 = at its normal level.
+var _wind_gain := 0.0
+var _wind_target := 0.0
 ## Cyclones currently on screen, by instance id.
 var _cyclones_in_view := {}
 var _next := 0
@@ -55,7 +58,7 @@ func _ready() -> void:
 	_wind.name = "CycloneWind"
 	_wind.stream = _first_take(&"cyclone_wind")
 	_wind.bus = Game.AUDIO_SETTINGS.event_bus(&"cyclone_wind")
-	_wind.volume_db = Game.AUDIO_SETTINGS.effect_gain_db(&"cyclone_wind")
+	_wind.volume_db = AudioSettings.SILENCE_DB
 	_wind.pitch_scale = Game.AUDIO_SETTINGS.event(&"cyclone_wind").pitch
 	add_child(_wind)
 	if placement != null:
@@ -65,6 +68,24 @@ func _ready() -> void:
 		inventory.model.item_available.connect(func(_index: int) -> void: play(&"item_available"))
 	# Entities spawned during the run (the level's starting ones are already in).
 	Game.world.child_entered_tree.connect(_on_entity_added)
+
+
+func _process(delta: float) -> void:
+	_fade_wind(delta)
+
+
+## The wind fades in while a cyclone is on screen and out once it leaves.
+func _fade_wind(delta: float) -> void:
+	if _wind == null or _wind.stream == null:
+		return
+	var seconds := Game.AUDIO_SETTINGS.cyclone_wind_fade_seconds
+	_wind_gain = _wind_target if seconds <= 0.0 else move_toward(_wind_gain, _wind_target, delta / seconds)
+	if _wind_gain <= 0.0:
+		if _wind.playing:
+			_wind.stop()
+		_wind.volume_db = AudioSettings.SILENCE_DB
+	else:
+		_wind.volume_db = Game.AUDIO_SETTINGS.effect_gain_db(&"cyclone_wind") + linear_to_db(_wind_gain)
 
 
 ## Plays a random take of `event` on the next voice in the ring.
@@ -127,9 +148,8 @@ func _set_cyclone_in_view(id: int, in_view: bool) -> void:
 		_cyclones_in_view[id] = true
 	else:
 		_cyclones_in_view.erase(id)
-	if _cyclones_in_view.is_empty():
-		_wind.stop()
-	elif not _wind.playing and _wind.stream != null:
+	_wind_target = 0.0 if _cyclones_in_view.is_empty() else 1.0
+	if _wind_target > 0.0 and not _wind.playing and _wind.stream != null:
 		_wind.play()
 
 
