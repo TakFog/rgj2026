@@ -19,8 +19,13 @@ const INDICATOR_REFRESH_SECONDS := 0.05
 const LOW_OXYGEN_RATIO := 0.3
 const LOW_OXYGEN_PULSE_SPEED := 6.0
 const LOW_OXYGEN_COLOR := Color(1.0, 0.28, 0.2, 0.9)
-const EGG_TRACK_COLOR := Color(0.03, 0.08, 0.12, 0.7)
-const EGG_RING_COLOR := Color(1.0, 0.82, 0.35, 0.95)
+const EGG_RING_COLOR := Color(1.0, 0.82, 0.35)
+const EGG_RING_WIDTH := 1.2
+const EGG_RING_RADIUS_CELLS := 0.55
+## The timer stays almost invisible at laying and only becomes readable as the
+## eggs get close to hatching.
+const EGG_RING_MIN_ALPHA := 0.10
+const EGG_RING_MAX_ALPHA := 0.38
 
 const BLOOD_COLORS := [
 	Color(0.85, 0.06, 0.10, 0.9),
@@ -294,7 +299,8 @@ func _draw_low_oxygen_rings() -> void:
 				1.5 + pulse * 1.5, true)
 
 
-## Draws a small gold progress ring around a nest while its eggs incubate.
+## A barely-there gold arc around a nest while its eggs incubate. No track and
+## no end dot; it only brightens as hatching gets close.
 func _draw_egg_rings() -> void:
 	var total := Game.eco.nest_hatch_seconds
 	if total <= 0.0:
@@ -307,15 +313,14 @@ func _draw_egg_rings() -> void:
 		if left <= 0.0:
 			continue
 		var progress := hatch_progress(left, total)
-		var center := nest.global_position
-		var radius := Game.grid.cell_size * 0.55
-		draw_polyline(_projected_circle(center, radius), EGG_TRACK_COLOR, 2.0, true)
 		if progress <= 0.0:
 			continue
+		var center := nest.global_position
+		var radius := Game.grid.cell_size * EGG_RING_RADIUS_CELLS
+		var color := EGG_RING_COLOR
+		color.a = lerpf(EGG_RING_MIN_ALPHA, EGG_RING_MAX_ALPHA, progress)
 		var arc := _projected_arc(center, radius, -PI * 0.5, -PI * 0.5 + TAU * progress, 24)
-		draw_polyline(arc, EGG_RING_COLOR, 2.5, true)
-		if not arc.is_empty():
-			draw_circle(arc[arc.size() - 1], 2.5, EGG_RING_COLOR)
+		draw_polyline(arc, color, EGG_RING_WIDTH, true)
 
 
 ## World-space centre and half-size of a coral's footprint, plus a small margin.
