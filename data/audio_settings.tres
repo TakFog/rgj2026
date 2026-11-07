@@ -34,7 +34,7 @@ gain_db = 4.0
 ; A predator eats a fish or a nest's eggs (assets/audio/eat).
 [sub_resource type="Resource" id="AudioEvent_predator_ate"]
 script = ExtResource("2_audio_event")
-gain_db = -6.0
+gain_db = -12.0
 
 ; An inventory slot refills (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_available"]
