@@ -42,4 +42,4 @@ so it can be inspected and toggled at runtime. When adding a new feature flag:
 2. Add a read-only (or toggleable) entry to the "Feature flags" section of `DebugOverlay`.
 3. Gate the feature on `Game.actors.<flag>` (or `Game.eco.<flag>`) in the system that uses it.
 
-Current flags: `co2_dies_on_coral`, `predator_enabled`.
+Current flags: `co2_dies_on_coral`, `predator_enabled`, `turtle_enabled`.
