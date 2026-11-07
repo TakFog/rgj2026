@@ -29,3 +29,10 @@ func spawn_fish(world_position: Vector2, adult: bool) -> Fish:
 	fish.setup(world_position, adult)
 	Game.world.add_child(fish)
 	return fish
+
+
+func spawn_predator(entry: EdgeEntry) -> Predator:
+	var predator := Predator.new()
+	predator.setup(entry)
+	Game.world.add_child(predator)
+	return predator

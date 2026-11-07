@@ -109,7 +109,7 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
   2. controlla la cella:
 	 - **vuota** → nasce la nuova alga;
 	 - **corallo** → l'alga non nasce, il corallo perde `algae_coral_damage` ossigeno;
-     - **qualsiasi altra cosa** (alga, nido, fuori mappa, pesce o minaccia sopra la cella) → passa alla cella adiacente successiva.
+	 - **qualsiasi altra cosa** (alga, nido, fuori mappa, pesce o minaccia sopra la cella) → passa alla cella adiacente successiva.
   3. Se **nessuna** delle 4 celle è utilizzabile, l'espansione si ferma. Al prossimo intervallo l'alga riprova, perché nel frattempo una cella potrebbe essersi liberata (es. un pesce ha mangiato un'alga vicina).
 - Tetto massimo di alghe in gioco: `algae_max_count` (200), sia per le prestazioni sia per il bilanciamento.
 - Può essere mangiata dai pesci.
@@ -168,6 +168,16 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 ### 7.3 Ciclone marino
 - Raggio 40 unità, veloce, va **dritto**.
 
+### 7.4 Pesce predatore (carnivoro)
+- **Feature flag**: `predator_enabled` in `balance_actors.tres` (se il designer non realizza l'asset, si spegne da lì).
+- Arriva ogni `predator_interval` (70 s), al massimo `predator_max_count` (1) alla volta, dal bordo dello schermo come le altre minacce.
+- Caccia **pesci adulti, pesci giovani e uova** finché non è sazio (`predator_satiety`, 6), poi se ne va. Se non si sazia entro `predator_hunt_seconds` (45 s passati sull'isola) se ne va comunque.
+- Sazietà per preda: giovane `predator_juvenile_satisfaction` (1) < adulto `predator_adult_satisfaction` (2) < uova = giovane × uova che si schiuderebbero (`nest_hatch_count`, quindi 3). Le uova sono la preda preferita: fanno perdere più tempo al giocatore.
+- Sceglie la preda con il punteggio più alto: **sazietà / distanza lungo il percorso**. Ignora le prede che non può raggiungere. Ricalcola preda e percorso ogni `predator_replan_seconds` (0.5 s), perché i pesci si muovono.
+- È **grande** (`predator_radius` 22, più di mezza cella): non passa nei **corridoi larghi una cella** tra i coralli, dove i pesci invece passano. **Solo i coralli lo fermano**: passa sopra alghe e nidi, quindi le alghe non proteggono i pesci. Il giocatore può proteggere pesci e nidi costruendo corridoi stretti di corallo. Il percorso si calcola sugli angoli della griglia: un angolo è percorribile solo se le 2×2 celle intorno non contengono coralli.
+- Dopo ogni morso si ferma `predator_bite_pause_seconds` (1 s). Il caldo lo rallenta come gli altri pesci.
+- È un corpo sul layer delle minacce: non si può piazzare nulla sopra di lui e il ciclone lo spazza via.
+
 ## 8. Tabella delle interazioni
 
 Le combinazioni non elencate **non fanno nulla**.
@@ -183,6 +193,9 @@ Le combinazioni non elencate **non fanno nulla**.
 | Ciclone | Pesce / Alga | Distrutti |
 | Ciclone | Nido | **Distrutto** |
 | Ciclone | CO2 / Busta | Rimosse |
+| Predatore | Pesce | Mangiato (sazietà giovane/adulto) |
+| Predatore | Nido con uova | Le uova vengono mangiate, il nido torna `EMPTY` (sazietà = giovane × uova) |
+| Ciclone | Predatore | Rimosso |
 | Ciclone | Corallo | Il corallo **muore**, il ciclone **sparisce** |
 
 Danni dal più debole al più forte: alga (10) < busta (35) < CO2 (50). Tutti i danni sono **istantanei al contatto**, nessuno è al secondo.

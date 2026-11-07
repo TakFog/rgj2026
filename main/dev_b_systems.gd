@@ -3,6 +3,7 @@ extends Node
 ## threat spawner, HUD...). Only Dev B edits this file.
 
 const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
+const PredatorSpawner := preload("res://systems/b_predator_spawner.gd")
 
 
 func _ready() -> void:
@@ -15,6 +16,11 @@ func _ready() -> void:
 	var threat_spawner := ThreatSpawner.new()
 	threat_spawner.name = "ThreatSpawner"
 	add_child(threat_spawner)
+
+	# Carnivorous predator (issue #3), behind the predator_enabled feature flag.
+	var predator_spawner := PredatorSpawner.new()
+	predator_spawner.name = "PredatorSpawner"
+	add_child(predator_spawner)
 
 
 ## B2: population monitor, HUD, pause and game over (GDD §3, §9).
