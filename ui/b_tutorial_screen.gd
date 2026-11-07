@@ -166,6 +166,18 @@ func _on_skip_pressed() -> void:
 		run_started.emit()
 
 
+## Mouse cancel must be caught in _input: the full-screen card consumes pointer
+## events in the GUI before _unhandled_input can see them.
+func _input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event is InputEventMouseButton and event.is_action_pressed(InputActions.CANCEL):
+		var viewport := get_viewport()
+		if viewport != null:
+			viewport.set_input_as_handled()
+		_on_primary_pressed()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
