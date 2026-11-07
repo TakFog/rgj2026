@@ -83,10 +83,13 @@ Why: the jam build is judged on its first screen; two competing button styles
 
 ## Update: code-drawn button labels
 
-The painted lettering in `video/MENU.png` was a placeholder; the artist replaces
-`assets/ui/menu.png` with a text-free version. `MainMenuScreen` therefore draws
-a `Label` on each hotspot (`LABELS`: INIZIA, COME SI GIOCA, IMPOSTAZIONI,
+The painted lettering in `video/MENU.png` was a placeholder; the text-free
+master is now `video/ciccio.png`, shipped as `assets/ui/menu.png`.
+`MainMenuScreen` therefore draws a `Label` on each hotspot (`LABELS`: INIZIA, COME SI GIOCA, IMPOSTAZIONI,
 CREDITI, ESCI), sized from the hotspot so it follows the art at every window
 size. The labels use the shared off-white caption colour and sit above the
 additive hover/focus glow. The old anti-goal "labels appearing twice" now only
-means the shipped painting must stay text-free.
+means the shipped painting must stay text-free. The text-free painting has an
+opaque navy background, so the menu backdrop is now
+`SeaStyle.MENU_BACKDROP_COLOR` (sampled from the art) instead of the
+translucent overlay; the letterbox bars blend into the painting.

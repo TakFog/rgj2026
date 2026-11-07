@@ -29,6 +29,9 @@ const BUTTON_SIZE := Vector2(200, 52)
 const MENU_SEPARATION := 18
 ## Same translucent navy backdrop for every full-screen menu overlay.
 const OVERLAY_COLOR := Color(0.02, 0.05, 0.1, 0.85)
+## Opaque navy sampled from the painted title screen's background, so the
+## letterbox bars blend into the artwork at any window aspect.
+const MENU_BACKDROP_COLOR := Color(0.101961, 0.160784, 0.258824)
 ## Divider under a menu title: a short sea-glass rule, not a full-width
 ## separator. Keeps its decorative role without reading as default chrome.
 const DIVIDER_COLOR := Color(0.47, 0.8, 0.78, 0.3)

@@ -6,7 +6,7 @@ extends ColorRect
 ## is the interface. Works while the tree is paused; clicking Inizia unpauses
 ## and hides the menu.
 
-## The painted menu: the master is `video/MENU.png`, this is the web-sized copy.
+## The painted menu: the master is `video/ciccio.png`, this is the web-sized copy.
 const MENU_TEXTURE: Texture2D = preload("res://assets/ui/menu.png")
 ## How much the hover/focus glow brightens a painted button.
 const GLOW_ALPHA := 0.22
@@ -63,7 +63,7 @@ var _glow_material: CanvasItemMaterial
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	color = SeaStyle.OVERLAY_COLOR
+	color = SeaStyle.MENU_BACKDROP_COLOR
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	visible = true

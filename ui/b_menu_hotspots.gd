@@ -5,7 +5,7 @@ extends RefCounted
 ## hotspots follow it at any window size (GDD §9, painted title screen).
 
 ## The painting shipped as `assets/ui/menu.png`: the 5699×3341 master in
-## `video/MENU.png`, downscaled to 2048 px wide.
+## `video/ciccio.png`, downscaled to 2048 px wide.
 const ART_SIZE := Vector2(2048, 1200)
 
 ## Hotspot key -> its rect in fractions of the painting, in keyboard focus
