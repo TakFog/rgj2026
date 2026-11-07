@@ -14,6 +14,13 @@ const MAX_RIPPLES := 16
 const RIPPLE_SEGMENTS := 20
 const RIPPLE_WIDTH := 2.0
 const RIPPLE_SECONDS := 0.5
+## Continuous indicators (low oxygen, egg hatch) redraw at 20 Hz.
+const INDICATOR_REFRESH_SECONDS := 0.05
+const LOW_OXYGEN_RATIO := 0.3
+const LOW_OXYGEN_PULSE_SPEED := 6.0
+const LOW_OXYGEN_COLOR := Color(1.0, 0.28, 0.2, 0.9)
+const EGG_TRACK_COLOR := Color(0.03, 0.08, 0.12, 0.7)
+const EGG_RING_COLOR := Color(1.0, 0.82, 0.35, 0.95)
 
 const BLOOD_COLORS := [
 	Color(0.85, 0.06, 0.10, 0.9),
@@ -62,6 +69,9 @@ var _camera: Camera2D
 var _shake_time := 0.0
 var _shake_duration := 0.0
 var _shake_strength := 0.0
+var _time := 0.0
+var _indicator_elapsed := INDICATOR_REFRESH_SECONDS
+var _had_indicators := false
 
 
 func _ready() -> void:
@@ -83,6 +93,7 @@ func _process(delta: float) -> void:
 	_tick_shake(delta)
 	if get_tree().paused:
 		return
+	_time += delta
 	var dirty := false
 	for i in range(_particles.size() - 1, -1, -1):
 		var p := _particles[i]
@@ -104,11 +115,23 @@ func _process(delta: float) -> void:
 		if ripple.age >= ripple.life:
 			_ripples.remove_at(i)
 		dirty = true
+
+	# Pulse low-oxygen rings and advance egg rings. Redraw while any indicator
+	# is visible, and once more after the last one disappears to clear it.
+	_indicator_elapsed += delta
+	if _indicator_elapsed >= INDICATOR_REFRESH_SECONDS:
+		_indicator_elapsed = 0.0
+		var has_indicators := _has_indicators()
+		if has_indicators or _had_indicators:
+			dirty = true
+		_had_indicators = has_indicators
+
 	if dirty:
 		queue_redraw()
 
 
 func _draw() -> void:
+	_draw_indicators()
 	for ripple in _ripples:
 		_draw_ripple(ripple)
 	for p in _particles:
@@ -218,6 +241,101 @@ func _on_placement_finished(kind: StringName) -> void:
 			Vector2(1.5, 3.0), Vector2(0.3, 0.5), 30.0, 0.8, -5.0)
 
 
+# --- Continuous indicators -------------------------------------------------
+
+## True when `oxygen` is at or below the danger threshold.
+static func is_low_oxygen(oxygen: float, max_oxygen: float) -> bool:
+	return max_oxygen > 0.0 and oxygen <= max_oxygen * LOW_OXYGEN_RATIO
+
+
+## 0 at laying, 1 at hatching. Clamped; a zero total reports 0.
+static func hatch_progress(seconds_left: float, total_seconds: float) -> float:
+	if total_seconds <= 0.0:
+		return 0.0
+	return clampf(1.0 - seconds_left / total_seconds, 0.0, 1.0)
+
+
+func _has_indicators() -> bool:
+	var max_oxygen := Game.eco.coral_max_oxygen
+	for node in get_tree().get_nodes_in_group(Groups.CORALS):
+		var coral := node as Coral
+		if coral != null and not coral.is_queued_for_deletion() \
+				and is_low_oxygen(coral.oxygen, max_oxygen):
+			return true
+	for node in get_tree().get_nodes_in_group(Groups.NESTS):
+		var nest := node as Nest
+		if nest != null and not nest.is_queued_for_deletion() and nest.has_eggs() \
+				and nest.eggs_time_left() > 0.0:
+			return true
+	return false
+
+
+func _draw_indicators() -> void:
+	_draw_low_oxygen_rings()
+	_draw_egg_rings()
+
+
+## Pulses a red danger ring around corals that are close to crumbling.
+func _draw_low_oxygen_rings() -> void:
+	var max_oxygen := Game.eco.coral_max_oxygen
+	for node in get_tree().get_nodes_in_group(Groups.CORALS):
+		var coral := node as Coral
+		if coral == null or coral.is_queued_for_deletion() \
+				or not is_low_oxygen(coral.oxygen, max_oxygen):
+			continue
+		var ring := _coral_ring(coral)
+		var center: Vector2 = ring["center"]
+		var radius: float = ring["radius"]
+		var phase := float(coral.get_instance_id() % 17)
+		var pulse := 0.5 + 0.5 * sin(_time * LOW_OXYGEN_PULSE_SPEED + phase)
+		var color := LOW_OXYGEN_COLOR
+		color.a *= 0.35 + 0.65 * pulse
+		draw_polyline(_projected_circle(center, radius + pulse * 2.0), color,
+				1.5 + pulse * 1.5, true)
+
+
+## Draws a small gold progress ring around a nest while its eggs incubate.
+func _draw_egg_rings() -> void:
+	var total := Game.eco.nest_hatch_seconds
+	if total <= 0.0:
+		return
+	for node in get_tree().get_nodes_in_group(Groups.NESTS):
+		var nest := node as Nest
+		if nest == null or nest.is_queued_for_deletion() or not nest.has_eggs():
+			continue
+		var left: float = nest.eggs_time_left()
+		if left <= 0.0:
+			continue
+		var progress := hatch_progress(left, total)
+		var center := nest.global_position
+		var radius := Game.grid.cell_size * 0.55
+		draw_polyline(_projected_circle(center, radius), EGG_TRACK_COLOR, 2.0, true)
+		if progress <= 0.0:
+			continue
+		var arc := _projected_arc(center, radius, -PI * 0.5, -PI * 0.5 + TAU * progress, 24)
+		draw_polyline(arc, EGG_RING_COLOR, 2.5, true)
+		if not arc.is_empty():
+			draw_circle(arc[arc.size() - 1], 2.5, EGG_RING_COLOR)
+
+
+## World-space centre and half-size of a coral's footprint, plus a small margin.
+func _coral_ring(coral: Coral) -> Dictionary:
+	if coral.cells.is_empty():
+		return {"center": coral.global_position, "radius": Game.grid.cell_size * 0.5}
+	var half := Game.grid.cell_size * 0.5
+	var min_cell: Vector2i = coral.cells[0]
+	var max_cell: Vector2i = coral.cells[0]
+	for cell in coral.cells:
+		min_cell = Vector2i(mini(min_cell.x, cell.x), mini(min_cell.y, cell.y))
+		max_cell = Vector2i(maxi(max_cell.x, cell.x), maxi(max_cell.y, cell.y))
+	var min_world := Game.grid.cell_to_world(min_cell) - Vector2(half, half)
+	var max_world := Game.grid.cell_to_world(max_cell) + Vector2(half, half)
+	return {
+		"center": (min_world + max_world) * 0.5,
+		"radius": maxf(max_world.x - min_world.x, max_world.y - min_world.y) * 0.5 + 4.0,
+	}
+
+
 # --- Effects ---------------------------------------------------------------
 
 func _blood(world_position: Vector2) -> void:
@@ -317,6 +435,15 @@ func _projected_circle(center_world: Vector2, radius: float) -> PackedVector2Arr
 		var angle := TAU * float(i) / float(RIPPLE_SEGMENTS)
 		points.append(Game.projection.to_screen(center_world + Vector2.from_angle(angle) * radius))
 	points.append(points[0])
+	return points
+
+
+func _projected_arc(center_world: Vector2, radius: float, from_angle: float,
+		to_angle: float, segments: int) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for i in range(segments + 1):
+		var angle := lerpf(from_angle, to_angle, float(i) / float(segments))
+		points.append(Game.projection.to_screen(center_world + Vector2.from_angle(angle) * radius))
 	return points
 
 
