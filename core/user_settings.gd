@@ -7,6 +7,8 @@ const PATH := "user://settings.cfg"
 const SECTION := "audio"
 const MUSIC_KEY := "music_db"
 const EFFECTS_KEY := "effects_db"
+const TUTORIAL_SECTION := "tutorial"
+const TUTORIAL_KEY := "seen"
 ## Slider range: -80 dB is silent, 0 dB leaves the designed mix untouched.
 const MIN_DB := -80.0
 const MAX_DB := 0.0
@@ -37,6 +39,22 @@ static func apply(music_db_value: float, effects_db_value: float) -> void:
 
 static func load_and_apply() -> void:
 	apply(music_db(), effects_db())
+
+
+## True once the player has started a run after seeing the tutorial.
+static func tutorial_seen(path := PATH) -> bool:
+	var config := ConfigFile.new()
+	if config.load(path) != OK:
+		return false
+	return bool(config.get_value(TUTORIAL_SECTION, TUTORIAL_KEY, false))
+
+
+## Remembers that the tutorial has been seen, keeping every other section.
+static func mark_tutorial_seen(path := PATH) -> void:
+	var config := ConfigFile.new()
+	config.load(path)
+	config.set_value(TUTORIAL_SECTION, TUTORIAL_KEY, true)
+	config.save(path)
 
 
 ## Slider position (0..100) -> bus level. Linear in amplitude, so 50% is -6 dB.

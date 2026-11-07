@@ -17,6 +17,10 @@ const CREDITS_TEXT := "Un gestionale di barriera corallina.\nTema del game jam: 
 
 signal play_pressed
 signal exit_pressed
+## Play was pressed: the front end shows the tutorial, then starts the run.
+signal play_requested
+## The "Come si gioca" button was pressed.
+signal tutorial_requested
 ## Any menu button was pressed (used by the audio system).
 signal button_pressed
 
@@ -117,6 +121,17 @@ func _build_menu_panel() -> Control:
 	settings_btn.offset_top = BUTTON_SIZE.y * 0.5 + SeaStyle.MENU_SEPARATION
 	settings_btn.offset_bottom = BUTTON_SIZE.y * 1.5 + SeaStyle.MENU_SEPARATION
 
+	# How to play, just below Settings.
+	var tutorial_btn := _button("Come si gioca")
+	tutorial_btn.add_theme_font_size_override("font_size", 22)
+	tutorial_btn.pressed.connect(_on_tutorial_pressed)
+	panel.add_child(tutorial_btn)
+	tutorial_btn.set_anchors_preset(Control.PRESET_CENTER)
+	tutorial_btn.offset_left = -BUTTON_SIZE.x * 0.5
+	tutorial_btn.offset_right = BUTTON_SIZE.x * 0.5
+	tutorial_btn.offset_top = BUTTON_SIZE.y * 1.5 + 32.0
+	tutorial_btn.offset_bottom = BUTTON_SIZE.y * 2.5 + 32.0
+
 	# Exit, bottom left of the screen.
 	var exit_btn := _button("Esci")
 	exit_btn.pressed.connect(_on_exit_pressed)
@@ -187,8 +202,14 @@ func _button(text: String) -> Button:
 
 func _on_play_pressed() -> void:
 	button_pressed.emit()
-	close()
-	play_pressed.emit()
+	hide_for_tutorial()
+	play_requested.emit()
+
+
+func _on_tutorial_pressed() -> void:
+	button_pressed.emit()
+	hide_for_tutorial()
+	tutorial_requested.emit()
 
 
 func _on_settings_pressed() -> void:
@@ -223,6 +244,12 @@ func _on_exit_pressed() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed(InputActions.PAUSE):
 		get_viewport().set_input_as_handled()
+
+
+## Play / How-to-play hides the menu but leaves the run paused for the tutorial.
+func hide_for_tutorial() -> void:
+	visible = false
+	_settings_panel.close()
 
 
 ## Show the menu and pause the game behind it. Called when the run starts.

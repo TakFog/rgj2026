@@ -8,6 +8,10 @@ const TurtleSpawner := preload("res://systems/b_turtle_spawner.gd")
 const AudioSystem := preload("res://systems/b_audio.gd")
 const Juice := preload("res://core/juice.gd")
 const MainMenuScreen := preload("res://ui/b_main_menu.gd")
+const TutorialScreen := preload("res://ui/b_tutorial_screen.gd")
+
+var _main_menu: MainMenuScreen
+var _tutorial: TutorialScreen
 
 
 func _ready() -> void:
@@ -57,11 +61,21 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 
 	# Title screen: shown at game start, pauses the run until Play is pressed.
 	# MainMenuScreen opens itself from its own _ready once it is in the tree.
-	var main_menu := MainMenuScreen.new()
-	main_menu.name = "MainMenu"
-	main_menu.play_pressed.connect(_on_play_pressed)
-	main_menu.exit_pressed.connect(_on_exit_pressed)
-	Game.ui.add_child(main_menu)
+	_main_menu = MainMenuScreen.new()
+	_main_menu.name = "MainMenu"
+	_main_menu.play_requested.connect(_on_play_requested)
+	_main_menu.tutorial_requested.connect(_on_tutorial_requested)
+	_main_menu.play_pressed.connect(_on_run_started)
+	_main_menu.exit_pressed.connect(_on_exit_pressed)
+	Game.ui.add_child(_main_menu)
+
+	# Tutorial between Play and the run; shown only on the first run, but
+	# always reachable from the menu ("Come si gioca").
+	_tutorial = TutorialScreen.new()
+	_tutorial.name = "Tutorial"
+	_tutorial.run_started.connect(_on_tutorial_run_started)
+	_tutorial.closed.connect(_on_tutorial_closed)
+	Game.ui.add_child(_tutorial)
 
 	var pause := PauseController.new()
 	pause.name = "PauseController"
@@ -70,8 +84,43 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	add_child(pause)
 
 
-## Play pressed on the title screen: swap the intro for the run's music.
-func _on_play_pressed() -> void:
+## Play pressed on the title screen: the tutorial comes first on the first run.
+func _on_play_requested() -> void:
+	if UserSettings.tutorial_seen():
+		_main_menu.close()
+		_start_game_music()
+	else:
+		_main_menu.hide_for_tutorial()
+		_tutorial.open(TutorialScreen.Mode.START)
+
+
+## "Come si gioca" on the title screen: review the tutorial without starting.
+func _on_tutorial_requested() -> void:
+	_main_menu.hide_for_tutorial()
+	_tutorial.open(TutorialScreen.Mode.REVIEW)
+
+
+## The tutorial starts the run (Inizia or Salta).
+func _on_tutorial_run_started() -> void:
+	UserSettings.mark_tutorial_seen()
+	_tutorial.close()
+	_main_menu.close()
+	_start_game_music()
+
+
+## "Indietro" in the tutorial: back to the still-paused title screen.
+func _on_tutorial_closed() -> void:
+	_tutorial.close()
+	_main_menu.open()
+
+
+## The run starts directly (restart path: no tutorial).
+func _on_run_started() -> void:
+	_start_game_music()
+
+
+## Swaps the intro for the run's music.
+func _start_game_music() -> void:
 	var music := get_tree().get_first_node_in_group(Groups.MUSIC)
 	if music != null and music.has_method(&"start_game_music"):
 		music.start_game_music()
