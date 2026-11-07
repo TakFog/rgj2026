@@ -17,10 +17,16 @@ const TAKES := {
 	&"placement_algae": [ # placing an algae
 		"res://assets/audio/alga/alga.wav",
 	],
+	&"predator_ate": [ # a predator bites a fish or a nest's eggs
+		"res://assets/audio/eat/eat.wav",
+	],
 	&"item_available": [ # an inventory slot refills
 		"res://assets/audio/item/i0.wav",
 		"res://assets/audio/item/i1.wav",
 		"res://assets/audio/item/i2.wav",
+	],
+	&"co2_gone": [ # a CO2 cloud disappears
+		"res://assets/audio/co2/fart.wav",
 	],
 	&"bag_destroyed": [ # a plastic bag pops
 		"res://assets/audio/busta/b0.wav",
