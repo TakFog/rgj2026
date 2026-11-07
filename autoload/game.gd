@@ -7,6 +7,7 @@ signal temperature_changed(value: float)
 const ECOSYSTEM: BalanceEcosystem = preload("res://data/balance_ecosystem.tres")
 const ACTORS: BalanceActors = preload("res://data/balance_actors.tres")
 const VIEW_SETTINGS: ViewSettings = preload("res://data/view_settings.tres")
+const AUDIO_SETTINGS: AudioSettings = preload("res://data/audio_settings.tres")
 
 var eco: BalanceEcosystem = ECOSYSTEM
 var actors: BalanceActors = ACTORS

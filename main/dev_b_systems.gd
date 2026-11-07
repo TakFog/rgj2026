@@ -5,6 +5,7 @@ extends Node
 const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
 const PredatorSpawner := preload("res://systems/b_predator_spawner.gd")
 const TurtleSpawner := preload("res://systems/b_turtle_spawner.gd")
+const AudioSystem := preload("res://systems/b_audio.gd")
 
 
 func _ready() -> void:
@@ -27,6 +28,9 @@ func _ready() -> void:
 	var turtle_spawner := TurtleSpawner.new()
 	turtle_spawner.name = "TurtleSpawner"
 	add_child(turtle_spawner)
+
+	# P4: sound effects for gameplay events.
+	_setup_audio()
 
 
 ## B2: population monitor, HUD, pause and game over (GDD §3, §9).
@@ -52,3 +56,15 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	pause.monitor = monitor
 	pause.commander = commander
 	add_child(pause)
+
+
+## P4: sound effects (GDD §9). Hooks Dev A's placement and inventory, read from
+## the sibling DevASystems node Main adds before this one (see Main._ready).
+func _setup_audio() -> void:
+	var audio := AudioSystem.new()
+	audio.name = "Audio"
+	var dev_a := get_parent().get_node_or_null("DevASystems")
+	if dev_a != null:
+		audio.inventory = dev_a.get("inventory") as InventorySystem
+		audio.placement = dev_a.get("placement") as PlacementController
+	add_child(audio)

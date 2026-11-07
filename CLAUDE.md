@@ -4,6 +4,11 @@ Godot **4.7.2** stable (GDScript, Compatibility renderer) top-down 2D reef-manag
 The same version is pinned in CI (`GODOT_VERSION` in `.github/workflows/ci.yml`); keep the two in sync when upgrading.
 The game design document is `docs/GDD.md`.
 
+## Audio
+
+- Every sound — music included — is configured through `data/audio_settings.tres` (level in dB, pitch, high/low-pass filters). Never hard-code a volume, pitch or filter in a script. How-to: `docs/audio.md`.
+- A new sound needs **both** a take list in `systems/b_audio.gd` `EVENTS` (files under `assets/audio/<event>/`) **and** an `AudioEvent` entry in the audio settings. `tests/unit/test_audio_settings.gd` fails if an event is missing from the settings.
+
 ## Git
 
 - **Never work on `main`.** Never commit directly to `main`. All work happens on

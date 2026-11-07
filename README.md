@@ -57,6 +57,11 @@ starts with `test_` is run automatically.
 
 CI (GitHub Actions, `.github/workflows/ci.yml`) runs both scripts on every push and pull request.
 
+## Audio
+
+Music and sound effects are tuned from `data/audio_settings.tres` (level in dB, pitch,
+low/high-pass filters, per event). To add a new sound, follow [`docs/audio.md`](docs/audio.md).
+
 ## Project layout
 
 | Folder | Contents |
