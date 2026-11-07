@@ -11,8 +11,6 @@ const MENU_TEXTURE: Texture2D = preload("res://assets/ui/menu.png")
 const GLOW_ALPHA := 0.22
 ## How much further it brightens while the button is held down.
 const GLOW_ALPHA_PRESSED := 0.4
-## Margin around the ESCI pill that the web cover blanks out.
-const EXIT_COVER_MARGIN := 6.0
 
 ## Player-facing name and credits, kept in one place so the credits panel and
 ## the rest of the UI cannot drift apart.
@@ -44,15 +42,13 @@ var _play_button: Button
 var _art_box: Control
 ## Hotspot key (see MenuHotspots.RECTS) -> its invisible Button.
 var _hotspots: Dictionary = {}
-## Web builds blank the painted ESCI pill with this backdrop-coloured cover.
-var _exit_cover: ColorRect
 ## Shared additive material that makes the glow brighten the painted shape.
 var _glow_material: CanvasItemMaterial
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	color = SeaStyle.MENU_BACKDROP_COLOR
+	color = SeaStyle.OVERLAY_COLOR
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	visible = true
@@ -95,7 +91,7 @@ func _start_without_menu() -> void:
 	play_pressed.emit.call_deferred()
 
 
-func _build_menu_panel(web_build: bool = OS.has_feature("web")) -> Control:
+func _build_menu_panel() -> Control:
 	var panel := Control.new()
 	panel.name = "MenuPanel"
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -134,21 +130,6 @@ func _build_menu_panel(web_build: bool = OS.has_feature("web")) -> Control:
 		_hotspots[key] = button
 		_art_box.add_child(button)
 	_play_button = _hotspots["play"]
-
-	# Web builds cannot quit the host page, so the painted ESCI pill is
-	# blanked out instead of looking clickable, and its hotspot is taken out of
-	# focus traversal so keyboard players cannot trigger a hidden quit.
-	var exit_button: Button = _hotspots["exit"]
-	exit_button.visible = not web_build
-	exit_button.focus_mode = (
-		Control.FOCUS_NONE if web_build else Control.FOCUS_ALL)
-
-	_exit_cover = ColorRect.new()
-	_exit_cover.name = "ExitCover"
-	_exit_cover.color = SeaStyle.MENU_BACKDROP_COLOR
-	_exit_cover.mouse_filter = Control.MOUSE_FILTER_STOP
-	_exit_cover.visible = web_build
-	_art_box.add_child(_exit_cover)
 
 	_layout_art()
 	return panel
@@ -203,9 +184,6 @@ func _layout_art() -> void:
 		var button: Button = _hotspots[key]
 		button.position = rect.position - art.position
 		button.size = rect.size
-	var cover_rect := MenuHotspots.hotspot_rect(size, "exit").grow(EXIT_COVER_MARGIN)
-	_exit_cover.position = cover_rect.position - art.position
-	_exit_cover.size = cover_rect.size
 
 
 

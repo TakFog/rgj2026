@@ -39,28 +39,12 @@ func test_each_hotspot_lights_up_its_painted_shape() -> void:
 		assert_false(glow.visible, key)
 
 
-func test_exit_cover_is_hidden_outside_the_web_build() -> void:
+func test_the_exit_hotspot_is_never_hidden() -> void:
 	var menu := _built_menu()
-	assert_false(menu._exit_cover.visible)
-	assert_eq(menu._exit_cover.color, SeaStyle.MENU_BACKDROP_COLOR)
-	assert_true(menu._hotspots["exit"].visible)
-	assert_eq(menu._hotspots["exit"].focus_mode, Control.FOCUS_ALL)
-
-
-func test_web_build_hides_the_exit_hotspot_behind_its_cover() -> void:
-	var menu := MainMenuScreen.new()
-	autofree(menu)
-	menu.size = VIEWPORT
-	menu.add_child(menu._build_menu_panel(true))
-	menu._layout_art()
 	var exit_button: Button = menu._hotspots["exit"]
-	# The painted ESCI pill stays in the art, so it is blanked out and its
-	# hotspot must neither take focus nor clicks.
-	assert_false(exit_button.visible)
-	assert_eq(exit_button.focus_mode, Control.FOCUS_NONE)
-	assert_true(menu._exit_cover.visible)
-	assert_eq(menu._exit_cover.mouse_filter, Control.MOUSE_FILTER_STOP)
-	assert_true(menu._exit_cover.get_index() > exit_button.get_index())
+	assert_true(exit_button.visible)
+	assert_eq(exit_button.focus_mode, Control.FOCUS_ALL)
+	assert_true(menu._art_box.get_node_or_null("ExitCover") == null)
 
 
 func test_each_hotspot_runs_its_menu_action() -> void:
