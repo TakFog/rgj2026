@@ -6,8 +6,8 @@ The game design document is `docs/GDD.md`.
 
 ## Audio
 
-- Every sound — music included — is configured through `data/audio_settings.tres` (level in dB, pitch, high/low-pass filters). Never hard-code a volume, pitch or filter in a script. How-to: `docs/audio.md`.
-- A new sound needs **both** a take list in `systems/b_audio.gd` `EVENTS` (files under `assets/audio/<event>/`) **and** an `AudioEvent` entry in the audio settings. `tests/unit/test_audio_settings.gd` fails if an event is missing from the settings.
+- Every sound — music included — is configured through `data/audio_settings.tres` (which music track plays, level in dB, pitch, high/low-pass filters). Never hard-code a volume, pitch or filter in a script. How-to: `docs/audio.md`.
+- A new sound needs **both** a take list in `core/audio_events.gd` `AudioEvents.TAKES` (files under `assets/audio/<event>/`) **and** an `AudioEvent` entry in the audio settings. `tests/unit/test_audio_settings.gd` fails if an event is missing from the settings.
 
 ## Git
 

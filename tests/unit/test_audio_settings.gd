@@ -14,8 +14,7 @@ func test_defaults_boost_the_quiet_effect_takes() -> void:
 
 
 func test_every_shipped_event_is_configured() -> void:
-	var script: GDScript = load("res://systems/b_audio.gd")
-	var events: Dictionary = script.get_script_constant_map()["EVENTS"]
+	var events: Dictionary = AudioEvents.TAKES
 	var shipped: AudioSettings = load("res://data/audio_settings.tres")
 	assert_false(events.is_empty())
 	for name: StringName in events:
@@ -27,6 +26,28 @@ func test_every_shipped_event_is_configured() -> void:
 		assert_almost(event.pitch_jitter, 0.0)
 		assert_almost(event.high_pass_hz, 0.0)
 		assert_almost(event.low_pass_hz, 0.0)
+
+
+func test_shipped_music_track_is_set_and_loops() -> void:
+	var shipped: AudioSettings = load("res://data/audio_settings.tres")
+	assert_true(shipped.music_track != null, "no music track in data/audio_settings.tres")
+	var wav := shipped.music_track as AudioStreamWAV
+	assert_true(wav != null, "music track is not a WAV")
+	assert_true(wav.loop_mode != AudioStreamWAV.LOOP_DISABLED, "music track does not loop")
+
+
+func test_shipped_outro_is_set_and_does_not_loop() -> void:
+	var shipped: AudioSettings = load("res://data/audio_settings.tres")
+	assert_true(shipped.outro_track != null, "no outro track in data/audio_settings.tres")
+	if shipped.outro_track is AudioStreamWAV:
+		assert_eq((shipped.outro_track as AudioStreamWAV).loop_mode, AudioStreamWAV.LOOP_DISABLED,
+				"the outro must not loop")
+
+
+func test_placement_uses_the_item_kind_sound_when_it_has_one() -> void:
+	assert_eq(AudioEvents.placement_event(&"nest"), &"placement_nest")
+	assert_eq(AudioEvents.placement_event(&"algae"), &"placement_algae")
+	assert_eq(AudioEvents.placement_event(&"coral"), &"placement")
 
 
 func test_event_gain_adds_to_the_effects_gain() -> void:

@@ -10,9 +10,17 @@ const SFX_BUS_PREFIX := "Sfx_"
 const SILENCE_DB := -80.0
 
 @export_group("Music")
+## Looping track played during the run: pick a .wav from assets/audio in the
+## inspector. It must loop, which comes from the WAV import (edit/loop_mode = 2).
+## Empty means silence.
+@export var music_track: AudioStream
 @export_range(-80.0, 24.0, 0.1) var music_gain_db := 0.0
 ## Playback speed multiplier: 1.0 unmodified, 0.5 an octave down, 2.0 up.
 @export_range(0.25, 4.0, 0.05) var music_pitch := 1.0
+## Track played once when the run is lost, replacing the loop (empty = none).
+## It should not loop (the WAV import's edit/loop_mode = 1 or "detect").
+@export var outro_track: AudioStream
+@export_range(-80.0, 24.0, 0.1) var outro_gain_db := 0.0
 @export_range(0.0, 21000.0, 10.0) var music_high_pass_hz := 0.0
 @export_range(0.0, 21000.0, 10.0) var music_low_pass_hz := 0.0
 
@@ -20,10 +28,12 @@ const SILENCE_DB := -80.0
 ## Applied to every effect, on top of the per-event gain. The takes peak around
 ## -10 dBFS, well under the music, hence the default boost (~+8 dB).
 @export_range(-80.0, 24.0, 0.1) var effects_gain_db := 8.0
-## One entry per event in systems/b_audio.gd EVENTS: level, pitch and filters.
+## One entry per event in AudioEvents.TAKES: level, pitch and filters.
 ## An event missing here plays at the neutral defaults.
 @export var events: Dictionary[StringName, AudioEvent] = {
 	&"placement": AudioEvent.new(),
+	&"placement_nest": AudioEvent.new(),
+	&"placement_algae": AudioEvent.new(),
 	&"item_available": AudioEvent.new(),
 	&"bag_destroyed": AudioEvent.new(),
 }
