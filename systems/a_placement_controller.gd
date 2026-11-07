@@ -14,9 +14,10 @@ signal placement_failed
 
 const VALID_COLOR := Color(0.3, 1.0, 0.4, 0.45)
 const INVALID_COLOR := Color(1.0, 0.25, 0.25, 0.45)
-## Re-check the preview at 10 Hz instead of every physics frame. Otherwise a
-## stationary mouse would run physics shape queries for every footprint cell
-## 60 times per second, even though only the actors moving over them change.
+## While the mouse is still, re-check the preview at 10 Hz instead of every
+## physics frame: the only thing that can change then is a fish or threat
+## swimming over a cell. The ghost still follows the mouse every frame, and a
+## cell change revalidates immediately, so placement stays responsive.
 const GHOST_REFRESH_SECONDS := 0.1
 
 var inventory: InventorySystem
@@ -41,6 +42,7 @@ func begin(slot: int) -> void:
 	if not inventory.model.is_ready(slot):
 		return
 	active_slot = slot
+	_ghost_cells = []
 	_ghost_elapsed = GHOST_REFRESH_SECONDS # show the preview immediately
 	Game.placing = true
 	placement_started.emit()
@@ -95,13 +97,24 @@ func try_place_at(origin: Vector2i) -> bool:
 func _physics_process(delta: float) -> void:
 	if active_slot < 0:
 		return
+	var cells := footprint(Game.grid.world_to_cell(Game.mouse_world()))
+	if cells != _ghost_cells:
+		# The mouse entered another cell (or the item changed): follow it and
+		# revalidate at once, exactly like the original every-frame preview.
+		_ghost_cells = cells
+		_ghost_valid = can_place(_ghost_cells)
+		_ghost_elapsed = 0.0
+		_ghost.queue_redraw()
+		return
+	# The mouse is still: only actors moving over the cells can invalidate it.
 	_ghost_elapsed += delta
 	if _ghost_elapsed < GHOST_REFRESH_SECONDS:
 		return
 	_ghost_elapsed = 0.0
-	_ghost_cells = footprint(Game.grid.world_to_cell(Game.mouse_world()))
-	_ghost_valid = can_place(_ghost_cells)
-	_ghost.queue_redraw()
+	var valid := can_place(_ghost_cells)
+	if valid != _ghost_valid:
+		_ghost_valid = valid
+		_ghost.queue_redraw()
 
 
 func _unhandled_input(event: InputEvent) -> void:
