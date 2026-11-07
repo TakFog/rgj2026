@@ -80,3 +80,13 @@ Why: the jam build is judged on its first screen; two competing button styles
   disabled on any platform: the user's call, after seeing the first build.
 - Exact hotspot fractions: measured from the painting during the plan; the
   builder only needs them to line up (verify with a screenshot).
+
+## Update: code-drawn button labels
+
+The painted lettering in `video/MENU.png` was a placeholder; the artist replaces
+`assets/ui/menu.png` with a text-free version. `MainMenuScreen` therefore draws
+a `Label` on each hotspot (`LABELS`: INIZIA, COME SI GIOCA, IMPOSTAZIONI,
+CREDITI, ESCI), sized from the hotspot so it follows the art at every window
+size. The labels use the shared off-white caption colour and sit above the
+additive hover/focus glow. The old anti-goal "labels appearing twice" now only
+means the shipped painting must stay text-free.
