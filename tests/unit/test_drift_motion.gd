@@ -83,3 +83,13 @@ func test_steer_inward_is_a_noop_inside_the_island() -> void:
 	threat.position = Vector2(50, 50)  # inside the island
 	assert_eq(threat._steer_inward(1.25, 0.1), 1.25)
 	Game.grid = previous_grid
+
+
+func test_cyclone_keeps_heading_when_outside_the_island() -> void:
+	var previous_grid := Game.grid
+	Game.grid = GridModel.new(Vector2i(10, 10), 10.0)  # 100 × 100 island, center (50, 50)
+	var cyclone := Cyclone.new()
+	cyclone.position = Vector2(200, 200)  # well outside the island
+	var heading := 0.7
+	assert_eq(cyclone._steer_inward(heading, 0.1), heading, "cyclone must keep going straight")
+	Game.grid = previous_grid
