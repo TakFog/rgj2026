@@ -386,6 +386,7 @@ func _animate_generic(tween: Tween) -> void:
 	var target := _target
 	if agent == null or target == null:
 		return
+	var id: StringName = _data.get("id", &"")
 	var agent_end: String = _data.get("agent_end", "stay")
 	var target_end: String = _data.get("target_end", "damage")
 	tween.tween_property(agent, "position", _pos(Vector2(4.0, 2.2)), 1.2).set_delay(0.2)
@@ -393,10 +394,21 @@ func _animate_generic(tween: Tween) -> void:
 		if not is_instance_valid(agent) or not is_instance_valid(target):
 			return
 		_pulse(target, 1.1, 0.35)
+		_hit_effect(id, target)
 		_apply_end(agent, agent_end, Vector2.RIGHT)
 		_apply_end(target, target_end, Vector2.RIGHT)
 	).set_delay(1.2)
 	tween.tween_method(_fade_all, 0.0, 1.0, FADE_SECONDS).set_delay(FADE_START)
+
+
+## Predator eating a fish leaves the same blood splash as in the game.
+func _hit_effect(id: StringName, target: Node2D) -> void:
+	if id != &"predator_fish":
+		return
+	var burst := BloodBurst.new()
+	burst.position = target.position
+	burst.z_index = 40
+	_visual_layer().add_child(burst)
 
 
 ## Applies one outcome to an actor: stay, vanish, leave, pass, damage, empty.
