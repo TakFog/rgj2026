@@ -2,31 +2,57 @@ class_name ReefPathfinder
 extends RefCounted
 ## Grid route planning for fish over GridModel (corals, algae and nests live on
 ## the grid; fish move freely between them). Pure: no scene access.
-## The A* grid is rebuilt from GridModel on every query: the map is small and
-## changes constantly (algae spread), so there is nothing to keep in sync.
+## The A* grid is rebuilt from GridModel only when the grid changed since the
+## last query (`GridModel.version`). Finders built with the same `share_key`
+## on the same grid share one A* grid, so a school of fish rebuilds it once.
 ## Routes are smoothed: waypoints the fish can skip in a straight line (with
 ## `clearance` to spare on both sides) are dropped, so it never zigzags along
 ## the grid in open water.
 
 ## Sampling step along a shortcut, as a fraction of the cell size.
 const SAMPLE_FRACTION := 0.25
+## Smoothing looks at most this many waypoints ahead for a shortcut, which
+## bounds the sight-line checks on long routes through maze-like reefs (an
+## open-water route on the 20x20 reef is at most 20 waypoints).
+const MAX_LOOKAHEAD := 24
+
+
+## A* grid mirroring the solidity of a GridModel at `version`.
+class Snapshot:
+	extends RefCounted
+	var astar := AStarGrid2D.new()
+	var version := -1
+
 
 var _grid: GridModel
 ## `is_solid(occupant: Object) -> bool`: whether a grid occupant blocks fish.
+## Must depend only on the occupant itself (not on time or other state): the
+## result is cached until the grid changes.
 var _is_solid: Callable
 ## Half-width (world units) of the corridor a straight shortcut must keep free.
 var _clearance: float
-var _astar := AStarGrid2D.new()
+var _snapshot: Snapshot
+var _astar: AStarGrid2D
 
 
-func _init(grid: GridModel, is_solid: Callable, clearance := 0.0) -> void:
+## Finders given the same non-empty `share_key` on the same grid share their
+## A* grid: they must use the same `is_solid` rule.
+func _init(grid: GridModel, is_solid: Callable, clearance := 0.0, share_key := &"") -> void:
 	_grid = grid
 	_is_solid = is_solid
 	_clearance = clearance
-	_astar.region = Rect2i(Vector2i.ZERO, grid.size)
-	_astar.cell_size = Vector2.ONE * grid.cell_size
-	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
-	_astar.update()
+	var key := "reef_pathfinder/" + share_key
+	if share_key != &"" and grid.derived.has(key):
+		_snapshot = grid.derived[key]
+	else:
+		_snapshot = Snapshot.new()
+		_snapshot.astar.region = Rect2i(Vector2i.ZERO, grid.size)
+		_snapshot.astar.cell_size = Vector2.ONE * grid.cell_size
+		_snapshot.astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+		_snapshot.astar.update()
+		if share_key != &"":
+			grid.derived[key] = _snapshot
+	_astar = _snapshot.astar
 
 
 ## Waypoints (world units) from `from` to `to` (excluding `from`): smoothed
@@ -64,7 +90,8 @@ func nearest_occupant(from: Vector2, predicate: Callable) -> Dictionary:
 	while head < queue.size():
 		var cell := queue[head]
 		head += 1
-		for next in _grid.neighbors4(cell):
+		for offset in GridModel.NEIGHBORS_4:
+			var next := cell + offset
 			if not _grid.in_bounds(next) or visited.has(next):
 				continue
 			visited[next] = true
@@ -98,21 +125,21 @@ func _is_clear(a: Vector2, b: Vector2, touch_b: bool) -> bool:
 	var steps := maxi(1, ceili(a.distance_to(b) / (_grid.cell_size * SAMPLE_FRACTION)))
 	for i in steps + 1:
 		var point := a.lerp(b, float(i) / steps)
-		for probe in [point, point + offset, point - offset]:
-			if _solid_at(probe, skip):
-				return false
+		if _solid_at(point, skip) or _solid_at(point + offset, skip) or _solid_at(point - offset, skip):
+			return false
 	return true
 
 
 ## String pulling: from each kept point, jump to the farthest waypoint in
-## clear sight. The start point `from` itself is not part of the result.
+## clear sight (at most MAX_LOOKAHEAD ahead). The start point `from` itself is
+## not part of the result.
 func _smooth(from: Vector2, path: PackedVector2Array) -> PackedVector2Array:
 	var result := PackedVector2Array()
 	var anchor := from
 	var i := 0
 	while i < path.size():
 		var farthest := i
-		for j in range(path.size() - 1, i, -1):
+		for j in range(mini(path.size() - 1, i + MAX_LOOKAHEAD), i, -1):
 			if _is_clear(anchor, path[j], j == path.size() - 1):
 				farthest = j
 				break
@@ -128,6 +155,9 @@ func _solid_at(point: Vector2, skip: Vector2i) -> bool:
 
 
 func _refresh() -> void:
+	if _snapshot.version == _grid.version:
+		return
+	_snapshot.version = _grid.version
 	for x in _grid.size.x:
 		for y in _grid.size.y:
 			var cell := Vector2i(x, y)

@@ -8,6 +8,13 @@ const NEIGHBORS_4: Array[Vector2i] = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT,
 
 var size: Vector2i
 var cell_size: float
+## Bumped on every change of occupants (occupy / release): consumers that
+## derive data from the grid (e.g. ReefPathfinder) rebuild it only when this
+## changes.
+var version := 0
+## Storage for such derived data, shared by all consumers of this grid and
+## keyed by the consumer (e.g. the pathfinders of all fish share one A* grid).
+var derived: Dictionary = {}
 var _cells: Dictionary = {} # Vector2i -> Object
 
 
@@ -41,11 +48,13 @@ func occupy(cells: Array[Vector2i], entity: Object) -> void:
 	assert(are_free(cells), "GridModel.occupy: cells not free %s" % [cells])
 	for cell in cells:
 		_cells[cell] = entity
+	version += 1
 
 
 func release(cells: Array[Vector2i]) -> void:
 	for cell in cells:
 		_cells.erase(cell)
+	version += 1
 
 
 ## Number of occupied cells whose occupant satisfies `predicate(occupant) -> bool`.
