@@ -19,6 +19,19 @@ const PANEL_PADDING := Vector2(40, 32)
 const TRACK_HEIGHT := 8
 const GRABBER_RADIUS := 11
 
+## Shared menu typography and layout. Screens use these instead of their own
+## near-duplicate sizes, so title, pause, settings, credits and game over match.
+const HERO_TITLE_FONT_SIZE := 48
+const TITLE_FONT_SIZE := 40
+const BODY_FONT_SIZE := 22
+const BUTTON_FONT_SIZE := 24
+const BUTTON_SIZE := Vector2(220, 60)
+const MENU_SEPARATION := 16
+## Same translucent navy backdrop for every full-screen menu overlay.
+const OVERLAY_COLOR := Color(0.02, 0.05, 0.1, 0.85)
+## Divider under a menu title: a thin aqua line at 35 % opacity.
+const DIVIDER_COLOR := Color(0.25, 0.85, 0.9, 0.35)
+
 
 ## Rounded card box: navy fill, aqua rim at `rim_alpha`, soft drop shadow.
 static func card_box(rim_alpha: float = 0.6, border := 3) -> StyleBoxFlat:
@@ -44,6 +57,39 @@ static func panel_box() -> StyleBoxFlat:
 	box.content_margin_top = PANEL_PADDING.y
 	box.content_margin_bottom = PANEL_PADDING.y
 	return box
+
+
+## Applies the shared menu-title look (sand, centred) at `font_size`.
+static func style_title(label: Label, font_size := TITLE_FONT_SIZE) -> void:
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", SAND_COLOR)
+
+
+## Applies the shared menu-body look (caption colour, centred) at `font_size`.
+static func style_body(label: Label, font_size := BODY_FONT_SIZE) -> void:
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", CAPTION_COLOR)
+
+
+## The thin aqua divider used under every menu title.
+static func divider() -> ColorRect:
+	var line := ColorRect.new()
+	line.color = DIVIDER_COLOR
+	line.custom_minimum_size = Vector2(0, 2)
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return line
+
+
+## A standard menu button: shared size, font size and sea-card styling.
+static func menu_button(text: String) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = BUTTON_SIZE
+	button.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
+	style_button(button)
+	return button
 
 
 ## Restyles a Button as a sea card: aqua glow on hover, sand rim when pressed.

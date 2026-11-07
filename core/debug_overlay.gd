@@ -4,7 +4,7 @@ extends Control
 ## Draws per-entity debug numbers over everything in screen space:
 ## coral oxygen/life, nest hatch time, fish state + hunger, turtle state.
 ## A fixed panel also shows temperature-dependent rates, a manual
-## temperature slider and editable feature flags.
+## temperature slider, editable debug flags and debug spawn buttons.
 
 signal enabled_changed(enabled: bool)
 
@@ -13,7 +13,7 @@ signal enabled_changed(enabled: bool)
 var _labels: Dictionary = {} # Variant -> Label
 var _slider: HSlider
 var _panel_bg: ColorRect
-## Editable feature-flag toggle buttons, keyed by flag name.
+## Editable debug/feature toggle buttons, keyed by flag name.
 var _flag_buttons: Dictionary = {} # StringName -> Button
 ## Action buttons (threat spawns, Game Over), keyed by action name.
 var _spawn_buttons: Dictionary = {} # String -> Button
@@ -47,6 +47,14 @@ const COLOR_FISH := Color(0.7, 0.85, 1.0)
 const COLOR_TURTLE := Color(0.4, 0.9, 0.6)
 const COLOR_TEMP := Color(1.0, 1.0, 1.0)
 const COLOR_DIM := Color(0.7, 0.7, 0.7)
+
+## Italian labels for the F3 panel's debug flags.
+const FLAG_NAMES := {
+	"co2_dies_on_coral": "CO2 muore sul corallo",
+	"predator_enabled": "Predatore attivo",
+	"turtle_enabled": "Tartaruga attiva",
+	"show_paths": "Mostra percorsi",
+}
 
 const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
 
@@ -101,32 +109,32 @@ func _ready() -> void:
 	_flag_buttons["show_paths"] = paths
 
 	# Threat spawn buttons (debug only).
-	var spawn_co2 := _make_action_button("Spawn CO2")
+	var spawn_co2 := _make_action_button("Genera CO2")
 	spawn_co2.pressed.connect(_spawn_co2)
 	add_child(spawn_co2)
 	_spawn_buttons["co2"] = spawn_co2
 
-	var spawn_bag := _make_action_button("Spawn Bag")
+	var spawn_bag := _make_action_button("Genera busta")
 	spawn_bag.pressed.connect(_spawn_bag)
 	add_child(spawn_bag)
 	_spawn_buttons["bag"] = spawn_bag
 
-	var spawn_cyclone := _make_action_button("Spawn Cyclone")
+	var spawn_cyclone := _make_action_button("Genera ciclone")
 	spawn_cyclone.pressed.connect(_spawn_cyclone)
 	add_child(spawn_cyclone)
 	_spawn_buttons["cyclone"] = spawn_cyclone
 
-	var spawn_predator := _make_action_button("Spawn Predator")
+	var spawn_predator := _make_action_button("Genera predatore")
 	spawn_predator.pressed.connect(_spawn_predator)
 	add_child(spawn_predator)
 	_spawn_buttons["predator"] = spawn_predator
 
-	var spawn_turtle := _make_action_button("Spawn Turtle")
+	var spawn_turtle := _make_action_button("Genera tartaruga")
 	spawn_turtle.pressed.connect(_spawn_turtle)
 	add_child(spawn_turtle)
 	_spawn_buttons["turtle"] = spawn_turtle
 
-	var game_over := _make_action_button("Game Over")
+	var game_over := _make_action_button("Fine partita")
 	game_over.pressed.connect(_force_game_over)
 	add_child(game_over)
 	_spawn_buttons["game_over"] = game_over
@@ -232,7 +240,7 @@ func _panel_height() -> float:
 	var rows := _flag_buttons.size() + _spawn_buttons.size()
 	return (LINE_HEIGHT + SLIDER_HEIGHT + ROW_GAP # temperature + slider
 		+ LINE_HEIGHT * 2.0 + ROW_GAP # rates
-		+ LINE_HEIGHT # "Feature flags:" header
+		+ LINE_HEIGHT # "Flag di gioco:" header
 		+ rows * (FLAG_ROW_HEIGHT + ROW_GAP) - ROW_GAP)
 
 
@@ -258,7 +266,7 @@ func _sync_slider() -> void:
 	_slider.size = Vector2(PANEL_WIDTH, SLIDER_HEIGHT)
 	_slider.value = Game.temperature
 
-	# Buttons sit below the rates section and the "Feature flags:" header.
+	# Buttons sit below the rates section and the "Flag di gioco:" header.
 	y += SLIDER_HEIGHT + ROW_GAP + LINE_HEIGHT * 2.0 + ROW_GAP + LINE_HEIGHT
 	for btn: Button in _flag_buttons.values() + _spawn_buttons.values():
 		btn.position = Vector2(x, y)
@@ -295,23 +303,23 @@ func _update_labels() -> void:
 	var y := origin.y
 
 	# --- Fixed panel: temperature ---
-	var temp_text := "T: %.2f" % Game.temperature
+	var temp_text := "Temp: %.2f" % Game.temperature
 	if Game.debug_temperature_manual:
-		temp_text += " (manual)"
+		temp_text += " (manuale)"
 	_set_label(&"_temp", temp_text, Vector2(x, y), COLOR_TEMP, wanted)
 	y += LINE_HEIGHT + SLIDER_HEIGHT + ROW_GAP
 
 	# --- Fixed panel: temperature-dependent rates ---
 	var regen := Game.by_temperature(Game.eco.coral_regen_per_sec, Game.eco.coral_regen_hot_per_sec)
-	_set_label(&"_regen", "Coral regen: %.2f/s" % regen, Vector2(x, y), COLOR_DIM, wanted)
+	_set_label(&"_regen", "Recupero corallo: %.2f/s" % regen, Vector2(x, y), COLOR_DIM, wanted)
 	y += LINE_HEIGHT
 
 	var egg_death := Game.by_temperature(Game.eco.egg_death_chance_cold, Game.eco.egg_death_chance_hot)
-	_set_label(&"_eggdeath", "Egg death: %.0f%%" % (egg_death * 100.0), Vector2(x, y), COLOR_DIM, wanted)
+	_set_label(&"_eggdeath", "Morte uova: %.0f%%" % (egg_death * 100.0), Vector2(x, y), COLOR_DIM, wanted)
 	y += LINE_HEIGHT + ROW_GAP
 
-	# --- Fixed panel: feature flags (editable, see _flag_buttons) ---
-	_set_label(&"_flags", "Feature flags:", Vector2(x, y), COLOR_TEMP, wanted)
+	# --- Fixed panel: debug flags (editable, see _flag_buttons) ---
+	_set_label(&"_flags", "Flag di gioco:", Vector2(x, y), COLOR_TEMP, wanted)
 
 	# Keep flag button labels in sync with current state (only when they change).
 	for name in _flag_buttons.keys():
@@ -344,9 +352,9 @@ func _update_labels() -> void:
 		if not _alive(nest):
 			continue
 		var id := nest.get_instance_id()
-		var text := "EMPTY"
+		var text := "VUOTO"
 		if nest.has_eggs():
-			text = "EGGS: %.1fs" % nest.eggs_time_left()
+			text = "UOVA: %.1fs" % nest.eggs_time_left()
 		var pos := _viewport_position(nest.global_position)
 		var color := COLOR_NEST if nest.has_eggs() else COLOR_NEST_EMPTY
 		_set_label(id, text, pos + OFFSET, color, wanted)
@@ -356,7 +364,7 @@ func _update_labels() -> void:
 		if not _alive(fish) or fish.brain == null:
 			continue
 		var id := fish.get_instance_id()
-		var text := "%s h:%d%%" % [_state_name(fish.brain.state), (fish.brain.hunger_ratio() * 100.0)]
+		var text := "%s fame %d%%" % [_state_name(fish.brain.state), (fish.brain.hunger_ratio() * 100.0)]
 		var pos := _viewport_position(fish.global_position)
 		_set_label(id, text, pos + OFFSET, COLOR_FISH, wanted)
 
@@ -365,7 +373,7 @@ func _update_labels() -> void:
 		if not _alive(turtle) or turtle.brain == null:
 			continue
 		var id := turtle.get_instance_id()
-		var text := "%s a:%d" % [_turtle_state_name(turtle.brain.state), turtle.brain.algae_eaten]
+		var text := "%s alghe %d" % [_turtle_state_name(turtle.brain.state), turtle.brain.algae_eaten]
 		var pos := _viewport_position(turtle.global_position)
 		_set_label(id, text, pos + OFFSET, COLOR_TURTLE, wanted)
 
@@ -376,13 +384,13 @@ func _update_labels() -> void:
 			_labels.erase(id)
 
 
-## Returns the display text for a feature flag.
+## Returns the Italian display text for a debug flag.
 func _flag_label(name: String, value: bool) -> String:
-	var pretty := name.to_upper().replace("_", " ")
-	return "%s: %s" % [pretty, "ON" if value else "OFF"]
+	var pretty: String = FLAG_NAMES.get(name, name.to_upper().replace("_", " "))
+	return "%s: %s" % [pretty, "SÌ" if value else "NO"]
 
 
-## Returns the current value of a feature flag by name.
+## Returns the current value of a debug/feature flag by name.
 func _flag_value(name: StringName) -> bool:
 	match name:
 		"co2_dies_on_coral": return Game.actors.co2_dies_on_coral
@@ -430,20 +438,20 @@ func _alive(entity: Object) -> bool:
 
 func _state_name(state: int) -> String:
 	match state:
-		FishBrain.State.WANDER: return "WANDER"
-		FishBrain.State.ORDERED: return "ORDERED"
-		FishBrain.State.EATING: return "EATING"
-		FishBrain.State.FERTILIZING: return "FERTILIZING"
-		FishBrain.State.IDLE: return "IDLE"
-		FishBrain.State.SEEKING_FOOD: return "SEEKING"
+		FishBrain.State.WANDER: return "VAGA"
+		FishBrain.State.ORDERED: return "ORDINE"
+		FishBrain.State.EATING: return "MANGIA"
+		FishBrain.State.FERTILIZING: return "FECONDA"
+		FishBrain.State.IDLE: return "FERMO"
+		FishBrain.State.SEEKING_FOOD: return "CERCA CIBO"
 		_: return "?"
 
 
 func _turtle_state_name(state: int) -> String:
 	match state:
-		TurtleBrain.State.HELPING: return "HELPING"
-		TurtleBrain.State.EATING: return "EATING"
-		TurtleBrain.State.LEAVING: return "LEAVING"
+		TurtleBrain.State.HELPING: return "AIUTA"
+		TurtleBrain.State.EATING: return "MANGIA"
+		TurtleBrain.State.LEAVING: return "SE NE VA"
 		_: return "?"
 
 

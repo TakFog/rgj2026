@@ -56,7 +56,7 @@ func set_paused(value: bool) -> void:
 func _build_overlay() -> Control:
 	var root := ColorRect.new()
 	root.name = "PauseOverlay"
-	root.color = Color(0, 0, 0, 0.5)
+	root.color = SeaStyle.OVERLAY_COLOR
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.visible = false
@@ -71,21 +71,14 @@ func _build_overlay() -> Control:
 	center.add_child(_pause_box)
 
 	_pause_items = VBoxContainer.new()
-	_pause_items.add_theme_constant_override("separation", 16)
+	_pause_items.add_theme_constant_override("separation", SeaStyle.MENU_SEPARATION)
 	_pause_box.add_child(_pause_items)
 
 	var label := Label.new()
 	label.text = "PAUSA"
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 40)
-	label.add_theme_color_override("font_color", SeaStyle.SAND_COLOR)
+	SeaStyle.style_title(label)
 	_pause_items.add_child(label)
-
-	var divider := ColorRect.new()
-	divider.color = Color(SeaStyle.RIM_COLOR, 0.35)
-	divider.custom_minimum_size = Vector2(0, 2)
-	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_pause_items.add_child(divider)
+	_pause_items.add_child(SeaStyle.divider())
 
 	var resume_btn := _add_button("Riprendi", _on_resume_pressed)
 	SeaStyle.style_highlighted_button(resume_btn)
@@ -104,12 +97,8 @@ func _build_overlay() -> Control:
 
 
 func _add_button(text: String, handler: Callable) -> Button:
-	var button := Button.new()
-	button.text = text
-	button.custom_minimum_size = Vector2(220, 60)
+	var button := SeaStyle.menu_button(text)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	button.add_theme_font_size_override("font_size", 24)
-	SeaStyle.style_button(button)
 	button.pressed.connect(handler)
 	_pause_items.add_child(button)
 	return button

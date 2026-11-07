@@ -11,7 +11,6 @@ signal button_pressed
 const LABEL_WIDTH := 90.0
 const SLIDER_WIDTH := 260.0
 const VALUE_WIDTH := 56.0
-const BUTTON_SIZE := Vector2(180.0, 60.0)
 
 var _music_slider: HSlider
 var _effects_slider: HSlider
@@ -33,30 +32,19 @@ func _ready() -> void:
 	center.add_child(card)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 18)
+	box.add_theme_constant_override("separation", SeaStyle.MENU_SEPARATION)
 	card.add_child(box)
 
 	var title := Label.new()
 	title.text = "Impostazioni"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 36)
-	title.add_theme_color_override("font_color", SeaStyle.SAND_COLOR)
+	SeaStyle.style_title(title)
 	box.add_child(title)
-
-	var divider := ColorRect.new()
-	divider.color = Color(SeaStyle.RIM_COLOR, 0.35)
-	divider.custom_minimum_size = Vector2(0, 2)
-	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(divider)
+	box.add_child(SeaStyle.divider())
 
 	_music_slider = _add_volume_row(box, "Musica")
 	_effects_slider = _add_volume_row(box, "Effetti")
 
-	var back := Button.new()
-	back.text = "Indietro"
-	back.custom_minimum_size = BUTTON_SIZE
-	back.add_theme_font_size_override("font_size", 28)
-	SeaStyle.style_button(back)
+	var back := SeaStyle.menu_button("Indietro")
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	back.pressed.connect(_on_back_pressed)
 	box.add_child(back)
@@ -72,7 +60,7 @@ func _add_volume_row(parent: VBoxContainer, text: String) -> HSlider:
 	var label := Label.new()
 	label.text = text
 	label.custom_minimum_size.x = LABEL_WIDTH
-	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_font_size_override("font_size", SeaStyle.BODY_FONT_SIZE)
 	label.add_theme_color_override("font_color", SeaStyle.CAPTION_COLOR)
 	row.add_child(label)
 
@@ -90,7 +78,7 @@ func _add_volume_row(parent: VBoxContainer, text: String) -> HSlider:
 	var value := Label.new()
 	value.custom_minimum_size.x = VALUE_WIDTH
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	value.add_theme_font_size_override("font_size", 22)
+	value.add_theme_font_size_override("font_size", SeaStyle.BODY_FONT_SIZE)
 	value.add_theme_color_override("font_color", SeaStyle.SAND_COLOR)
 	row.add_child(value)
 
