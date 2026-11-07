@@ -5,7 +5,8 @@
 ; Levels are in dB: 0.0 is unmodified, negative is quieter, positive louder.
 ; Each AudioEvent_<name> sub-resource below is the audio of that event, and its
 ; name matches the event keys in core/audio_events.gd AudioEvents.TAKES.
-; Music tracks available in assets/audio: game_loop/ (stems), outro.wav (one-shot).
+; Music tracks in assets/audio: intro.wav (title screen), game_loop/ (stems),
+; outro.wav (one-shot on game over).
 
 [ext_resource type="Script" path="res://data/audio_settings.gd" id="1_audio_settings"]
 [ext_resource type="Script" path="res://data/audio_event.gd" id="2_audio_event"]
@@ -16,6 +17,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/game_loop/arp_full1.wav" id="7_arp_full1"]
 [ext_resource type="AudioStream" path="res://assets/audio/game_loop/arp_full2.wav" id="8_arp_full2"]
 [ext_resource type="AudioStream" path="res://assets/audio/outro.wav" id="9_outro_track"]
+[ext_resource type="AudioStream" path="res://assets/audio/intro.wav" id="10_intro_track"]
 
 ; Placing an item that has no sound of its own (assets/audio/corallo).
 ; Slightly high-passed.
@@ -71,6 +73,9 @@ script = ExtResource("2_audio_event")
 
 [resource]
 script = ExtResource("1_audio_settings")
+; Title screen: plays once before Play, then the stems take over.
+intro_track = ExtResource("10_intro_track")
+intro_gain_db = -6.0
 ; Stems: every one plays from the start and loops in sync (shared loop point).
 ; The drums alternate each loop; the arp takes turn on with hostiles.
 drums = [ExtResource("3_drums0"), ExtResource("4_drums1")]

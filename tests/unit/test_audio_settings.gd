@@ -51,6 +51,11 @@ func test_arp_level_from_hostile_count() -> void:
 	assert_eq(MusicSystem.arp_level(9, 6), 2)
 
 
+func test_shipped_intro_is_set() -> void:
+	var shipped: AudioSettings = load("res://data/audio_settings.tres")
+	assert_true(shipped.intro_track != null, "no intro track in data/audio_settings.tres")
+
+
 func test_shipped_outro_is_set_and_does_not_loop() -> void:
 	var shipped: AudioSettings = load("res://data/audio_settings.tres")
 	assert_true(shipped.outro_track != null, "no outro track in data/audio_settings.tres")

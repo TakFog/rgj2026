@@ -10,6 +10,10 @@ const SFX_BUS_PREFIX := "Sfx_"
 const SILENCE_DB := -80.0
 
 @export_group("Music")
+## Track played on the title screen before Play is pressed (empty = the loop
+## starts immediately). Pressing Play stops it and starts the stems below.
+@export var intro_track: AudioStream
+@export_range(-80.0, 24.0, 0.1) var intro_gain_db := 0.0
 ## Fallback loop, used only when no stems are assigned (empty = no fallback).
 ## Pick a .wav from assets/audio; it must loop (WAV import edit/loop_mode = 2).
 @export var music_track: AudioStream

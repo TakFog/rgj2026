@@ -104,6 +104,10 @@ Giving another kind its own sound needs no code: add e.g. `placement_algae` to
 
 ## Music
 
+The title screen plays `intro_track` once at `intro_gain_db` on the Music bus.
+Pressing Play stops it and starts the run's loop; without an intro track the loop
+starts immediately.
+
 The run's music is built from stems in `assets/audio/game_loop/`: two drum takes,
 two half-arp takes and two full-arp takes. All six start together and loop in
 sync — they share one loop point (`edit/loop_end = 384872` frames = 8.73 s, 4 bars

@@ -56,6 +56,7 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	# MainMenuScreen opens itself from its own _ready once it is in the tree.
 	var main_menu := MainMenuScreen.new()
 	main_menu.name = "MainMenu"
+	main_menu.play_pressed.connect(_on_play_pressed)
 	Game.ui.add_child(main_menu)
 
 	var pause := PauseController.new()
@@ -63,6 +64,13 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	pause.monitor = monitor
 	pause.commander = commander
 	add_child(pause)
+
+
+## Play pressed on the title screen: swap the intro for the run's music.
+func _on_play_pressed() -> void:
+	var music := get_tree().get_first_node_in_group(Groups.MUSIC)
+	if music != null and music.has_method(&"start_game_music"):
+		music.start_game_music()
 
 
 ## P4: sound effects (GDD §9). Hooks Dev A's placement and inventory, read from

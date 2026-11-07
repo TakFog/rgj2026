@@ -1,7 +1,8 @@
 class_name MusicSystem
 extends Node
-## Loop-based music built from stems (GDD §9). Every stem plays from the start
-## and loops in sync; the arrangement switches by fading volumes:
+## Loop-based music built from stems (GDD §9). The title screen plays the intro
+## track once; pressing Play starts every stem, which loop in sync. The
+## arrangement switches by fading volumes:
 ## - the two drum takes alternate at every loop boundary;
 ## - the arp stays silent with no hostiles, plays the half take with 1..N-1
 ##   hostiles and the full take from N on, picking one of its takes at random
@@ -15,6 +16,8 @@ var _drums: Array[AudioStreamPlayer] = []
 var _half: Array[AudioStreamPlayer] = []
 var _full: Array[AudioStreamPlayer] = []
 var _fallback: AudioStreamPlayer
+var _intro: AudioStreamPlayer
+var _started := false
 var _gains := {} # AudioStreamPlayer -> linear gain 0..1
 var _clock: AudioStreamPlayer
 var _last_pos := -1.0
@@ -36,18 +39,52 @@ func _ready() -> void:
 	_drums = _make_players(Game.AUDIO_SETTINGS.drums)
 	_half = _make_players(Game.AUDIO_SETTINGS.arp_half)
 	_full = _make_players(Game.AUDIO_SETTINGS.arp_full)
+	# The title screen plays the intro; Play starts the run's loop. Without an
+	# intro the loop starts right away (the old behaviour).
+	if Game.AUDIO_SETTINGS.intro_track != null:
+		_start_intro()
+	else:
+		start_game_music()
+
+
+## The title screen is over: stop the intro (if any) and start the loop.
+func start_game_music() -> void:
+	if _started:
+		return
+	_started = true
+	if _intro != null:
+		_intro.stop()
+	_start_stems()
+
+
+## Stops everything for good: the outro takes over when the run is lost.
+func stop_music() -> void:
+	if _intro != null:
+		_intro.stop()
+	for player: AudioStreamPlayer in _all_players():
+		player.stop()
+
+
+## Plays the intro track once while the title screen is up.
+func _start_intro() -> void:
+	_intro = AudioStreamPlayer.new()
+	_intro.name = "Intro"
+	_intro.stream = Game.AUDIO_SETTINGS.intro_track
+	_intro.bus = Game.AUDIO_SETTINGS.music_bus()
+	_intro.volume_db = Game.AUDIO_SETTINGS.intro_gain_db
+	_intro.pitch_scale = Game.AUDIO_SETTINGS.music_pitch
+	add_child(_intro)
+	_intro.play()
+
+
+## Starts every stem at once (or the fallback track when there are none).
+func _start_stems() -> void:
 	if _drums.is_empty() and _half.is_empty() and _full.is_empty():
 		_start_fallback()
 		return
 	for player: AudioStreamPlayer in _all_players():
 		player.play()
 	_clock = _drums[0] if not _drums.is_empty() else _all_players()[0]
-
-
-## Stops everything for good: the outro takes over when the run is lost.
-func stop_music() -> void:
-	for player: AudioStreamPlayer in _all_players():
-		player.stop()
 
 
 ## Keeps every stem player silent at the start; the mix raises the ones in use.
@@ -70,7 +107,7 @@ func _make_players(streams: Array[AudioStream]) -> Array[AudioStreamPlayer]:
 
 ## No stems assigned: fall back to the single looping track.
 func _start_fallback() -> void:
-	if Game.AUDIO_SETTINGS.music_track == null:
+	if _fallback != null or Game.AUDIO_SETTINGS.music_track == null:
 		return
 	_fallback = _make_players([Game.AUDIO_SETTINGS.music_track])[0]
 	_fallback.volume_db = Game.AUDIO_SETTINGS.music_gain_db
@@ -78,6 +115,8 @@ func _start_fallback() -> void:
 
 
 func _process(delta: float) -> void:
+	if not _started:
+		return
 	if _clock != null and _clock.playing:
 		var pos := _clock.get_playback_position()
 		if pos < _last_pos - 0.01:

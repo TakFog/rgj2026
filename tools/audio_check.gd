@@ -9,6 +9,7 @@ func _init() -> void:
 	var settings: AudioSettings = load("res://data/audio_settings.tres")
 	var events: Dictionary = AudioEvents.TAKES
 
+	print("Intro: ", _intro(settings))
 	print("Music stems: ", _stems(settings))
 	print("Outro: ", _outro(settings))
 	print()
@@ -38,6 +39,16 @@ func _stems(settings: AudioSettings) -> String:
 		settings.drums.size(), settings.arp_half.size(), settings.arp_full.size(), loop,
 		settings.music_gain_db, settings.drums_gain_db, settings.arp_gain_db,
 		settings.arp_full_hostiles, settings.music_fade_seconds, settings.drum_fade_seconds]
+
+
+func _intro(settings: AudioSettings) -> String:
+	if settings.intro_track == null:
+		return "(none, the loop starts right away)"
+	var wav := settings.intro_track as AudioStreamWAV
+	var loop := "loop: NO" if wav == null or wav.loop_mode == AudioStreamWAV.LOOP_DISABLED else "loop: YES (should not loop!)"
+	return "%s (%s, %.1f s)  gain %+.1f dB" % [
+		settings.intro_track.resource_path, loop, settings.intro_track.get_length(),
+		settings.intro_gain_db]
 
 
 func _outro(settings: AudioSettings) -> String:
