@@ -14,8 +14,7 @@ func test_defaults_boost_the_quiet_effect_takes() -> void:
 
 
 func test_every_shipped_event_is_configured() -> void:
-	var script: GDScript = load("res://systems/b_audio.gd")
-	var events: Dictionary = script.get_script_constant_map()["EVENTS"]
+	var events: Dictionary = AudioEvents.TAKES
 	var shipped: AudioSettings = load("res://data/audio_settings.tres")
 	assert_false(events.is_empty())
 	for name: StringName in events:
@@ -35,6 +34,12 @@ func test_shipped_music_track_is_set_and_loops() -> void:
 	var wav := shipped.music_track as AudioStreamWAV
 	assert_true(wav != null, "music track is not a WAV")
 	assert_true(wav.loop_mode != AudioStreamWAV.LOOP_DISABLED, "music track does not loop")
+
+
+func test_placement_uses_the_item_kind_sound_when_it_has_one() -> void:
+	assert_eq(AudioEvents.placement_event(&"nest"), &"placement_nest")
+	assert_eq(AudioEvents.placement_event(&"algae"), &"placement_algae")
+	assert_eq(AudioEvents.placement_event(&"coral"), &"placement")
 
 
 func test_event_gain_adds_to_the_effects_gain() -> void:

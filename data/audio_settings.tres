@@ -1,26 +1,52 @@
 [gd_resource type="Resource" script_class="AudioSettings" format=3]
 
-[ext_resource type="Script" path="res://data/audio_settings.gd" id="1"]
-[ext_resource type="Script" path="res://data/audio_event.gd" id="1_pxccp"]
-[ext_resource type="AudioStream" path="res://assets/audio/game_loop_alt.wav" id="2_5ousj"]
+; Audio tuning for the whole game (see docs/audio.md).
+; Every value here overrides the defaults in data/audio_settings.gd.
+; Levels are in dB: 0.0 is unmodified, negative is quieter, positive louder.
+; Each AudioEvent_<name> sub-resource below is the audio of that event, and its
+; name matches the event keys in core/audio_events.gd AudioEvents.TAKES.
+; Music tracks available in assets/audio: game_loop.wav, game_loop_alt.wav.
 
-[sub_resource type="Resource" id="Resource_6116b"]
-script = ExtResource("1_pxccp")
+[ext_resource type="Script" path="res://data/audio_settings.gd" id="1_audio_settings"]
+[ext_resource type="Script" path="res://data/audio_event.gd" id="2_audio_event"]
+[ext_resource type="AudioStream" path="res://assets/audio/game_loop_alt.wav" id="3_music_track"]
 
-[sub_resource type="Resource" id="Resource_5rr5f"]
-script = ExtResource("1_pxccp")
-gain_db = -3.0
+; Placing an item that has no sound of its own (assets/audio/corallo).
+; Slightly high-passed.
+[sub_resource type="Resource" id="AudioEvent_placement"]
+script = ExtResource("2_audio_event")
+gain_db = -12.0
+high_pass_hz = 400.0
 
-[sub_resource type="Resource" id="Resource_5ousj"]
-script = ExtResource("1_pxccp")
-gain_db = -3.0
-high_pass_hz = 350.0
+; Placing a nest (assets/audio/nido).
+[sub_resource type="Resource" id="AudioEvent_placement_nest"]
+script = ExtResource("2_audio_event")
+gain_db = -12.0
+
+; Placing an algae (assets/audio/alga). Its take is much quieter than the
+; others (peak -26 dBFS), so it gets a big boost to sit at the same level.
+[sub_resource type="Resource" id="AudioEvent_placement_algae"]
+script = ExtResource("2_audio_event")
+gain_db = 4.0
+
+; An inventory slot refills (assets/audio/item).
+[sub_resource type="Resource" id="AudioEvent_item_available"]
+script = ExtResource("2_audio_event")
+gain_db = -12.0
+
+; A plastic bag pops (assets/audio/busta).
+[sub_resource type="Resource" id="AudioEvent_bag_destroyed"]
+script = ExtResource("2_audio_event")
 
 [resource]
-script = ExtResource("1")
-music_track = ExtResource("2_5ousj")
-events = Dictionary[StringName, ExtResource("1_pxccp")]({
-&"bag_destroyed": SubResource("Resource_6116b"),
-&"item_available": SubResource("Resource_5rr5f"),
-&"placement": SubResource("Resource_5ousj")
+script = ExtResource("1_audio_settings")
+; The looping background track: point this at another .wav in assets/audio.
+music_track = ExtResource("3_music_track")
+; One entry per event, keyed by its event name.
+events = Dictionary[StringName, ExtResource("2_audio_event")]({
+&"placement": SubResource("AudioEvent_placement"),
+&"placement_nest": SubResource("AudioEvent_placement_nest"),
+&"placement_algae": SubResource("AudioEvent_placement_algae"),
+&"item_available": SubResource("AudioEvent_item_available"),
+&"bag_destroyed": SubResource("AudioEvent_bag_destroyed")
 })

@@ -24,10 +24,12 @@ const SILENCE_DB := -80.0
 ## Applied to every effect, on top of the per-event gain. The takes peak around
 ## -10 dBFS, well under the music, hence the default boost (~+8 dB).
 @export_range(-80.0, 24.0, 0.1) var effects_gain_db := 8.0
-## One entry per event in systems/b_audio.gd EVENTS: level, pitch and filters.
+## One entry per event in AudioEvents.TAKES: level, pitch and filters.
 ## An event missing here plays at the neutral defaults.
 @export var events: Dictionary[StringName, AudioEvent] = {
 	&"placement": AudioEvent.new(),
+	&"placement_nest": AudioEvent.new(),
+	&"placement_algae": AudioEvent.new(),
 	&"item_available": AudioEvent.new(),
 	&"bag_destroyed": AudioEvent.new(),
 }
