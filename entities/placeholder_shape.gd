@@ -34,5 +34,18 @@ static func _make(p_polygon: PackedVector2Array, p_color: Color) -> PlaceholderS
 	return shape
 
 
+## Temporary art: adds a sprite standing on the shape's anchor (bottom edge at
+## the anchor), `height_cells` grid cells tall on screen. The coloured
+## footprint stays underneath.
+func add_sprite(texture: Texture2D, height_cells := 1.0) -> Sprite2D:
+	var sprite := Sprite2D.new()
+	sprite.texture = texture
+	var height := Game.grid.cell_size * height_cells * Game.VIEW_SETTINGS.pixels_per_unit
+	sprite.scale = Vector2.ONE * height / texture.get_height()
+	sprite.offset = Vector2(0, -texture.get_height() * 0.4)
+	add_child(sprite)
+	return sprite
+
+
 func _draw() -> void:
 	draw_colored_polygon(polygon, color)

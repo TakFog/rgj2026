@@ -2,6 +2,9 @@ class_name Cyclone
 extends Threat
 ## Sea cyclone (GDD §7.3): fast and perfectly straight.
 
+## Temporary art, until the designer's sprite is ready.
+const TEXTURE := preload("res://assets/sprites/temp/cyclone.png")
+
 
 func _init() -> void:
 	kind = ThreatSchedule.Type.CYCLONE
@@ -9,6 +12,7 @@ func _init() -> void:
 	speed = Game.actors.cyclone_speed
 	turn_noise = 0.0
 	color = Color(0.45, 0.85, 0.95, 0.8)
+	texture = TEXTURE
 
 
 ## Cyclones are perfectly straight (GDD §7.3): they keep their heading even

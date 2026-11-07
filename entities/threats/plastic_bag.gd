@@ -2,8 +2,8 @@ class_name PlasticBag
 extends Threat
 ## Plastic bag (GDD §7.2): small, very slow, wobbly path.
 
-## Temporary art.
-const TEXTURE := preload("res://assets/sprites/plastic_bag.png")
+## Temporary art, until the designer's sprite is ready.
+const TEXTURE := preload("res://assets/sprites/temp/plastic_bag.png")
 
 
 func _init() -> void:

@@ -2,6 +2,9 @@ class_name Co2Cloud
 extends Threat
 ## CO2 cloud (GDD §7.1): large, slow, almost straight with gentle curves.
 
+## Temporary art, until the designer's sprite is ready.
+const TEXTURE := preload("res://assets/sprites/temp/co2_cloud.svg")
+
 
 func _init() -> void:
 	kind = ThreatSchedule.Type.CO2
@@ -10,3 +13,4 @@ func _init() -> void:
 	turn_noise = Game.actors.co2_turn_noise
 	outside_turn_scale = Game.actors.co2_outside_turn_scale
 	color = Color(0.6, 0.6, 0.65, 0.75)
+	texture = TEXTURE

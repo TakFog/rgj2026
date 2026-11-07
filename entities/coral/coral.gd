@@ -8,6 +8,8 @@ signal destroyed
 const HEALTHY_COLOR := Color(1.0, 0.45, 0.55)
 const SUFFOCATED_COLOR := Color(0.45, 0.42, 0.42)
 const CRUMBLE_SECONDS := 0.6
+## Temporary art, until the designer's coral sprite is ready.
+const TEXTURE := preload("res://assets/sprites/temp/coral.png")
 
 var shape_id: StringName
 var origin_cell: Vector2i
@@ -18,6 +20,7 @@ var oxygen: float:
 
 var _oxygen: CoralOxygen
 var _visuals: Array[PlaceholderShape] = []
+var _sprites: Array[Sprite2D] = []
 var _followers: Array[ViewFollower] = []
 var _dead := false
 
@@ -48,6 +51,7 @@ func _build_visuals() -> void:
 		add_child(marker)
 		var visual := PlaceholderShape.cell(Game.grid.cell_to_world(cell), HEALTHY_COLOR)
 		_visuals.append(visual)
+		_sprites.append(visual.add_sprite(TEXTURE))
 		_followers.append(ViewFollower.attach(marker, visual))
 
 
@@ -61,6 +65,9 @@ func _process(delta: float) -> void:
 	var tint := SUFFOCATED_COLOR.lerp(HEALTHY_COLOR, _oxygen.ratio())
 	for visual in _visuals:
 		visual.color = tint
+	var sprite_tint := Color.WHITE.lerp(SUFFOCATED_COLOR, 1.0 - _oxygen.ratio())
+	for sprite in _sprites:
+		sprite.modulate = sprite_tint
 
 
 ## Instant damage on contact. Kills the coral at 0 oxygen.

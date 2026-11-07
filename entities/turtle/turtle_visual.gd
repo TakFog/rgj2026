@@ -1,13 +1,17 @@
 class_name TurtleVisual
 extends Node2D
-## Placeholder sea turtle drawing in screen space (until real art lands):
-## projected green shell with a head pointing where it swims; the head is
-## lowered toward the shell while eating.
+## Sea turtle drawing in screen space: a temporary sprite (until the designer's
+## art lands) over a projected ground shadow, flipped to face where it swims;
+## it dips toward the seabed while eating.
 
-const SHELL_COLOR := Color(0.33, 0.55, 0.3)
-const OUTLINE_COLOR := Color(0.85, 0.95, 0.6, 0.9)
-const SKIN_COLOR := Color(0.6, 0.75, 0.45)
-const HEAD_SCALE := 0.35
+## Temporary art, until the designer's turtle sprite is ready. Faces right.
+const TEXTURE := preload("res://assets/sprites/temp/turtle.png")
+const SHADOW_COLOR := Color(0.0, 0.0, 0.0, 0.3)
+## On-screen sprite width, in turtle radii (world units).
+const WIDTH_RADII := 2.6
+## Screen pixels the body floats above its shadow (lower while eating).
+const HOVER_PX := 10.0
+const EATING_HOVER_PX := 3.0
 const SEGMENTS := 20
 
 var radius_world := 20.0
@@ -24,18 +28,13 @@ var eating := false:
 
 
 func _draw() -> void:
-	var forward := heading.normalized() if heading != Vector2.ZERO else Vector2.RIGHT
-	var head_distance := radius_world * (0.95 if eating else 1.15)
-	var head := _ellipse(forward * head_distance, radius_world * HEAD_SCALE)
-	draw_colored_polygon(head, SKIN_COLOR)
-	var shell := _ellipse(Vector2.ZERO, radius_world)
-	draw_colored_polygon(shell, SHELL_COLOR)
-	var outline := shell.duplicate()
-	outline.append(shell[0])
-	draw_polyline(outline, OUTLINE_COLOR, 2.0)
-	var inner := _ellipse(Vector2.ZERO, radius_world * 0.55)
-	inner.append(inner[0])
-	draw_polyline(inner, OUTLINE_COLOR, 1.0)
+	draw_colored_polygon(_ellipse(Vector2.ZERO, radius_world), SHADOW_COLOR)
+	var width := radius_world * WIDTH_RADII * Game.VIEW_SETTINGS.pixels_per_unit
+	var size := Vector2(width, width * TEXTURE.get_height() / TEXTURE.get_width())
+	if heading.x < 0.0:
+		size.x = -size.x # flip to face left
+	var hover := EATING_HOVER_PX if eating else HOVER_PX
+	draw_texture_rect(TEXTURE, Rect2(Vector2(-size.x * 0.5, -size.y * 0.5 - hover), size), false)
 
 
 ## A world-space circle of `radius` at `center` (relative to the turtle),

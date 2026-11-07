@@ -129,6 +129,7 @@ func _make_visual() -> Node2D:
 	if texture:
 		var sprite := Sprite2D.new()
 		sprite.texture = texture
+		sprite.modulate = color
 		var height := radius * sprite_height_radii * Game.VIEW_SETTINGS.pixels_per_unit
 		sprite.scale = Vector2.ONE * height / texture.get_height()
 		body = sprite
