@@ -14,6 +14,9 @@ const TAKES := {
 	&"placement_nest": [ # placing a nest (nido)
 		"res://assets/audio/nido/nido0.wav",
 	],
+	&"placement_algae": [ # placing an algae
+		"res://assets/audio/alga/alga.wav",
+	],
 	&"item_available": [ # an inventory slot refills
 		"res://assets/audio/item/i0.wav",
 		"res://assets/audio/item/i1.wav",

@@ -23,6 +23,12 @@ high_pass_hz = 400.0
 script = ExtResource("2_audio_event")
 gain_db = -6.0
 
+; Placing an algae (assets/audio/alga). Its take is much quieter than the
+; others (peak -26 dBFS), so it gets a big boost to sit at the same level.
+[sub_resource type="Resource" id="AudioEvent_placement_algae"]
+script = ExtResource("2_audio_event")
+gain_db = 10.0
+
 ; An inventory slot refills (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_available"]
 script = ExtResource("2_audio_event")
@@ -40,6 +46,7 @@ music_track = ExtResource("3_music_track")
 events = Dictionary[StringName, ExtResource("2_audio_event")]({
 &"placement": SubResource("AudioEvent_placement"),
 &"placement_nest": SubResource("AudioEvent_placement_nest"),
+&"placement_algae": SubResource("AudioEvent_placement_algae"),
 &"item_available": SubResource("AudioEvent_item_available"),
 &"bag_destroyed": SubResource("AudioEvent_bag_destroyed")
 })

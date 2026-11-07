@@ -56,7 +56,8 @@ Placing an item reports its kind, and the sound is `placement_<kind>` (kind is
 | Placed item | Event | Files |
 |---|---|---|
 | nest | `placement_nest` | `assets/audio/nido/` |
-| coral, algae | `placement` | `assets/audio/corallo/` |
+| algae | `placement_algae` | `assets/audio/alga/` |
+| coral | `placement` | `assets/audio/corallo/` |
 
 Giving another kind its own sound needs no code: add e.g. `placement_algae` to
 `AudioEvents.TAKES` with its files and an `AudioEvent` entry in the settings.
