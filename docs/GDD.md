@@ -90,7 +90,7 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
   - Corallo: peso 40
   - Alga: peso 40
   - Nido: peso `nest_base_weight / (1 + nidi_in_mappa + nidi_in_inventario)` (base 20). Meno nidi hai, più è probabile che ne arrivi uno.
-- Piazzamento: clicchi lo slot e sotto il mouse compare un'anteprima trasparente **agganciata alla cella**: **verde** se tutte le celle sono valide, **rossa** altrimenti. Clic sinistro conferma, clic destro o Esc annulla.
+- Piazzamento: clicchi lo slot (o premi **1-4**, tastiera numerica inclusa) e sotto il mouse compare un'anteprima trasparente **agganciata alla cella**: **verde** se tutte le celle sono valide, **rossa** altrimenti. Clic sinistro conferma, clic destro o Esc annulla.
 - Una cella è valida se è dentro la mappa, se è vuota e se **nessun pesce o minaccia ci si trova sopra in quel momento** (così non si incastrano corpi dentro un ostacolo).
 
 ### 5.2 Corallo — *subisce*
@@ -218,7 +218,7 @@ Danni dal più debole al più forte: alga (10) < busta (35) < CO2 (50). Tutti i 
 ## 9. Interfaccia
 - **In alto a destra**: termometro.
 - **In alto al centro**: punteggio / tempo.
-- **In basso**: 4 slot dell'inventario, con il tempo di ricarica mostrato come radiale.
+- **In basso**: 4 slot dell'inventario, con il numero della scorciatoia (**1-4**) e il tempo di ricarica mostrato come radiale.
 - **Pausa**: Spazio / Esc. Mentre sei in pausa non puoi piazzare oggetti.
 - **Tutorial**: al primo avvio, dopo Gioca, una schermata mostra tre reazioni animate della barriera (pesce/nido, CO2/alga, alga/corallo) e, accanto, l'elenco completo delle interazioni (§8). Sempre riapribile da "Come si gioca".
 - **Debug overlay** (F3): tutti i valori di bilanciamento in tempo reale, raggi di collisione, stati dei pesci.

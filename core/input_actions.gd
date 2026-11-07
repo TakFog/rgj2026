@@ -6,6 +6,8 @@ const COMMAND := &"command" # left click: select fish / give order / confirm pla
 const CANCEL := &"cancel" # right click or Esc: cancel placement / deselect
 const PAUSE := &"pause" # Space or Esc (Esc only when nothing to cancel)
 const DEBUG_OVERLAY := &"debug_overlay" # F3
+## One action per inventory slot, bound to the 1-4 keys (number row and keypad).
+const SLOTS: Array[StringName] = [&"slot_1", &"slot_2", &"slot_3", &"slot_4"]
 
 
 static func register() -> void:
@@ -15,6 +17,9 @@ static func register() -> void:
 	_add_key(PAUSE, KEY_SPACE)
 	_add_key(PAUSE, KEY_ESCAPE)
 	_add_key(DEBUG_OVERLAY, KEY_F3)
+	for i in SLOTS.size():
+		_add_key(SLOTS[i], KEY_1 + i)
+		_add_key(SLOTS[i], KEY_KP_1 + i)
 
 
 static func _ensure(action: StringName) -> void:
