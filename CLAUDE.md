@@ -28,4 +28,4 @@ The game design document is `docs/GDD.md`.
    git merge <gh-username>/<feature-name>
    git push origin main
    ```
-5. Delete the feature branch after it has been merged.
+5. **Never delete feature branches**, even after they have been merged. Keep them for reference.
