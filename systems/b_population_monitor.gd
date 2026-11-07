@@ -1,8 +1,8 @@
 class_name PopulationMonitor
 extends Node
-## Counts the four map populations every frame (roadmap contract #9), drives the
-## CollapseTracker, accumulates the score (seconds survived) and ends the run.
-## Pausable: score and countdowns freeze while the tree is paused.
+## Counts the four map populations (sampled at COUNT_INTERVAL, roadmap contract
+## #9), drives the CollapseTracker, accumulates the score (seconds survived) and
+## ends the run. Pausable: score and countdowns freeze while the tree is paused.
 
 signal counts_changed(counts: Dictionary)
 signal score_changed(seconds: float)
@@ -36,6 +36,7 @@ static func soonest_hatch(nests: Array) -> float:
 
 
 func _ready() -> void:
+	add_to_group(Groups.POPULATION_MONITOR)
 	tracker = CollapseTracker.new(Game.actors.collapse_grace_seconds)
 	tracker.countdown_started.connect(func(p: StringName) -> void: countdown_started.emit(p))
 	tracker.countdown_cancelled.connect(func(p: StringName) -> void: countdown_cancelled.emit(p))
@@ -73,6 +74,12 @@ func _sample_counts() -> void:
 ## Seconds until the first nest hatches, or -1.0 (fish-rescue hint, contract #10).
 func soonest_hatch_seconds() -> float:
 	return soonest_hatch(get_tree().get_nodes_in_group(Groups.NESTS))
+
+
+## Ends the run now, as if `population` had collapsed (debug overlay button).
+func force_game_over(population: StringName = Groups.CORALS) -> void:
+	if not is_over:
+		_on_collapsed(population)
 
 
 func _on_collapsed(population: StringName) -> void:

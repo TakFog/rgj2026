@@ -15,7 +15,7 @@ var _slider: HSlider
 var _panel_bg: ColorRect
 ## Editable feature-flag toggle buttons, keyed by flag name.
 var _flag_buttons: Dictionary = {} # StringName -> Button
-## Threat spawn buttons, keyed by threat type.
+## Action buttons (threat spawns, Game Over), keyed by action name.
 var _spawn_buttons: Dictionary = {} # String -> Button
 
 const FONT_SIZE := 11
@@ -126,6 +126,11 @@ func _ready() -> void:
 	add_child(spawn_turtle)
 	_spawn_buttons["turtle"] = spawn_turtle
 
+	var game_over := _make_action_button("Game Over")
+	game_over.pressed.connect(_force_game_over)
+	add_child(game_over)
+	_spawn_buttons["game_over"] = game_over
+
 
 func _on_debug_mode_changed(value: bool) -> void:
 	enabled = value
@@ -202,6 +207,13 @@ func _spawn_turtle() -> void:
 	rng.randomize()
 	var entry := EdgeEntry.random(rng, Game.visible_world_polygon(), Rect2(Vector2.ZERO, Game.grid.world_size()))
 	Game.factory.spawn_turtle(entry)
+
+
+## End the run immediately and show the game-over screen.
+func _force_game_over() -> void:
+	var monitor := get_tree().get_first_node_in_group(Groups.POPULATION_MONITOR) as PopulationMonitor
+	if monitor != null:
+		monitor.force_game_over()
 
 
 func _process(delta: float) -> void:
