@@ -14,6 +14,9 @@ const TITLE_Y_FRACTION := 0.25
 ## the credits panel cannot drift apart.
 const GAME_TITLE := "BalanSea"
 const CREDITS_TEXT := "Un gestionale di barriera corallina.\nTema del game jam: SUBIRE.\n\nRealizzato con Godot 4.7.2."
+## User command-line argument (after `--`) that skips the title screen and
+## starts a run straight away, so tools/smoke.sh exercises real gameplay.
+const SMOKE_PLAY_ARG := "--smoke-play"
 
 signal play_pressed
 signal exit_pressed
@@ -32,6 +35,7 @@ static var _skip_next_open := false
 var _menu_panel: Control
 var _credits_panel: Control
 var _settings_panel: SettingsPanel
+var _play_button: Button
 
 
 func _ready() -> void:
@@ -57,7 +61,7 @@ func _ready() -> void:
 	# Auto-open when the menu enters the tree (game start). Calling open()
 	# from DevBSystems would race: Game.ui is not in the tree yet when
 	# DevBSystems._ready runs, so _ready here hasn't fired yet.
-	if _skip_next_open:
+	if _skip_next_open or OS.get_cmdline_user_args().has(SMOKE_PLAY_ARG):
 		_skip_next_open = false
 		_start_without_menu()
 	else:
@@ -104,6 +108,7 @@ func _build_menu_panel() -> Control:
 	# Play, centred both horizontally and vertically.
 	var play_btn := _button("Gioca")
 	play_btn.pressed.connect(_on_play_pressed)
+	_play_button = play_btn
 	panel.add_child(play_btn)
 	play_btn.set_anchors_preset(Control.PRESET_CENTER)
 	play_btn.offset_left = -BUTTON_SIZE.x * 0.5
@@ -220,6 +225,7 @@ func _on_settings_pressed() -> void:
 
 func _on_settings_closed() -> void:
 	_menu_panel.visible = true
+	_play_button.grab_focus.call_deferred()
 
 
 func _on_credits_pressed() -> void:
@@ -232,6 +238,7 @@ func _on_back_pressed() -> void:
 	button_pressed.emit()
 	_credits_panel.visible = false
 	_menu_panel.visible = true
+	_play_button.grab_focus.call_deferred()
 
 
 func _on_exit_pressed() -> void:
@@ -241,9 +248,15 @@ func _on_exit_pressed() -> void:
 
 ## The run is paused behind the menu, so swallow the pause key: otherwise
 ## Space/Esc would unpause the game underneath the still-visible menu.
+## On the credits screen, Esc goes back to the menu.
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed(InputActions.PAUSE):
+	if not visible:
+		return
+	var cancel := event.is_action_pressed(InputActions.CANCEL)
+	if cancel or event.is_action_pressed(InputActions.PAUSE):
 		get_viewport().set_input_as_handled()
+		if cancel and _credits_panel.visible:
+			_on_back_pressed()
 
 
 ## Play / How-to-play hides the menu but leaves the run paused for the tutorial.
@@ -260,6 +273,8 @@ func open() -> void:
 	_menu_panel.visible = true
 	_set_gameplay_hud_visible(false)
 	get_tree().paused = true
+	# Keyboard/gamepad players can start without the mouse.
+	_play_button.grab_focus.call_deferred()
 
 
 ## Hide the menu and resume the game.

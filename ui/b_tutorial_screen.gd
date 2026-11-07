@@ -13,11 +13,19 @@ signal button_pressed
 enum Mode { START, REVIEW }
 enum InputAction { NONE, NEXT, PRIMARY }
 
-## Advance to the next interaction after this many seconds.
-const LOOP_SECONDS := 4.5
+## Advance to the next interaction once the longest vignette has faded out.
+const LOOP_SECONDS := TutorialStage.TIMELINE_SECONDS
 const SCREEN_MARGIN := 24.0
 const RIGHT_COLUMN_MIN_WIDTH := 340.0
 const CAPTION_FONT_SIZE := 24
+## Theme entries SeaStyle sets on a button; chips share one copy of each look.
+const CHIP_STYLE_STATES: Array[StringName] = [
+	&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled", &"focus",
+]
+const CHIP_COLOR_STATES: Array[StringName] = [
+	&"font_color", &"font_hover_color", &"font_focus_color", &"font_pressed_color",
+	&"font_hover_pressed_color", &"font_disabled_color",
+]
 
 var _mode := Mode.START
 var _stage: TutorialStage
@@ -29,6 +37,10 @@ var _selected_index := 0
 var _chips: Array[Button] = []
 var _chip_rows: Array[int] = []
 var _scroll: ScrollContainer
+## Chip looks, built once and shared by every chip: {"styles", "colors"}.
+var _chip_normal: Dictionary = {}
+var _chip_highlighted: Dictionary = {}
+var _highlighted_chip: Button
 
 
 static func primary_label(mode: Mode) -> String:
@@ -140,6 +152,8 @@ func _ready() -> void:
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	right.add_child(_scroll)
 
+	_chip_normal = _chip_look(false)
+	_chip_highlighted = _chip_look(true)
 	var rows := VBoxContainer.new()
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rows.add_theme_constant_override("separation", 6)
@@ -207,14 +221,18 @@ func _on_chip_pressed(index: int) -> void:
 	_select_interaction(index)
 
 
+## Only the previous and the new selection are restyled.
 func _refresh_chips() -> void:
 	var selected: Button = null
-	for i in _chips.size():
-		if _chip_rows[i] == _selected_index:
-			SeaStyle.style_highlighted_button(_chips[i])
-			selected = _chips[i]
-		else:
-			SeaStyle.style_button(_chips[i])
+	var at := _chip_rows.find(_selected_index)
+	if at >= 0:
+		selected = _chips[at]
+	if selected != _highlighted_chip:
+		if _highlighted_chip != null:
+			_apply_chip_look(_highlighted_chip, _chip_normal)
+		if selected != null:
+			_apply_chip_look(selected, _chip_highlighted)
+		_highlighted_chip = selected
 	if selected != null and _scroll != null and _scroll.is_inside_tree():
 		_scroll.ensure_control_visible(selected)
 
@@ -331,7 +349,34 @@ func _build_chip(row: Dictionary, index: int) -> Button:
 	chip.add_theme_font_size_override("font_size", 15)
 	chip.focus_mode = Control.FOCUS_NONE
 	chip.pressed.connect(_on_chip_pressed.bind(index))
-	SeaStyle.style_button(chip)
+	chip.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_apply_chip_look(chip, _chip_normal)
 	_chips.append(chip)
 	_chip_rows.append(index)
 	return chip
+
+
+## Captures SeaStyle's (highlighted) button look once, so chips can share it.
+func _chip_look(highlighted: bool) -> Dictionary:
+	var template := Button.new()
+	if highlighted:
+		SeaStyle.style_highlighted_button(template)
+	else:
+		SeaStyle.style_button(template)
+	var styles := {}
+	for state in CHIP_STYLE_STATES:
+		styles[state] = template.get_theme_stylebox(state)
+	var colors := {}
+	for state in CHIP_COLOR_STATES:
+		colors[state] = template.get_theme_color(state)
+	template.free()
+	return {"styles": styles, "colors": colors}
+
+
+func _apply_chip_look(chip: Button, look: Dictionary) -> void:
+	var styles: Dictionary = look["styles"]
+	for state: StringName in styles:
+		chip.add_theme_stylebox_override(state, styles[state])
+	var colors: Dictionary = look["colors"]
+	for state: StringName in colors:
+		chip.add_theme_color_override(state, colors[state])
