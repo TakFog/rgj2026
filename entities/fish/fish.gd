@@ -52,7 +52,8 @@ func _ready() -> void:
 	shape.shape = circle
 	add_child(shape)
 
-	brain = FishBrain.new(Game.actors, adult)
+	brain = FishBrain.new(Game.actors, adult,
+			FishBrain.effective_reproduce_cooldown(Game.actors, Game.eco.nest_hatch_seconds))
 	brain.starved.connect(_on_starved)
 	brain.matured.connect(_on_matured)
 	brain.eat_finished.connect(_on_eat_finished)
@@ -80,9 +81,11 @@ func _physics_process(delta: float) -> void:
 		FishBrain.State.WANDER:
 			if brain.wants_to_seek_food():
 				_seek_food()
+			elif brain.wants_to_seek_nest():
+				_seek_nest()
 			if brain.state == FishBrain.State.WANDER:
 				_swim_wander(delta)
-		FishBrain.State.ORDERED, FishBrain.State.SEEKING_FOOD:
+		FishBrain.State.ORDERED, FishBrain.State.SEEKING_FOOD, FishBrain.State.SEEKING_NEST:
 			_follow_path(_speed() * delta)
 	_visual.hunger_ratio = brain.hunger_ratio()
 	_visual.heading = Game.projection.to_screen(_heading) - Game.projection.to_screen(Vector2.ZERO)
@@ -145,6 +148,19 @@ func _reserve(algae: Algae) -> void:
 	algae.eater = self
 
 
+## Fed, off cooldown and wandering: reserve the nearest reachable empty nest
+## within the notice radius, if any.
+func _seek_nest() -> void:
+	var result := _pathfinder.nearest_occupant(
+			global_position, _is_empty_nest, Game.actors.reproduce_nest_radius)
+	if result.is_empty():
+		brain.nest_seek_failed()
+		return
+	_replans_left = MAX_REPLANS
+	brain.seek_nest(result["occupant"])
+	_path = result["path"]
+
+
 ## Wandering: curve toward the wander heading; a bounce turns at once.
 func _swim_wander(delta: float) -> void:
 	var step := _speed() * delta
@@ -175,11 +191,14 @@ func _follow_path(budget: float) -> void:
 
 
 func _on_path_end() -> void:
-	if brain.state == FishBrain.State.ORDERED:
-		brain.arrived(_empty_nest_under())
-	else:
-		# Reached the end without touching the algae: it is gone or moved.
-		brain.food_lost()
+	match brain.state:
+		FishBrain.State.ORDERED:
+			brain.arrived(_empty_nest_under())
+		FishBrain.State.SEEKING_NEST:
+			brain.nest_reached(_empty_nest_under())
+		_:
+			# Reached the end without touching the algae: it is gone or moved.
+			brain.food_lost()
 
 
 ## Moves and reacts to collisions. Returns false if the fish was blocked.
@@ -197,7 +216,8 @@ func _move(direction: Vector2, distance: float, toward := Vector2.ZERO) -> bool:
 		return true
 	if brain.state == FishBrain.State.WANDER:
 		_wander.on_blocked(collision.get_normal())
-	elif collider is Algae and not (collider as Algae).is_taken_by_other(self):
+	elif collider is Algae and not (collider as Algae).is_taken_by_other(self) \
+			and (brain.state == FishBrain.State.ORDERED or brain.state == FishBrain.State.SEEKING_FOOD):
 		brain.blocked_by_algae(collider)
 		if brain.state == FishBrain.State.EATING:
 			(collider as Algae).eater = self
@@ -224,6 +244,9 @@ func _slide(collision: KinematicCollision2D, distance: float) -> bool:
 func _replan() -> void:
 	if brain.state == FishBrain.State.ORDERED:
 		_path = _pathfinder.find_path(global_position, brain.target)
+		return
+	if brain.state == FishBrain.State.SEEKING_NEST:
+		_path = _pathfinder.find_path(global_position, (brain.nest as Node2D).global_position)
 		return
 	var result := _pathfinder.nearest_occupant(global_position, _is_free_algae)
 	if result.is_empty():
@@ -252,7 +275,7 @@ func _check_targets_still_exist() -> void:
 	var has_food := brain.state == FishBrain.State.EATING or brain.state == FishBrain.State.SEEKING_FOOD
 	if has_food and not _alive_in(brain.food, Groups.ALGAE):
 		brain.food_lost()
-	elif brain.state == FishBrain.State.FERTILIZING:
+	elif brain.state == FishBrain.State.FERTILIZING or brain.state == FishBrain.State.SEEKING_NEST:
 		if not _alive_in(brain.nest, Groups.NESTS) or not (brain.nest as Nest).is_empty():
 			brain.nest_lost()
 
@@ -288,6 +311,10 @@ static func _blocks_fish(occupant: Object) -> bool:
 
 func _is_free_algae(occupant: Object) -> bool:
 	return occupant is Algae and not (occupant as Algae).is_taken_by_other(self)
+
+
+func _is_empty_nest(occupant: Object) -> bool:
+	return occupant is Nest and (occupant as Nest).is_empty()
 
 
 ## True if `entity` still exists and still belongs to `group` (destroy() leaves

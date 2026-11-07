@@ -445,6 +445,7 @@ func _state_name(state: int) -> String:
 		FishBrain.State.FERTILIZING: return "FECONDA"
 		FishBrain.State.IDLE: return "FERMO"
 		FishBrain.State.SEEKING_FOOD: return "CERCA CIBO"
+		FishBrain.State.SEEKING_NEST: return "CERCA NIDO"
 		_: return "?"
 
 

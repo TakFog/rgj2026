@@ -29,6 +29,8 @@ extends Resource
 ## Minimum seconds between two autonomous fertilizations. The Fish node clamps
 ## it to at least twice the nest hatching time.
 @export var reproduce_cooldown_seconds := 40.0
+## Straight-line distance (world units) within which an empty nest is noticed.
+@export var reproduce_nest_radius := 128.0
 
 @export_group("Predator")
 ## Feature flag: set to false to turn the carnivorous predator off entirely.
