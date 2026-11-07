@@ -25,8 +25,10 @@ func _ready() -> void:
 	bar.name = "InventoryBar"
 	bar.inventory = inventory
 	bar.placement = placement
+	bar.add_to_group(Groups.GAMEPLAY_HUD)
 	Game.ui.add_child(bar)
 
 	var thermometer := Thermometer.new()
 	thermometer.name = "Thermometer"
+	thermometer.add_to_group(Groups.GAMEPLAY_HUD)
 	Game.ui.add_child(thermometer)

@@ -197,6 +197,7 @@ func open() -> void:
 	_credits_panel.visible = false
 	_settings_panel.close()
 	_menu_panel.visible = true
+	_set_gameplay_hud_visible(false)
 	get_tree().paused = true
 
 
@@ -204,4 +205,13 @@ func open() -> void:
 func close() -> void:
 	visible = false
 	_settings_panel.close()
+	_set_gameplay_hud_visible(true)
 	get_tree().paused = false
+
+
+## The thermometer and inventory cards would show through the translucent
+## backdrop, so they are hidden while the menu is up.
+func _set_gameplay_hud_visible(value: bool) -> void:
+	for node in get_tree().get_nodes_in_group(Groups.GAMEPLAY_HUD):
+		if node is CanvasItem:
+			(node as CanvasItem).visible = value
