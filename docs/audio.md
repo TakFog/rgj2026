@@ -27,7 +27,7 @@ so the mix can be rebalanced without touching a script. The rules below apply to
 | `item_available` | an inventory slot refills | `assets/audio/item/` |
 | `cyclone_wind` | loops while a cyclone is on screen, fading in/out (`cyclone_wind_fade_seconds`; the take must loop) | `assets/audio/wind/` |
 | `cyclone_hit` | a cyclone destroys something (fish, coral, algae, nest...) | `assets/audio/` |
-| `co2_gone` | a CO2 cloud disappears on screen (not when it drifts off it) | `assets/audio/co2/` |
+| `co2_gone` | a CO2 cloud disappears on screen (not when it drifts off it) | `assets/audio/co2/` (bubble pop) |
 | `bag_destroyed` | a plastic bag pops on screen (not when it drifts off it) | `assets/audio/busta/` |
 
 ## Levels
