@@ -25,7 +25,7 @@ so the mix can be rebalanced without touching a script. The rules below apply to
 | `predator_ate` | a predator bites a fish or a nest's eggs | `assets/audio/eat/` |
 | `item_available` | an inventory slot refills | `assets/audio/item/` |
 | `co2_gone` | a CO2 cloud disappears on screen (not when it drifts off it) | `assets/audio/co2/` |
-| `bag_destroyed` | a plastic bag pops | `assets/audio/busta/` |
+| `bag_destroyed` | a plastic bag pops on screen (not when it drifts off it) | `assets/audio/busta/` |
 
 ## Levels
 
