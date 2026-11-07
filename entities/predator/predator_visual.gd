@@ -5,11 +5,11 @@ extends Node2D
 
 const TEXTURE := preload("res://assets/sprites/predator.png")
 ## Body centre, tail→head angle and body length in the texture (measured on the art).
-const FACING_CENTER := Vector2(297, 295)
-const FACING_AXIS_DEG := 32.0
-const FACING_LENGTH := 720.0
+const FACING_CENTER := Vector2(1021, 362)
+const FACING_AXIS_DEG := 0.0
+const FACING_LENGTH := 2043.0
 ## Half the sprite height, as a fraction of its body length (bars sit above it).
-const SPRITE_HALF_HEIGHT := 0.3
+const SPRITE_HALF_HEIGHT := 0.18
 const MAX_TILT_DEG := 30.0
 ## On-screen body length, in predator radii (world units).
 const BODY_LENGTH_RADII := 4.5
