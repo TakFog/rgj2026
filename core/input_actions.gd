@@ -8,6 +8,10 @@ const PAUSE := &"pause" # Space or Esc (Esc only when nothing to cancel)
 const DEBUG_OVERLAY := &"debug_overlay" # F3
 ## One action per inventory slot, bound to the 1-4 keys (number row and keypad).
 const SLOTS: Array[StringName] = [&"slot_1", &"slot_2", &"slot_3", &"slot_4"]
+## InputMap device id matching every device. Touch builds need it: taps reach
+## the game as mouse clicks from the emulation device (-1), which a binding
+## made with a new event's default device would not match.
+const ALL_DEVICES := -1
 
 
 static func register() -> void:
@@ -36,6 +40,14 @@ static func _add_key(action: StringName, keycode: Key) -> void:
 
 static func _add_mouse(action: StringName, button: MouseButton) -> void:
 	_ensure(action)
+	InputMap.action_add_event(action, mouse_event(button, Platform.is_touch()))
+
+
+## Mouse binding for `button`. Mouse builds (web included) keep the default
+## device binding they always had; touch builds also accept clicks emulated from taps.
+static func mouse_event(button: MouseButton, touch: bool) -> InputEventMouseButton:
 	var event := InputEventMouseButton.new()
 	event.button_index = button
-	InputMap.action_add_event(action, event)
+	if touch:
+		event.device = ALL_DEVICES
+	return event

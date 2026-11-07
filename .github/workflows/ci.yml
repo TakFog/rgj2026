@@ -7,7 +7,8 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a main run: it may be publishing an Android release.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   GODOT_VERSION: "4.7.2"
@@ -42,3 +43,143 @@ jobs:
 
       - name: Smoke test
         run: GODOT=~/godot/godot tools/smoke.sh
+
+  # Builds a signed APK on every push. On pushes to main it also publishes a
+  # GitHub release tagged v<N>, N = previous highest v<N> tag + 1.
+  android:
+    name: Android APK
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      RELEASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The release number doubles as the Android version code, so every
+      # release installs over the previous one. Branch builds use the number
+      # the next release will get.
+      - name: Compute version
+        run: |
+          last=$(git ls-remote --tags origin 'refs/tags/v*' \
+            | sed -n 's#.*refs/tags/v\([0-9][0-9]*\)$#\1#p' | sort -n | tail -1)
+          next=$(( ${last:-0} + 1 ))
+          echo "VERSION_CODE=$next" >> "$GITHUB_ENV"
+          if [ "$RELEASE" = "true" ]; then
+            echo "VERSION_NAME=$next" >> "$GITHUB_ENV"
+          else
+            echo "VERSION_NAME=$next-dev.$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Download Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          curl -fsSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/"Godot_v${GODOT_VERSION}-stable_linux.x86_64" ~/godot/godot
+          chmod +x ~/godot/godot
+
+      - name: Cache Android export templates
+        id: cache-templates
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-templates-android-${{ env.GODOT_VERSION }}
+
+      - name: Download Android export templates
+        if: steps.cache-templates.outputs.cache-hit != 'true'
+        run: |
+          dest=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$dest"
+          curl -fsSL -o /tmp/templates.tpz \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          # Only the prebuilt APK templates are needed (no Gradle build).
+          unzip -j -q /tmp/templates.tpz \
+            templates/android_release.apk \
+            templates/android_debug.apk \
+            -d "$dest"
+          rm /tmp/templates.tpz
+
+      # Godot reads the SDK and JDK locations from its editor settings.
+      - name: Point Godot at the Android SDK and JDK
+        run: |
+          mkdir -p ~/.config/godot
+          cat > ~/.config/godot/"editor_settings-${GODOT_VERSION%.*}.tres" <<SETTINGS
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "${ANDROID_HOME}"
+          export/android/java_sdk_path = "${JAVA_HOME}"
+          SETTINGS
+
+      # Release-signed with the repository keystore (secrets ANDROID_KEYSTORE_*).
+      # Without the secrets (e.g. pull requests from forks) a throwaway debug
+      # keystore signs a debug APK instead, so the build is still checked.
+      - name: Prepare signing
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            {
+              echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$RUNNER_TEMP/release.keystore"
+              echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=${{ secrets.ANDROID_KEYSTORE_ALIAS }}"
+              echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
+              echo "EXPORT_MODE=release"
+            } >> "$GITHUB_ENV"
+          else
+            keytool -genkeypair -keystore "$RUNNER_TEMP/debug.keystore" -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android \
+              -dname "CN=Android Debug,O=Android,C=US"
+            {
+              echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$RUNNER_TEMP/debug.keystore"
+              echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey"
+              echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android"
+              echo "EXPORT_MODE=debug"
+            } >> "$GITHUB_ENV"
+            echo "::notice::Android keystore secrets unavailable: building a debug-signed APK."
+          fi
+
+      - name: Export Android APK
+        run: |
+          sed -i -e "s/^version\/code=.*/version\/code=${VERSION_CODE}/" \
+            -e "s/^version\/name=.*/version\/name=\"${VERSION_NAME}\"/" export_presets.cfg
+          mkdir -p build/android
+          ~/godot/godot --headless --import || true
+          ~/godot/godot --headless "--export-${EXPORT_MODE}" "Android" build/android/balansea.apk
+          test -f build/android/balansea.apk
+          build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$build_tools/apksigner" verify --print-certs build/android/balansea.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/android/balansea.apk
+          retention-days: 14
+
+      - name: Publish release
+        if: env.RELEASE == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v${VERSION_CODE}"
+          cp build/android/balansea.apk "build/android/balansea-${tag}.apk"
+          gh release create "$tag" "build/android/balansea-${tag}.apk" \
+            --target "$GITHUB_SHA" --title "BalanSea ${tag}" \
+            --notes "Android build of ${GITHUB_SHA::7} (version code ${VERSION_CODE})."

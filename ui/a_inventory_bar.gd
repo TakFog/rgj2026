@@ -17,7 +17,8 @@ func _ready() -> void:
 	add_theme_constant_override("separation", SEPARATION)
 	for i in inventory.model.slots.size():
 		var card := InventoryCard.new()
-		card.hotkey = i + 1
+		# Touch builds have no number keys, so no shortcut badge.
+		card.hotkey = 0 if Platform.is_touch() else i + 1
 		card.pressed.connect(placement.begin.bind(i))
 		add_child(card)
 		_cards.append(card)

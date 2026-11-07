@@ -6,6 +6,9 @@ extends Resource
 @export_group("Fish")
 @export var fish_radius := 10.0
 @export var fish_click_radius := 24.0
+## Pick radius used instead of fish_click_radius in touch builds: a fingertip
+## covers far more than a mouse pointer.
+@export var fish_touch_radius := 48.0
 @export var fish_speed := 60.0
 ## Turning radius (world units) when changing direction: higher = wider curves.
 @export var fish_turn_radius := 16.0
