@@ -19,15 +19,16 @@ class Outcome:
 		threat_dies = p_threat_dies
 
 
-## `already_hit` is true when this threat already touched this target before
-## (only used for "CO2 damages each coral once"). `nest_has_eggs` only matters for NEST.
-static func resolve(kind: int, target: int, actors: BalanceActors, already_hit: bool, nest_has_eggs: bool) -> Outcome:
+## `nest_has_eggs` only matters for NEST. `already_hit` is true when this threat
+## touched this target before (only matters for CO2 on corals when
+## actors.co2_dies_on_coral is false: each coral is damaged once).
+static func resolve(kind: int, target: int, actors: BalanceActors, nest_has_eggs: bool, already_hit := false) -> Outcome:
 	match kind:
 		ThreatSchedule.Type.CO2:
 			match target:
 				Target.CORAL:
 					if not already_hit:
-						return Outcome.new(Effect.DAMAGE_CORAL, actors.co2_coral_damage, false)
+						return Outcome.new(Effect.DAMAGE_CORAL, actors.co2_coral_damage, actors.co2_dies_on_coral)
 				Target.ALGAE:
 					return Outcome.new(Effect.ABSORB_CO2, 0.0, true)
 				Target.NEST:

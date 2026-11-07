@@ -65,9 +65,9 @@ func _on_contact(other: Node2D) -> void:
 	var target := ThreatRules.target_of(other)
 	if target == ThreatRules.Target.NONE:
 		return
-	var key := other.get_instance_id()
 	var nest_has_eggs := target == ThreatRules.Target.NEST and (other as Nest).has_eggs()
-	var outcome := ThreatRules.resolve(kind, target, Game.actors, _hit.has(key), nest_has_eggs)
+	var key := other.get_instance_id()
+	var outcome := ThreatRules.resolve(kind, target, Game.actors, nest_has_eggs, _hit.has(key))
 	_hit[key] = true
 	match outcome.effect:
 		ThreatRules.Effect.DAMAGE_CORAL:

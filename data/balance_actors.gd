@@ -30,6 +30,9 @@ extends Resource
 @export var co2_interval_cold := 30.0
 @export var co2_interval_hot := 8.0
 @export var co2_coral_damage := 50.0
+## If true the cloud disappears after damaging its first coral; if false it keeps
+## going and damages every coral it touches, each one only once.
+@export var co2_dies_on_coral := true
 @export var bag_radius := 16.0
 @export var bag_speed := 20.0
 @export var bag_turn_noise := 2.0

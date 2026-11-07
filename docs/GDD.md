@@ -170,7 +170,7 @@ Le combinazioni non elencate **non fanno nulla**.
 | Agente | Bersaglio | Effetto |
 |---|---|---|
 | Alga (espansione) | Corallo | Corallo −`algae_coral_damage` (10) ossigeno |
-| CO2 | Corallo | Corallo −`co2_coral_damage` (50) ossigeno **una sola volta, al primo contatto**: basta toccare una qualsiasi delle sue celle. La nube prosegue e non danneggia di nuovo lo stesso corallo |
+| CO2 | Corallo | Corallo −`co2_coral_damage` (50) ossigeno al primo contatto (basta toccare una qualsiasi delle sue celle), la nube **sparisce**. Con `co2_dies_on_coral = false` la nube invece prosegue e danneggia ogni corallo una sola volta |
 | CO2 | Alga | La CO2 viene **assorbita** (sparisce) e l'alga **si espande subito** |
 | CO2 | Nido con uova | Le uova muoiono, il nido torna `EMPTY` |
 | Busta | Pesce | Il pesce **muore**, la busta resta |
