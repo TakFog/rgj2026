@@ -242,7 +242,7 @@ drums_gain_db = 0.0
 arp_gain_db = -4.0
 ; Half arp with 1-5 hostiles, full from 6 on.
 arp_full_hostiles = 6
-music_gain_db = 5.0
+music_gain_db = 7.0
 ; Global effects level: every effect event gets this on top of its own gain.
 effects_gain_db = 2.0
 ; The cyclone wind fades in when a cyclone enters the screen and out when it leaves.

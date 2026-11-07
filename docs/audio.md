@@ -13,6 +13,7 @@ so the mix can be rebalanced without touching a script. The rules below apply to
 | `systems/b_audio.gd` | The SFX node that plays those events (pool of voices, one bus per event). |
 | `data/audio_event.gd` | One event's `gain_db`, `pitch`, `pitch_jitter`, `high_pass_hz` and `low_pass_hz` (an `AudioEvent` resource). |
 | `data/audio_settings.gd` / `.tres` | It all comes together here: the music settings, a global effects level, and one `AudioEvent` per event. **Tune in `data/audio_settings.tres`** (open it in the inspector); its entries are named after the events (`AudioEvent_placement`, ...) and the file starts with a short legend. |
+| `core/user_settings.gd` | The player's Music/Effects volume, saved in `user://settings.cfg` (separate from the designer mix). |
 | `autoload/game.gd` | Exposes the resource as `Game.AUDIO_SETTINGS`. |
 
 ## Events
@@ -86,10 +87,13 @@ the ones **above** it; `0.0` switches that filter off. They are plain frequencie
 in Hz, e.g. `250.0` is a gentle high-pass that thins the low end of a thud and
 `4000.0` is a low-pass that muffles a sound.
 
-Each event plays on its own audio bus (`Sfx_<event>`, routed to Master), so its
-filters never affect the other sounds; the music has its own `Music` bus. The
-buses are created at startup from the settings — nothing to set up by hand in
-the Audio panel.
+Each event plays on its own audio bus (`Sfx_<event>`), routed through the
+`Effects` bus to Master, so its filters never affect the other sounds; the music
+has its own `Music` bus. The in-game settings menu (title screen and pause)
+controls the volume of the `Music` and `Effects` groups; those user levels are
+saved in `user://settings.cfg` and are separate from the designer levels above.
+The buses are created at startup from the settings — nothing to set up by hand
+in the Audio panel.
 
 The placement sound is the one that ships with a filter (a gentle high-pass, so
 it cuts less through the music).

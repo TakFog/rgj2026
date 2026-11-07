@@ -122,6 +122,25 @@ func test_bus_without_filters_has_no_effects() -> void:
 	assert_eq(AudioServer.get_bus_effect_count(index), 0)
 
 
+func test_event_buses_are_routed_through_the_effects_bus() -> void:
+	# A name of its own: another test reuses the placement bus with filters.
+	var bus := settings.event_bus(&"route_probe")
+	var index := AudioServer.get_bus_index(bus)
+	assert_true(index != -1, "event bus not created")
+	assert_eq(AudioServer.get_bus_send(index), AudioSettings.EFFECTS_BUS)
+	var effects := AudioServer.get_bus_index(AudioSettings.EFFECTS_BUS)
+	assert_true(effects != -1, "effects bus not created")
+	assert_eq(AudioServer.get_bus_send(effects), &"Master")
+
+
+func test_volume_percent_maps_to_db() -> void:
+	assert_almost(UserSettings.db_from_percent(100.0), 0.0)
+	assert_almost(UserSettings.db_from_percent(50.0), -6.0206, 0.01)
+	assert_almost(UserSettings.db_from_percent(0.0), UserSettings.MIN_DB)
+	assert_almost(UserSettings.percent_from_db(0.0), 100.0)
+	assert_almost(UserSettings.percent_from_db(-6.0206), 50.0, 0.1)
+
+
 func test_event_bus_carries_the_event_filters() -> void:
 	settings.events[&"placement"].high_pass_hz = 120.0
 	var index := AudioServer.get_bus_index(settings.event_bus(&"placement"))

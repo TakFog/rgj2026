@@ -38,6 +38,8 @@ func _ready() -> void:
 			_streams[event] = takes
 	for name: StringName in _streams:
 		Game.AUDIO_SETTINGS.event_bus(name) # Create the filter buses up front.
+	# Apply the player's saved Music/Effects levels now that the buses exist.
+	UserSettings.load_and_apply()
 	for i in VOICES:
 		var player := AudioStreamPlayer.new()
 		# UI feedback must be audible on the title screen and pause menu, when
@@ -144,6 +146,7 @@ func _connect_ui() -> void:
 	var pause := get_parent().get_node_or_null("PauseController") as PauseController
 	if pause != null:
 		pause.pause_toggled.connect(func(_paused: bool) -> void: play(&"ui_click"))
+		pause.button_pressed.connect(func() -> void: play(&"ui_click"))
 
 
 ## Selecting a fish, sending it somewhere and clearing the selection.
