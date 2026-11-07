@@ -26,6 +26,14 @@ var temperature := 0.0:
 	set(value):
 		temperature = value
 		temperature_changed.emit(value)
+## Debug overlay flag (F3). When true, shows per-entity numbers (coral life,
+## nest time, fish state...) over everything (GDD §9).
+var debug_mode := false:
+	set(value):
+		debug_mode = value
+		debug_mode_changed.emit(value)
+
+signal debug_mode_changed(enabled: bool)
 
 var _actions_registered := false
 
@@ -49,6 +57,13 @@ func reset() -> void:
 ## Mouse position in logical world coordinates.
 func mouse_world() -> Vector2:
 	return projection.to_world(view.get_global_mouse_position())
+
+
+## Toggles the debug overlay with F3 (GDD §9).
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(InputActions.DEBUG_OVERLAY):
+		debug_mode = not debug_mode
+		get_viewport().set_input_as_handled()
 
 
 ## The world area currently on screen (viewport corners projected back to the

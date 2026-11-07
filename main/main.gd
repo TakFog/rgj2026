@@ -8,6 +8,7 @@ extends Node
 
 const DevASystems := preload("res://main/dev_a_systems.gd")
 const DevBSystems := preload("res://main/dev_b_systems.gd")
+const DebugOverlay := preload("res://core/debug_overlay.gd")
 const Ground := preload("res://main/ground.gd")
 
 
@@ -52,6 +53,11 @@ func _ready() -> void:
 	var dev_b := DevBSystems.new()
 	dev_b.name = "DevBSystems"
 	add_child(dev_b)
+
+	var debug_overlay := DebugOverlay.new()
+	debug_overlay.name = "DebugOverlay"
+	Game.ui.add_child(debug_overlay)
+
 	add_child(ui)
 
 
