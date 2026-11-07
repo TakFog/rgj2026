@@ -1,28 +1,29 @@
 class_name EdgeEntry
 extends RefCounted
-## Where a threat enters the map (GDD §7): a random point on one of the four
-## world edges and a heading pointing inward, randomised within ±spread radians.
+## Where a threat enters (GDD §7): a random point on the border of the visible
+## world area (the seabed around the island) and a heading aimed at a random
+## point of the island, so the player sees it coming across the seabed.
 
 var point: Vector2
-## Unit vector perpendicular to the chosen edge, pointing into the world.
-var inward: Vector2
 var heading: float
 
 
-static func random(rng: RandomNumberGenerator, world_size: Vector2, spread: float) -> EdgeEntry:
+## `visible` is the visible world area as a convex polygon (any winding);
+## the entry point is picked along its perimeter, weighted by side length.
+static func random(rng: RandomNumberGenerator, visible: PackedVector2Array, island: Rect2) -> EdgeEntry:
+	var perimeter := 0.0
+	for i in visible.size():
+		perimeter += visible[i].distance_to(visible[(i + 1) % visible.size()])
+	var along := rng.randf_range(0.0, perimeter)
 	var entry := EdgeEntry.new()
-	match rng.randi_range(0, 3):
-		0: # top
-			entry.point = Vector2(rng.randf_range(0.0, world_size.x), 0.0)
-			entry.inward = Vector2.DOWN
-		1: # bottom
-			entry.point = Vector2(rng.randf_range(0.0, world_size.x), world_size.y)
-			entry.inward = Vector2.UP
-		2: # left
-			entry.point = Vector2(0.0, rng.randf_range(0.0, world_size.y))
-			entry.inward = Vector2.RIGHT
-		_: # right
-			entry.point = Vector2(world_size.x, rng.randf_range(0.0, world_size.y))
-			entry.inward = Vector2.LEFT
-	entry.heading = entry.inward.angle() + rng.randf_range(-spread, spread)
+	for i in visible.size():
+		var a := visible[i]
+		var b := visible[(i + 1) % visible.size()]
+		var length := a.distance_to(b)
+		if along <= length or i == visible.size() - 1:
+			entry.point = a.lerp(b, clampf(along / length, 0.0, 1.0))
+			break
+		along -= length
+	var target := island.position + Vector2(rng.randf(), rng.randf()) * island.size
+	entry.heading = (target - entry.point).angle()
 	return entry

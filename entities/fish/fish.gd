@@ -91,6 +91,14 @@ func order(destination: Vector2) -> void:
 	_path = _pathfinder.find_path(global_position, destination)
 
 
+## True while this fish has reserved `algae`: swimming to it on its own or
+## eating it (used by Algae to stay exclusive).
+func holds(algae: Object) -> bool:
+	if brain == null or brain.dead or is_queued_for_deletion() or brain.food != algae:
+		return false
+	return brain.state == FishBrain.State.EATING or brain.state == FishBrain.State.SEEKING_FOOD
+
+
 func destroy() -> void:
 	if is_queued_for_deletion():
 		return
@@ -105,15 +113,21 @@ func _speed() -> float:
 	return Game.actors.fish_speed * Game.by_temperature(1.0, Game.actors.fish_speed_hot_factor)
 
 
-## Hungry and wandering: head for the nearest reachable algae, if any.
+## Hungry and wandering: reserve the nearest reachable free algae, if any.
 func _seek_food() -> void:
-	var result := _pathfinder.nearest_occupant(global_position, _is_algae)
+	var result := _pathfinder.nearest_occupant(global_position, _is_free_algae)
 	if result.is_empty():
 		brain.seek_failed()
 		return
-	brain.seek_food(result["occupant"])
+	_reserve(result["occupant"])
 	_replans_left = MAX_REPLANS
 	_path = result["path"]
+
+
+## Swims to `algae` and books it, so other fish pick a different one.
+func _reserve(algae: Algae) -> void:
+	brain.seek_food(algae)
+	algae.eater = self
 
 
 ## Swims up to `budget` world units along the waypoints.
@@ -149,8 +163,10 @@ func _move(direction: Vector2, distance: float) -> bool:
 	var collider := collision.get_collider()
 	if brain.state == FishBrain.State.WANDER:
 		_wander.on_blocked(collision.get_normal())
-	elif collider is Node and (collider as Node).is_in_group(Groups.ALGAE):
+	elif collider is Algae and not (collider as Algae).is_taken_by_other(self):
 		brain.blocked_by_algae(collider)
+		if brain.state == FishBrain.State.EATING:
+			(collider as Algae).eater = self
 	elif _replans_left > 0:
 		_replans_left -= 1
 		_replan()
@@ -164,12 +180,12 @@ func _replan() -> void:
 	if brain.state == FishBrain.State.ORDERED:
 		_path = _pathfinder.find_path(global_position, brain.target)
 		return
-	var result := _pathfinder.nearest_occupant(global_position, _is_algae)
+	var result := _pathfinder.nearest_occupant(global_position, _is_free_algae)
 	if result.is_empty():
 		# No algae reachable now: give up, the brain retries after a cooldown.
 		brain.blocked_by_other()
 		return
-	brain.seek_food(result["occupant"])
+	_reserve(result["occupant"])
 	_path = result["path"]
 
 
@@ -218,8 +234,8 @@ static func _blocks_fish(occupant: Object) -> bool:
 	return not occupant is Nest
 
 
-static func _is_algae(occupant: Object) -> bool:
-	return occupant is Algae
+func _is_free_algae(occupant: Object) -> bool:
+	return occupant is Algae and not (occupant as Algae).is_taken_by_other(self)
 
 
 ## True if `entity` still exists and still belongs to `group` (destroy() leaves

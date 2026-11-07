@@ -26,7 +26,6 @@ extends Resource
 @export var collapse_grace_seconds := 10.0
 
 @export_group("Threats")
-@export var threat_warning_seconds := 2.5
 @export var co2_radius := 60.0
 @export var co2_speed := 40.0
 ## Max random heading change in radians per second.
