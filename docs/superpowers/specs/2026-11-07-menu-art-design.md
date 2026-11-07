@@ -50,21 +50,23 @@ Why: the jam build is judged on its first screen; two competing button styles
 ## Design
 
 - **Asset.** A copy of the art lives at `assets/ui/menu.png`, scaled to 2048 px
-  wide (2048×1201, same 1.705:1 ratio) with mipmaps enabled, so the web build
-  and VRAM stay reasonable. `video/MENU.png` stays as the master.
-- **Layout.** `MainMenuScreen` (still a full-rect `ColorRect`, opaque deep-sea
-  colour for the letterbox bars) owns an "Art" `Control` that fits the painting
+  wide (2048×1200, same ratio as the master) with mipmaps enabled, so the web
+  build and VRAM stay reasonable. `video/MENU.png` stays as the master.
+- **Layout.** `MainMenuScreen` (still a full-rect `ColorRect`, translucent
+  `SeaStyle.OVERLAY_COLOR` as before, so the paused reef shows through and the
+  letterbox bars match) owns an "Art" `Control` that fits the painting
   *contain*: same aspect ratio, centred, recomputed on every `resized`. The
   painting is a `TextureRect` filling that box; the five hotspots are its
   children positioned as fractions, so they scale with it.
 - **Hotspots.** Invisible `Button`s (no theme, no text) with a pointer cursor.
-  Hover brightens the painted shape with a translucent white wash (invisible on
-  the white background, so only the shape lights up); pressed deepens it;
-  keyboard focus draws an aqua outline. Focus order: INIZIA → COME SI GIOCA →
-  IMPOSTAZIONI → CREDITI → ESCI, INIZIA focused when the menu opens.
-- **Web build.** `OS.has_feature("web")`: the ESCI hotspot is replaced by an
-  opaque white cover over its rect, so the dead button disappears instead of
-  looking clickable (same intent as today's hidden `Esci` button).
+  Hover and keyboard focus brighten the painted shape with an additive re-draw
+  of that region of the art, so only the pill lights up; pressed deepens it.
+  Focus order: INIZIA → COME SI GIOCA → IMPOSTAZIONI → CREDITI → ESCI, INIZIA
+  focused when the menu opens.
+- **ESCI is never hidden.** It stays on screen and in focus order on every
+  platform, including the web build (the user's call). Consequence: in a
+  browser `SceneTree.quit()` cannot close the host page, so pressing ESCI stops
+  the game loop and leaves the page showing.
 - **Panels.** Settings and credits keep their sea cards, shown over the art;
   the art box is hidden while a panel is up, restored on back/close.
 - **`logo.png`** is no longer used by the menu (the painting has its own
@@ -73,6 +75,8 @@ Why: the jam build is judged on its first screen; two competing button styles
 ## What is decided, and by whom
 
 - Chosen approach, contain (letterbox) scaling, hotspot feedback style, the
-  downscaled asset and the web ESCI cover: agreed with the user.
+  downscaled asset: agreed with the user.
+- The backdrop is the shared translucent overlay, and ESCI is never hidden or
+  disabled on any platform: the user's call, after seeing the first build.
 - Exact hotspot fractions: measured from the painting during the plan; the
   builder only needs them to line up (verify with a screenshot).
