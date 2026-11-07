@@ -37,6 +37,9 @@ var _hostile_count := 0
 var _pause_filter: AudioEffectLowPassFilter
 var _pause_cutoff := FILTER_OPEN_HZ
 var _paused := false
+## Web: browsers keep audio suspended until the first user gesture, so the intro
+## is restarted then. Static, so a scene reload does not restart it again.
+static var _web_gesture_seen := false
 
 
 ## 0 = no arp, 1 = half, 2 = full. `full_at` is the hostile count for full.
@@ -58,6 +61,20 @@ func _ready() -> void:
 		_start_intro()
 	else:
 		start_game_music()
+	set_process_input(OS.has_feature("web") and not _web_gesture_seen)
+
+
+## Web only: the first click, key or touch unlocks the browser's audio, so the
+## intro starts over from there if the title screen is still up.
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton or event is InputEventKey or event is InputEventScreenTouch):
+		return
+	if not event.is_pressed():
+		return
+	_web_gesture_seen = true
+	set_process_input(false)
+	if not _started and _intro != null:
+		_intro.play()
 
 
 ## The title screen is over: stop the intro (if any) and start the loop.
@@ -182,10 +199,12 @@ func _fade(player: AudioStreamPlayer, target: float, delta: float, seconds: floa
 ## Volume of `player` = global music level + its stem group level + fade gain.
 func _apply(player: AudioStreamPlayer, group_db: float) -> void:
 	var gain: float = _gains[player]
-	if gain <= 0.0:
-		player.volume_db = AudioSettings.SILENCE_DB
-	else:
-		player.volume_db = Game.AUDIO_SETTINGS.music_gain_db + group_db + linear_to_db(gain)
+	var volume_db := AudioSettings.SILENCE_DB
+	if gain > 0.0:
+		volume_db = Game.AUDIO_SETTINGS.music_gain_db + group_db + linear_to_db(gain)
+	# Fades are settled most of the time: skip the redundant audio server write.
+	if not is_equal_approx(player.volume_db, volume_db):
+		player.volume_db = volume_db
 
 
 ## Cutoff the music eases toward: the pause cutoff while paused (unless the
