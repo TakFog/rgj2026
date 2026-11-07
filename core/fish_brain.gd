@@ -8,7 +8,7 @@ signal matured
 signal eat_finished(algae: Object)
 signal fertilize_finished(nest: Object)
 
-enum State { WANDER, ORDERED, EATING, FERTILIZING, IDLE }
+enum State { WANDER, ORDERED, EATING, FERTILIZING, IDLE, SEEKING_FOOD }
 
 var state := State.WANDER
 ## Order destination in world units (meaningful while ORDERED).
@@ -19,13 +19,15 @@ var hunger := 0.0
 var age := 0.0
 var adult: bool
 var dead := false
-## Algae being eaten while EATING, otherwise null.
+## Algae being eaten while EATING, or swum to while SEEKING_FOOD, otherwise null.
 var food: Object = null
 ## Nest being fertilized while FERTILIZING, otherwise null.
 var nest: Object = null
 
 var _cfg: BalanceActors
 var _timer := 0.0
+## Seconds before a wandering hungry fish looks for food again.
+var _seek_cooldown := 0.0
 
 
 func _init(cfg: BalanceActors, p_adult: bool) -> void:
@@ -41,9 +43,30 @@ func hunger_ratio() -> float:
 	return clampf(hunger / _cfg.starve_seconds, 0.0, 1.0)
 
 
-## True when the node should move this frame (wandering or following an order).
+## True when the node should move this frame (wandering, following an order
+## or swimming to food).
 func wants_to_move() -> bool:
-	return not dead and (state == State.WANDER or state == State.ORDERED)
+	return not dead and (state == State.WANDER or state == State.ORDERED or state == State.SEEKING_FOOD)
+
+
+## True when a wandering fish is hungry enough to look for food on its own.
+func wants_to_seek_food() -> bool:
+	return not dead and state == State.WANDER and _seek_cooldown <= 0.0 \
+		and hunger_ratio() >= _cfg.seek_food_threshold
+
+
+## The node found a reachable algae: swim to it. Only from WANDER (or to switch
+## target while already seeking), so orders and timed states are never interrupted.
+func seek_food(algae: Object) -> void:
+	if dead or (state != State.WANDER and state != State.SEEKING_FOOD):
+		return
+	_enter(State.SEEKING_FOOD)
+	food = algae
+
+
+## The node found no reachable algae: keep wandering, retry later.
+func seek_failed() -> void:
+	_seek_cooldown = _cfg.seek_retry_seconds
 
 
 ## Player order: swim straight to `destination`. Cancels eating/fertilizing.
@@ -58,6 +81,7 @@ func tick(delta: float) -> void:
 	if dead:
 		return
 	hunger += delta
+	_seek_cooldown -= delta
 	if hunger >= _cfg.starve_seconds:
 		dead = true
 		starved.emit()
@@ -73,20 +97,22 @@ func tick(delta: float) -> void:
 			_finish_timed_state()
 
 
-## Sensor: the ordered fish stopped against an algae.
+## Sensor: the ordered or food-seeking fish stopped against an algae.
 func blocked_by_algae(algae: Object) -> void:
-	if state != State.ORDERED:
+	if state != State.ORDERED and state != State.SEEKING_FOOD:
 		return
 	_enter(State.EATING)
 	food = algae
 	_timer = _cfg.eat_seconds
 
 
-## Sensor: the ordered fish stopped against a coral or a wall.
+## Sensor: the ordered or food-seeking fish stopped against a coral or a wall.
 func blocked_by_other() -> void:
-	if state != State.ORDERED:
-		return
-	_go_idle()
+	if state == State.ORDERED:
+		_go_idle()
+	elif state == State.SEEKING_FOOD:
+		_enter(State.WANDER)
+		seek_failed()
 
 
 ## Sensor: the ordered fish reached its destination. `empty_nest` is the empty
@@ -102,9 +128,10 @@ func arrived(empty_nest: Object) -> void:
 		_go_idle()
 
 
-## Sensor: the algae being eaten disappeared (eaten by another fish, cyclone...).
+## Sensor: the algae being eaten or swum to disappeared (eaten by another
+## fish, cyclone...).
 func food_lost() -> void:
-	if state == State.EATING:
+	if state == State.EATING or state == State.SEEKING_FOOD:
 		_enter(State.WANDER)
 
 

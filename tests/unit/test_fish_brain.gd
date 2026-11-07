@@ -147,3 +147,88 @@ func test_juvenile_matures_once() -> void:
 func test_hunger_ratio() -> void:
 	brain.tick(30.0)
 	assert_almost(brain.hunger_ratio(), 0.5)
+
+
+func test_not_hungry_does_not_seek_food() -> void:
+	brain.tick(29.0) # ratio 0.48 < 0.5
+	assert_false(brain.wants_to_seek_food())
+
+
+func test_hungry_wandering_fish_seeks_food() -> void:
+	brain.tick(31.0)
+	assert_true(brain.wants_to_seek_food())
+	brain.seek_food(food)
+	assert_eq(brain.state, FishBrain.State.SEEKING_FOOD)
+	assert_true(brain.food == food)
+	assert_true(brain.wants_to_move())
+	assert_false(brain.wants_to_seek_food())
+
+
+func test_seeking_fish_eats_on_algae_contact() -> void:
+	brain.tick(31.0)
+	brain.seek_food(food)
+	brain.blocked_by_algae(food)
+	assert_eq(brain.state, FishBrain.State.EATING)
+	brain.tick(3.0)
+	assert_eq(eaten, [food])
+	assert_almost(brain.hunger, 0.0)
+	assert_false(brain.wants_to_seek_food(), "fed fish is not hungry anymore")
+
+
+func test_busy_fish_does_not_seek_food() -> void:
+	brain.tick(31.0)
+	brain.order(Vector2(10, 0))
+	assert_false(brain.wants_to_seek_food())
+	brain.seek_food(food)
+	assert_eq(brain.state, FishBrain.State.ORDERED, "seeking never overrides an order")
+
+
+func test_order_overrides_seeking() -> void:
+	brain.tick(31.0)
+	brain.seek_food(food)
+	brain.order(Vector2(10, 0))
+	assert_eq(brain.state, FishBrain.State.ORDERED)
+	assert_true(brain.food == null)
+
+
+func test_seek_failed_waits_before_retrying() -> void:
+	brain.tick(31.0)
+	brain.seek_failed()
+	assert_false(brain.wants_to_seek_food())
+	brain.tick(cfg.seek_retry_seconds * 0.5)
+	assert_false(brain.wants_to_seek_food())
+	brain.tick(cfg.seek_retry_seconds * 0.6)
+	assert_true(brain.wants_to_seek_food())
+
+
+func test_seeking_blocked_by_other_wanders_and_waits() -> void:
+	brain.tick(31.0)
+	brain.seek_food(food)
+	brain.blocked_by_other()
+	assert_eq(brain.state, FishBrain.State.WANDER)
+	assert_false(brain.wants_to_seek_food())
+
+
+func test_seeking_food_lost_wanders() -> void:
+	brain.tick(31.0)
+	brain.seek_food(food)
+	brain.food_lost()
+	assert_eq(brain.state, FishBrain.State.WANDER)
+	assert_true(brain.food == null)
+	assert_true(brain.wants_to_seek_food(), "can pick another algae right away")
+
+
+func test_arrived_is_ignored_while_seeking() -> void:
+	brain.tick(31.0)
+	brain.seek_food(food)
+	brain.arrived(nest)
+	assert_eq(brain.state, FishBrain.State.SEEKING_FOOD)
+
+
+func test_seeking_fish_can_switch_target() -> void:
+	var other := RefCounted.new()
+	brain.tick(31.0)
+	brain.seek_food(food)
+	brain.seek_food(other)
+	assert_eq(brain.state, FishBrain.State.SEEKING_FOOD)
+	assert_true(brain.food == other)

@@ -117,8 +117,9 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 ### 5.4 Pesce
 - CharacterBody2D, piccolo (raggio 10 unità). **I pesci non si scontrano tra loro**, ma si scontrano con alghe, coralli e muri.
 - **Stati**:
-  - `WANDER`: nuota a caso. Sceglie una direzione, nuota per un po', ne cambia. Se tocca un ostacolo, cambia direzione. **Non mangia e non feconda.**
-  - `ORDERED`: il giocatore fa clic sinistro sul pesce per selezionarlo (area di clic più grande del pesce) e poi clic sinistro sul punto di arrivo. Il pesce **va dritto**; se tocca un ostacolo **si ferma**.
+  - `WANDER`: nuota a caso. Sceglie una direzione, nuota per un po', ne cambia. Se tocca un ostacolo, cambia direzione. **Non feconda.** Quando la fame supera `seek_food_threshold` (50%) passa a `SEEKING_FOOD`.
+  - `SEEKING_FOOD`: il pesce affamato calcola un percorso verso l'**alga più vicina raggiungibile** (distanza lungo il percorso, non in linea d'aria) e ci va; quando la tocca → `EATING`. Se nessuna alga è raggiungibile (es. chiuso dai coralli) continua a girare e riprova ogni `seek_retry_seconds` (1 s). Se l'alga sparisce prima che arrivi, torna a `WANDER`. Un ordine del giocatore ha sempre la precedenza.
+  - `ORDERED`: il giocatore fa clic sinistro sul pesce per selezionarlo (area di clic più grande del pesce) e poi clic sinistro sul punto di arrivo. Il pesce **calcola un percorso** sulla griglia (A*) che aggira coralli e alghe (i nidi si attraversano) e lo segue. Se il punto è dentro un ostacolo o in una zona chiusa, va alla cella raggiungibile più vicina e punta verso il punto finché non tocca l'ostacolo. Se un ostacolo imprevisto blocca il percorso, lo ricalcola una volta; se è ancora bloccato **si ferma**.
 	- Se si è fermato contro un'**alga** → `EATING`.
 	- Se arriva sopra un **nido vuoto** ed è adulto → `FERTILIZING`.
 	- Altrimenti resta fermo `idle_after_order_seconds` (2 s) e poi torna a `WANDER`.

@@ -17,6 +17,10 @@ extends Resource
 @export var starve_seconds := 60.0
 @export var hunger_bar_threshold := 0.5
 @export var maturity_seconds := 45.0
+## Hunger ratio from which a wandering fish swims to the nearest algae by itself.
+@export var seek_food_threshold := 0.5
+## Seconds a hungry fish waits before looking again when no algae is reachable.
+@export var seek_retry_seconds := 1.0
 
 @export_group("Collapse")
 @export var collapse_grace_seconds := 10.0
