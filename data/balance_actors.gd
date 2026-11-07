@@ -85,6 +85,19 @@ extends Resource
 @export var turtle_predator_aggro_radius := 160.0
 ## Straight-line distance within which it goes after a plastic bag.
 @export var turtle_bag_aggro_radius := 320.0
+## Chance (0..1) that a run starts with an early turtle rush. 0 disables it.
+@export_range(0.0, 1.0) var turtle_rush_chance := 0.2
+## Seconds into the run when the first rush turtle arrives.
+@export var turtle_rush_seconds := 15.0
+## Rush turtles in one event. The rush ignores `turtle_max_count` on purpose:
+## that cap limits the normal helper cadence, not this event.
+@export var turtle_rush_count := 2
+## Seconds between two rush turtles, so they arrive as a group, not one frame.
+@export var turtle_rush_spacing_seconds := 1.5
+## Rush turtles leave after eating this many algae (0 = no limit, like
+## `turtle_max_algae`). It keeps the rush hungry but finite, so a player who
+## reacts can keep one algae alive until the group leaves.
+@export var turtle_rush_max_algae := 4
 
 @export_group("Collapse")
 @export var collapse_grace_seconds := 10.0

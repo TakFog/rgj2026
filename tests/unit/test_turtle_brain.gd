@@ -120,6 +120,25 @@ func test_unlimited_algae_when_max_is_zero() -> void:
 	assert_eq(brain.algae_eaten, 10)
 
 
+func test_custom_max_algae_overrides_the_balance_value() -> void:
+	# The early-rush turtles leave after a few algae even though the shared
+	# turtle_max_algae is 0 (unlimited).
+	var capped := TurtleBrain.new(cfg, 2)
+	for i in 2:
+		capped.start_eating()
+		capped.tick(0.5)
+	assert_eq(capped.algae_eaten, 2)
+	assert_eq(capped.state, TurtleBrain.State.LEAVING)
+
+
+func test_negative_override_uses_the_balance_value() -> void:
+	cfg.turtle_max_algae = 1
+	var default_cap := TurtleBrain.new(cfg, -1)
+	default_cap.start_eating()
+	default_cap.tick(0.5)
+	assert_eq(default_cap.state, TurtleBrain.State.LEAVING)
+
+
 func test_cannot_start_eating_while_leaving() -> void:
 	brain.bag_removed()
 	brain.start_eating()

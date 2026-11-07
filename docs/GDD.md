@@ -26,7 +26,7 @@ minacce ──► CO2, buste, cicloni (annunciati prima di entrare)
 ```
 
 - Troppe alghe → soffocano i coralli → coralli a zero → game over
-- Troppi pesci → finiscono le alghe → alghe a zero → game over
+- Troppi pesci o un'ondata di tartarughe → finiscono le alghe → alghe a zero → game over
 - Troppi coralli → i pesci restano bloccati e non arrivano al cibo → muoiono di fame → game over
 - Pochi pesci → bisogna fecondare i nidi in fretta
 
@@ -184,6 +184,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 ### 7.5 Tartaruga marina (aiutante)
 - **Feature flag**: `turtle_enabled` in `balance_actors.tres` (default `true`).
 - Arriva ogni `turtle_interval` (90 s), al massimo `turtle_max_count` (1) alla volta, dal bordo dello schermo come le minacce. Non è una minaccia: aiuta il giocatore.
+- **Ondata iniziale (rara)**: con probabilità `turtle_rush_chance` (25%) una piccola ondata di `turtle_rush_count` (2) tartarughe arriva dopo `turtle_rush_seconds` (15 s), una ogni `turtle_rush_spacing_seconds` (1,5 s). Ogni tartaruga dell'ondata se ne va dopo `turtle_rush_max_algae` (4) alghe, anche se `turtle_max_algae` è 0; l'ondata ignora `turtle_max_count`. Arrivano prima che le alghe si siano diffuse: se il giocatore non reagisce (piazza alghe o isola le ultime con i coralli), le alghe possono andare a zero e la barriera collassa con "Le alghe si sono estinte."
 - **Priorità**: prima difende i pesci, poi pulisce. Una minaccia conta solo se è **vicina** (distanza in linea d'aria): un predatore che sta cacciando entro `turtle_predator_aggro_radius` (160 = 5 celle) o una busta di plastica entro `turtle_bag_aggro_radius` (320 = 10 celle). Tra quelle nel proprio raggio va verso la **minaccia raggiungibile più vicina** lungo il percorso; una volta puntata la insegue finché non la elimina, anche se esce dal raggio. Se non ce ne sono, verso l'**alga raggiungibile più vicina**. Ricalcola ogni `turtle_replan_seconds` (0.5 s); mentre mangia un'alga la lascia se compare una minaccia nel suo raggio.
 - **Predatore**: gli va addosso e lo allontana (il predatore smette di cacciare e lascia l'isola). La tartaruga resta.
 - **Busta**: la elimina toccandola, poi **se ne va**.
