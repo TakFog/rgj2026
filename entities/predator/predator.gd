@@ -6,7 +6,8 @@ extends CharacterBody2D
 ## between corals, so the player can shelter fish and nests behind them.
 ## Rules live in PredatorBrain, routes in PredatorPathfinder.
 ## Physics: a body on the THREAT layer (so placements and algae avoid it, and
-## a cyclone sweeps it away like any other threat), blocked by corals and algae.
+## a cyclone sweeps it away like any other threat), blocked only by corals: it
+## swims over algae and nests, so only corals can shelter fish and eggs.
 
 signal destroyed
 
@@ -44,7 +45,7 @@ func _ready() -> void:
 	_cfg = Game.actors
 	_rng.randomize()
 	collision_layer = Layers.THREAT
-	collision_mask = Layers.CORAL | Layers.ALGAE
+	collision_mask = Layers.CORAL
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	add_to_group(Groups.THREATS)
 	add_to_group(Groups.PREDATORS)
@@ -230,6 +231,6 @@ static func _is_valid_prey(prey: Variant) -> bool:
 	return false
 
 
-## Grid occupants that block the predator: everything but nests (Area2D).
+## Grid occupants that block the predator: only corals (it swims over algae and nests).
 static func _blocks_predator(occupant: Object) -> bool:
-	return not occupant is Nest
+	return occupant is Coral

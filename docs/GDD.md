@@ -174,7 +174,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 - Caccia **pesci adulti, pesci giovani e uova** finché non è sazio (`predator_satiety`, 6), poi se ne va. Se non si sazia entro `predator_hunt_seconds` (45 s passati sull'isola) se ne va comunque.
 - Sazietà per preda: giovane `predator_juvenile_satisfaction` (1) < adulto `predator_adult_satisfaction` (2) < uova = giovane × uova che si schiuderebbero (`nest_hatch_count`, quindi 3). Le uova sono la preda preferita: fanno perdere più tempo al giocatore.
 - Sceglie la preda con il punteggio più alto: **sazietà / distanza lungo il percorso**. Ignora le prede che non può raggiungere. Ricalcola preda e percorso ogni `predator_replan_seconds` (0.5 s), perché i pesci si muovono.
-- È **grande** (`predator_radius` 22, più di mezza cella): non passa nei **corridoi larghi una cella** tra coralli e alghe, dove i pesci invece passano. Il giocatore può proteggere pesci e nidi costruendo corridoi stretti. Il percorso si calcola sugli angoli della griglia: un angolo è percorribile solo se le 2×2 celle intorno sono libere.
+- È **grande** (`predator_radius` 22, più di mezza cella): non passa nei **corridoi larghi una cella** tra i coralli, dove i pesci invece passano. **Solo i coralli lo fermano**: passa sopra alghe e nidi, quindi le alghe non proteggono i pesci. Il giocatore può proteggere pesci e nidi costruendo corridoi stretti di corallo. Il percorso si calcola sugli angoli della griglia: un angolo è percorribile solo se le 2×2 celle intorno non contengono coralli.
 - Dopo ogni morso si ferma `predator_bite_pause_seconds` (1 s). Il caldo lo rallenta come gli altri pesci.
 - È un corpo sul layer delle minacce: non si può piazzare nulla sopra di lui e il ciclone lo spazza via.
 
