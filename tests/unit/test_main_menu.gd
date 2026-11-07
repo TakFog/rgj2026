@@ -45,6 +45,23 @@ func test_exit_cover_is_hidden_outside_the_web_build() -> void:
 	assert_eq(menu._exit_cover.color, SeaStyle.MENU_BACKDROP_COLOR)
 
 
+func test_each_hotspot_runs_its_menu_action() -> void:
+	var menu := _built_menu()
+	var expected := {
+		"play": "_on_play_pressed",
+		"tutorial": "_on_tutorial_pressed",
+		"settings": "_on_settings_pressed",
+		"credits": "_on_credits_pressed",
+		"exit": "_on_exit_pressed",
+	}
+	for key: String in expected:
+		var button: Button = menu._hotspots[key]
+		var connections := button.pressed.get_connections()
+		assert_eq(connections.size(), 1, key)
+		var handler: Callable = connections[0]["callable"]
+		assert_eq(String(handler.get_method()), expected[key], key)
+
+
 ## A menu screen with its panel built, laid out for VIEWPORT, not in the tree.
 func _built_menu() -> MainMenuScreen:
 	var menu := MainMenuScreen.new()
