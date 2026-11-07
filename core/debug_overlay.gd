@@ -2,8 +2,8 @@ class_name DebugOverlay
 extends Control
 ## Debug overlay toggled with F3 (GDD §9).
 ## Draws per-entity debug numbers over everything in screen space:
-## coral oxygen/life, nest hatch time, fish state + hunger, algae cell,
-## threat kind + radius, plus the global temperature.
+## coral oxygen/life, nest hatch time, fish state + hunger,
+## plus the global temperature.
 
 signal enabled_changed(enabled: bool)
 
@@ -25,7 +25,6 @@ const COLOR_CORAL_LOW := Color(1.0, 0.5, 0.5)
 const COLOR_NEST := Color(1.0, 0.75, 0.35)
 const COLOR_NEST_EMPTY := Color(0.55, 0.55, 0.55)
 const COLOR_FISH := Color(0.7, 0.85, 1.0)
-const COLOR_THREAT := Color(1.0, 0.55, 0.55)
 const COLOR_TEMP := Color(1.0, 1.0, 1.0)
 
 
@@ -92,15 +91,6 @@ func _update_labels() -> void:
 		var pos := _viewport_position(fish.global_position)
 		_set_label(id, text, pos + OFFSET, COLOR_FISH, wanted)
 
-	# --- Threats: kind + radius ---
-	for threat in get_tree().get_nodes_in_group(Groups.THREATS):
-		if not _alive(threat):
-			continue
-		var id := threat.get_instance_id()
-		var text := "%s r:%.0f" % [_threat_name(threat.kind), threat.radius]
-		var pos := _viewport_position(threat.global_position)
-		_set_label(id, text, pos + OFFSET, COLOR_THREAT, wanted)
-
 	# Remove labels for entities that no longer exist.
 	for id in _labels.keys():
 		if not wanted.has(id):
@@ -149,14 +139,6 @@ func _state_name(state: int) -> String:
 		FishBrain.State.FERTILIZING: return "FERTILIZING"
 		FishBrain.State.IDLE: return "IDLE"
 		FishBrain.State.SEEKING_FOOD: return "SEEKING"
-		_: return "?"
-
-
-func _threat_name(kind: int) -> String:
-	match kind:
-		ThreatSchedule.Type.CO2: return "CO2"
-		ThreatSchedule.Type.BAG: return "BAG"
-		ThreatSchedule.Type.CYCLONE: return "CYCLONE"
 		_: return "?"
 
 
