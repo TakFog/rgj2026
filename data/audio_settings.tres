@@ -15,24 +15,24 @@
 ; Slightly high-passed.
 [sub_resource type="Resource" id="AudioEvent_placement"]
 script = ExtResource("2_audio_event")
-gain_db = -6.0
+gain_db = -12.0
 high_pass_hz = 400.0
 
 ; Placing a nest (assets/audio/nido).
 [sub_resource type="Resource" id="AudioEvent_placement_nest"]
 script = ExtResource("2_audio_event")
-gain_db = -6.0
+gain_db = -12.0
 
 ; Placing an algae (assets/audio/alga). Its take is much quieter than the
 ; others (peak -26 dBFS), so it gets a big boost to sit at the same level.
 [sub_resource type="Resource" id="AudioEvent_placement_algae"]
 script = ExtResource("2_audio_event")
-gain_db = 10.0
+gain_db = 4.0
 
 ; An inventory slot refills (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_available"]
 script = ExtResource("2_audio_event")
-gain_db = -6.0
+gain_db = -12.0
 
 ; A plastic bag pops (assets/audio/busta).
 [sub_resource type="Resource" id="AudioEvent_bag_destroyed"]
