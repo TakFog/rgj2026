@@ -80,13 +80,11 @@ func _build_overlay() -> Control:
 	hint.add_theme_font_size_override("font_size", 24)
 	_pause_box.add_child(hint)
 
-	var settings_btn := Button.new()
-	settings_btn.text = "Impostazioni"
-	settings_btn.custom_minimum_size = Vector2(220, 60)
-	settings_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	settings_btn.add_theme_font_size_override("font_size", 24)
-	settings_btn.pressed.connect(_on_settings_pressed)
-	_pause_box.add_child(settings_btn)
+	_add_button("Impostazioni", _on_settings_pressed)
+	_add_button("Ricomincia", _on_restart_pressed)
+	var exit_btn := _add_button("Esci", _on_exit_pressed)
+	# Web builds cannot quit the host page, so the exit button is hidden there.
+	exit_btn.visible = not OS.has_feature("web")
 
 	_settings_panel = SettingsPanel.new()
 	_settings_panel.visible = false
@@ -96,10 +94,32 @@ func _build_overlay() -> Control:
 	return root
 
 
+func _add_button(text: String, handler: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = Vector2(220, 60)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.add_theme_font_size_override("font_size", 24)
+	button.pressed.connect(handler)
+	_pause_box.add_child(button)
+	return button
+
+
 func _on_settings_pressed() -> void:
 	button_pressed.emit()
 	_pause_box.visible = false
 	_settings_panel.open()
+
+
+func _on_restart_pressed() -> void:
+	button_pressed.emit()
+	get_tree().paused = false
+	get_tree().reload_current_scene()
+
+
+func _on_exit_pressed() -> void:
+	button_pressed.emit()
+	get_tree().quit()
 
 
 func _on_settings_closed() -> void:
