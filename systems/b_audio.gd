@@ -88,9 +88,11 @@ func _on_placement_finished(kind: StringName) -> void:
 	play(AudioEvents.placement_event(kind))
 
 
-## Plastic bags pop and predators bite (GDD §7.2, §7.4).
+## Threats vanish (bags, CO2) and predators bite (GDD §7.1, §7.2, §7.4).
 func _on_entity_added(node: Node) -> void:
 	if node is PlasticBag:
 		(node as PlasticBag).destroyed.connect(func() -> void: play(&"bag_destroyed"))
+	elif node is Co2Cloud:
+		(node as Co2Cloud).destroyed.connect(func() -> void: play(&"co2_gone"))
 	elif node is Predator:
 		(node as Predator).ate.connect(func() -> void: play(&"predator_ate"))
