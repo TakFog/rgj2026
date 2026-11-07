@@ -34,7 +34,15 @@ var debug_mode := false:
 		debug_mode = value
 		debug_mode_changed.emit(value)
 
+## Debug view (F3 panel): draw the remaining planned routes of fish, predators
+## and turtles. Independent of debug_mode, which must also be on.
+var debug_show_paths := false:
+	set(value):
+		debug_show_paths = value
+		debug_show_paths_changed.emit(value)
+
 signal debug_mode_changed(enabled: bool)
+signal debug_show_paths_changed(enabled: bool)
 
 ## When true, the debug overlay's temperature slider overrides the automatic
 ## TemperatureSystem (roadmap contract #1: only Game writes Game.temperature,

@@ -79,7 +79,7 @@ func _ready() -> void:
 	_slider.value_changed.connect(_on_temperature_slider_changed)
 	add_child(_slider)
 
-	# Editable feature-flag toggle buttons.
+	# Editable feature-flag and debug-view toggle buttons.
 	var co2 := _make_flag_button("co2_dies_on_coral", Game.actors.co2_dies_on_coral)
 	co2.pressed.connect(_toggle_co2_dies_on_coral)
 	add_child(co2)
@@ -94,6 +94,11 @@ func _ready() -> void:
 	turtle.pressed.connect(_toggle_turtle_enabled)
 	add_child(turtle)
 	_flag_buttons["turtle_enabled"] = turtle
+
+	var paths := _make_flag_button("show_paths", Game.debug_show_paths)
+	paths.pressed.connect(_toggle_show_paths)
+	add_child(paths)
+	_flag_buttons["show_paths"] = paths
 
 	# Threat spawn buttons (debug only).
 	var spawn_co2 := _make_action_button("Spawn CO2")
@@ -151,6 +156,11 @@ func _toggle_predator_enabled() -> void:
 ## Toggle the turtle-enabled feature flag.
 func _toggle_turtle_enabled() -> void:
 	Game.actors.turtle_enabled = not Game.actors.turtle_enabled
+
+
+## Toggle the planned-route overlay (see core/path_debug.gd).
+func _toggle_show_paths() -> void:
+	Game.debug_show_paths = not Game.debug_show_paths
 
 
 ## Spawn a CO2 cloud at a random edge of the visible seabed.
@@ -366,6 +376,7 @@ func _flag_value(name: StringName) -> bool:
 		"co2_dies_on_coral": return Game.actors.co2_dies_on_coral
 		"predator_enabled": return Game.actors.predator_enabled
 		"turtle_enabled": return Game.actors.turtle_enabled
+		"show_paths": return Game.debug_show_paths
 		_: return false
 
 

@@ -101,6 +101,11 @@ func is_hunting() -> bool:
 	return brain != null and brain.state != PredatorBrain.State.LEAVING
 
 
+## Debug view only: the remaining planned route, in world units.
+func debug_path() -> PackedVector2Array:
+	return _path
+
+
 func destroy() -> void:
 	if is_queued_for_deletion():
 		return

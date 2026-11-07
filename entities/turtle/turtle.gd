@@ -97,6 +97,11 @@ func _physics_process(delta: float) -> void:
 	_visual.eating = brain.state == TurtleBrain.State.EATING
 
 
+## Debug view only: the remaining planned route, in world units.
+func debug_path() -> PackedVector2Array:
+	return _path
+
+
 func destroy() -> void:
 	if is_queued_for_deletion():
 		return
