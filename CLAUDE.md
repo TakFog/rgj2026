@@ -1,6 +1,7 @@
 # Ideologia Marina
 
-Godot 4 (GDScript, Compatibility renderer) top-down 2D reef-management game for a game jam (theme: "SUBIRE").
+Godot **4.7.2** stable (GDScript, Compatibility renderer) top-down 2D reef-management game for a game jam (theme: "SUBIRE").
+The same version is pinned in CI (`GODOT_VERSION` in `.github/workflows/ci.yml`); keep the two in sync when upgrading.
 The game design document is `docs/GDD.md`.
 
 ## Git
