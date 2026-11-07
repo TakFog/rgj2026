@@ -14,6 +14,7 @@ var monitor: PopulationMonitor
 var commander: FishCommander
 var overlay: Control
 var _pause_box: Control
+var _pause_items: VBoxContainer
 var _settings_panel: SettingsPanel
 
 
@@ -64,22 +65,30 @@ func _build_overlay() -> Control:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.add_child(center)
 
-	_pause_box = VBoxContainer.new()
-	_pause_box.add_theme_constant_override("separation", 16)
+	# The pause menu is one sea card, matching the settings panel.
+	_pause_box = PanelContainer.new()
+	_pause_box.add_theme_stylebox_override("panel", SeaStyle.panel_box())
 	center.add_child(_pause_box)
+
+	_pause_items = VBoxContainer.new()
+	_pause_items.add_theme_constant_override("separation", 16)
+	_pause_box.add_child(_pause_items)
 
 	var label := Label.new()
 	label.text = "PAUSA"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 40)
-	_pause_box.add_child(label)
+	label.add_theme_color_override("font_color", SeaStyle.SAND_COLOR)
+	_pause_items.add_child(label)
 
-	var hint := Label.new()
-	hint.text = "Spazio per riprendere"
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_font_size_override("font_size", 24)
-	_pause_box.add_child(hint)
+	var divider := ColorRect.new()
+	divider.color = Color(SeaStyle.RIM_COLOR, 0.35)
+	divider.custom_minimum_size = Vector2(0, 2)
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_pause_items.add_child(divider)
 
+	var resume_btn := _add_button("Riprendi", _on_resume_pressed)
+	SeaStyle.style_highlighted_button(resume_btn)
 	_add_button("Impostazioni", _on_settings_pressed)
 	_add_button("Ricomincia", _on_restart_pressed)
 	var exit_btn := _add_button("Esci", _on_exit_pressed)
@@ -100,9 +109,16 @@ func _add_button(text: String, handler: Callable) -> Button:
 	button.custom_minimum_size = Vector2(220, 60)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_size_override("font_size", 24)
+	SeaStyle.style_button(button)
 	button.pressed.connect(handler)
-	_pause_box.add_child(button)
+	_pause_items.add_child(button)
 	return button
+
+
+## Unpausing already emits pause_toggled, which plays the click, so no
+## button_pressed here (it would play the click twice).
+func _on_resume_pressed() -> void:
+	set_paused(false)
 
 
 func _on_settings_pressed() -> void:
@@ -113,8 +129,7 @@ func _on_settings_pressed() -> void:
 
 func _on_restart_pressed() -> void:
 	button_pressed.emit()
-	get_tree().paused = false
-	get_tree().reload_current_scene()
+	MainMenuScreen.restart_run(get_tree())
 
 
 func _on_exit_pressed() -> void:

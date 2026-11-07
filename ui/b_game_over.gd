@@ -47,5 +47,4 @@ func _add_label(parent: Control, font_size: int) -> Label:
 
 func _on_restart_pressed() -> void:
 	restart_pressed.emit()
-	get_tree().paused = false
-	get_tree().reload_current_scene()
+	MainMenuScreen.restart_run(get_tree())
