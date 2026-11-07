@@ -4,6 +4,7 @@ extends Node
 
 var inventory: InventorySystem
 var placement: PlacementController
+var temperature: TemperatureSystem
 
 
 func _ready() -> void:
@@ -16,8 +17,16 @@ func _ready() -> void:
 	placement.inventory = inventory
 	add_child(placement)
 
+	temperature = TemperatureSystem.new()
+	temperature.name = "TemperatureSystem"
+	add_child(temperature)
+
 	var bar := InventoryBar.new()
 	bar.name = "InventoryBar"
 	bar.inventory = inventory
 	bar.placement = placement
 	Game.ui.add_child(bar)
+
+	var thermometer := Thermometer.new()
+	thermometer.name = "Thermometer"
+	Game.ui.add_child(thermometer)
