@@ -48,13 +48,13 @@ func _draw() -> void:
 
 ## Sprite transform: mirrored when swimming right and tilted toward `heading`,
 ## up to `MAX_TILT_DEG`, around the body centre.
-static func facing(heading: Vector2) -> Transform2D:
-	var flip := heading.x >= 0.0
+static func facing(p_heading: Vector2) -> Transform2D:
+	var flip := p_heading.x >= 0.0
 	var tilt := 0.0
-	if heading != Vector2.ZERO:
+	if p_heading != Vector2.ZERO:
 		var level := 0.0 if flip else PI
 		var limit := deg_to_rad(MAX_TILT_DEG)
-		tilt = clampf(wrapf(heading.angle() - level, -PI, PI), -limit, limit)
+		tilt = clampf(wrapf(p_heading.angle() - level, -PI, PI), -limit, limit)
 	return Transform2D(tilt, Vector2(-1.0 if flip else 1.0, 1.0), 0.0, Vector2.ZERO)
 
 
