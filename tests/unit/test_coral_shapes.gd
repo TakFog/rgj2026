@@ -17,4 +17,4 @@ func test_balance_resources_load_with_defaults() -> void:
 	var eco: BalanceEcosystem = load("res://data/balance_ecosystem.tres")
 	var actors: BalanceActors = load("res://data/balance_actors.tres")
 	assert_eq(eco.grid_size, Vector2i(20, 20))
-	assert_almost(actors.collapse_grace_seconds, 10.0)
+	assert_almost(actors.collapse_grace_seconds, 7.0)

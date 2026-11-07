@@ -4,3 +4,9 @@
 
 [resource]
 script = ExtResource("1")
+coral_regen_per_sec = 0.3
+nest_hatch_count = 2
+slot_refill_seconds = 14.0
+weight_coral = 40.0
+temp_base_rate = 0.0033333334
+temp_max_slowdown = 0.45

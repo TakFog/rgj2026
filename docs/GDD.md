@@ -34,7 +34,7 @@ minacce ──► CO2, buste, cicloni (annunciati prima di entrare)
 
 - **Survival a punteggio, senza vittoria.**
 - Le popolazioni controllate sono quattro, contate **sulla mappa**: **coralli, alghe, pesci, nidi**.
-- **Timeout di collasso**: quando una popolazione arriva a 0 **non** si perde subito. Parte un conto alla rovescia di `collapse_grace_seconds` (**10 s**) solo per quella popolazione.
+- **Timeout di collasso**: quando una popolazione arriva a 0 **non** si perde subito. Parte un conto alla rovescia di `collapse_grace_seconds` (**7 s**) solo per quella popolazione.
   - Se la popolazione torna sopra 0 prima della scadenza, il conto alla rovescia si annulla. Se in seguito torna a 0, il conto riparte da capo.
   - Se il conto arriva a 0 → **game over**.
   - Ogni popolazione ha un suo conto alla rovescia indipendente; se ne scadono più di uno, il primo che scade fa perdere.
@@ -86,8 +86,8 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 
 ### 5.1 Inventario
 - **4 slot** fissi.
-- Quando usi uno slot, lo slot si **ricarica dopo `slot_refill_seconds` (8 s)** con un oggetto estratto a caso con pesi:
-  - Corallo: peso 50
+- Quando usi uno slot, lo slot si **ricarica dopo `slot_refill_seconds` (14 s)** con un oggetto estratto a caso con pesi:
+  - Corallo: peso 40
   - Alga: peso 40
   - Nido: peso `nest_base_weight / (1 + nidi_in_mappa + nidi_in_inventario)` (base 20). Meno nidi hai, più è probabile che ne arrivi uno.
 - Piazzamento: clicchi lo slot e sotto il mouse compare un'anteprima trasparente **agganciata alla cella**: **verde** se tutte le celle sono valide, **rossa** altrimenti. Clic sinistro conferma, clic destro o Esc annulla.
@@ -98,7 +98,7 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 - È un ostacolo solido per i pesci: ogni cella ha una collisione quadrata.
 - L'ossigeno appartiene **al corallo intero**, non alla singola cella. Quando muore libera tutte le sue celle.
 - **Ossigeno** da 0 a 100. A 0 si **sgretola**: animazione, poi viene rimosso.
-- **Recupero lento**: `+coral_regen_per_sec` (0.5/s) a temperatura ambiente. Il recupero dipende dalla temperatura e diventa **negativo** con l'acqua calda (`coral_regen_hot_per_sec`, −0.3/s a T=1): i coralli muoiono lentamente se il mare si surriscalda.
+- **Recupero lento**: `+coral_regen_per_sec` (0.3/s) a temperatura ambiente. Il recupero dipende dalla temperatura e diventa **negativo** con l'acqua calda (`coral_regen_hot_per_sec`, −0.3/s a T=1): i coralli muoiono lentamente se il mare si surriscalda.
 - Danni (vedi tabella delle interazioni): alga che si espande addosso, CO2, busta, ciclone. **Tutti i danni sono istantanei e avvengono al contatto**: non esistono danni al secondo.
 - Rallenta la salita della temperatura **in proporzione alle celle che occupa** (§6): un corallo grande protegge di più dal caldo, ma blocca di più i pesci.
 
@@ -125,34 +125,34 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 	- Altrimenti resta fermo `idle_after_order_seconds` (2 s) e poi torna a `WANDER`.
   - `EATING`: dopo `eat_seconds` (3 s) l'alga viene rimossa e la fame si azzera. Poi torna a `WANDER`. *Un pesce circondato dalle alghe può uscirne mangiando.*
   - `FERTILIZING`: deve restare fermo sul nido `fertilize_seconds` (3 s). Se se ne va prima (nuovo ordine), la fecondazione non avviene. Se va a buon fine, il nido passa a `EGGS` e il pesce torna a `WANDER`, libero di andarsene.
-- **Fame**: da 0 a `starve_seconds` (60 s). Barra visibile sopra il pesce quando supera il 50%. Al massimo il pesce muore.
-- **Età**: nasce giovane e diventa fecondo dopo `maturity_seconds` (45 s). Il pesce giovane si riconosce a vista (sprite più piccolo).
+- **Fame**: da 0 a `starve_seconds` (45 s). Barra visibile sopra il pesce quando supera il 50%. Al massimo il pesce muore.
+- **Età**: nasce giovane e diventa fecondo dopo `maturity_seconds` (60 s). Il pesce giovane si riconosce a vista (sprite più piccolo).
 - La velocità è ridotta dalla temperatura.
 
 ### 5.5 Nido
 - Occupa **1 cella**. È un Area2D, quindi i pesci possono passarci sopra.
-- Stati: `EMPTY` → (fecondazione) → `EGGS` → dopo `hatch_seconds` (20 s) nascono `hatch_count` (3) pesci giovani → `EMPTY`.
+- Stati: `EMPTY` → (fecondazione) → `EGGS` → dopo `hatch_seconds` (20 s) nascono `hatch_count` (2) pesci giovani → `EMPTY`.
 - Con il caldo le uova possono morire prima della schiusa. La probabilità è interpolata sulla temperatura: `egg_death_chance_cold` = −0.2 a T=0 (clampata a 0, quindi all'inizio non muoiono mai) e `egg_death_chance_hot` = 0.6 a T=1 (60% di probabilità sull'intera incubazione).
 - Si ottiene dall'inventario con probabilità bassa (vedi §5.1).
 
 ## 6. Temperatura
 - Valore normalizzato `T` da 0 a 1 (mostrato come °C sul termometro in alto a destra).
 - **Sale sempre**: `dT/dt = temp_base_rate × (1 − coral_slowdown)`
-  - `coral_slowdown = min(celle_di_corallo × temp_slow_per_cell, temp_max_slowdown)` con `temp_max_slowdown` = 0.6, quindi la temperatura **non si ferma mai e non scende mai**.
-  - `celle_di_corallo` = numero totale di celle occupate da coralli vivi, letto da `GridModel`. Default `temp_slow_per_cell` = 0.03, quindi il rallentamento massimo si raggiunge con 20 celle di corallo.
-  - `temp_base_rate` è tarato in modo che, senza coralli, si arrivi a T=1 in circa 8 minuti.
+  - `coral_slowdown = min(celle_di_corallo × temp_slow_per_cell, temp_max_slowdown)` con `temp_max_slowdown` = 0.45, quindi la temperatura **non si ferma mai e non scende mai**.
+  - `celle_di_corallo` = numero totale di celle occupate da coralli vivi, letto da `GridModel`. Default `temp_slow_per_cell` = 0.03, quindi il rallentamento massimo si raggiunge con 15 celle di corallo.
+  - `temp_base_rate` è tarato in modo che, senza coralli, si arrivi a T=1 in circa 5 minuti.
 - Effetti (interpolazione lineare in base a T):
 
 | Effetto | T = 0 | T = 1 |
 |---|---|---|
 | Intervallo di crescita alghe | 12 s | 4 s |
-| Intervallo di spawn CO2 | 30 s | 8 s |
-| Intervallo di spawn ciclone | 90 s | 30 s |
+| Intervallo di spawn CO2 | 22 s | 8 s |
+| Intervallo di spawn ciclone | 70 s | 30 s |
 | Velocità pesci | 100% | 50% |
-| Recupero ossigeno dei coralli | +0.5/s | −0.3/s |
+| Recupero ossigeno dei coralli | +0.3/s | −0.3/s |
 | Probabilità che le uova muoiano prima della schiusa | 0% (valore freddo negativo, azzerato) | 60% |
 
-- Le buste di plastica hanno una frequenza fissa (`bag_spawn_interval` 40 s).
+- Le buste di plastica hanno una frequenza fissa (`bag_spawn_interval` 28 s).
 
 ## 7. Minacce
 
@@ -170,9 +170,9 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 
 ### 7.4 Pesce predatore (carnivoro)
 - **Feature flag**: `predator_enabled` in `balance_actors.tres` (se il designer non realizza l'asset, si spegne da lì).
-- Arriva ogni `predator_interval` (70 s), al massimo `predator_max_count` (1) alla volta, dal bordo dello schermo come le altre minacce.
-- Caccia **pesci adulti, pesci giovani e uova** finché non è sazio (`predator_satiety`, 6), poi se ne va. Se non si sazia entro `predator_hunt_seconds` (45 s passati sull'isola) se ne va comunque.
-- Sazietà per preda: giovane `predator_juvenile_satisfaction` (1) < adulto `predator_adult_satisfaction` (2) < uova = giovane × uova che si schiuderebbero (`nest_hatch_count`, quindi 3). Le uova sono la preda preferita: fanno perdere più tempo al giocatore.
+- Arriva ogni `predator_interval` (45 s), al massimo `predator_max_count` (1) alla volta, dal bordo dello schermo come le altre minacce.
+- Caccia **pesci adulti, pesci giovani e uova** finché non è sazio (`predator_satiety`, 8), poi se ne va. Se non si sazia entro `predator_hunt_seconds` (45 s passati sull'isola) se ne va comunque.
+- Sazietà per preda: giovane `predator_juvenile_satisfaction` (1) < adulto `predator_adult_satisfaction` (2) < uova = giovane × uova che si schiuderebbero (`nest_hatch_count`, quindi 2). Le uova sono la preda preferita: fanno perdere più tempo al giocatore.
 - Sceglie la preda con il punteggio più alto: **sazietà / distanza lungo il percorso**. Ignora le prede che non può raggiungere. Ricalcola preda e percorso ogni `predator_replan_seconds` (0.5 s), perché i pesci si muovono.
 - È **grande** (`predator_radius` 22, più di mezza cella): non passa nei **corridoi larghi una cella** tra i coralli, dove i pesci invece passano. **Solo i coralli lo fermano**: passa sopra alghe e nidi, quindi le alghe non proteggono i pesci. Il giocatore può proteggere pesci e nidi costruendo corridoi stretti di corallo. Il percorso si calcola sugli angoli della griglia: un angolo è percorribile solo se le 2×2 celle intorno non contengono coralli.
 - Dopo ogni morso si ferma `predator_bite_pause_seconds` (1 s). Il caldo lo rallenta come gli altri pesci.
@@ -180,7 +180,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 
 ### 7.5 Tartaruga marina (aiutante)
 - **Feature flag**: `turtle_enabled` in `balance_actors.tres` (default `true`).
-- Arriva ogni `turtle_interval` (60 s), al massimo `turtle_max_count` (1) alla volta, dal bordo dello schermo come le minacce. Non è una minaccia: aiuta il giocatore.
+- Arriva ogni `turtle_interval` (90 s), al massimo `turtle_max_count` (1) alla volta, dal bordo dello schermo come le minacce. Non è una minaccia: aiuta il giocatore.
 - **Priorità**: prima difende i pesci, poi pulisce. Va verso la **minaccia raggiungibile più vicina** lungo il percorso (predatore che sta cacciando o busta di plastica); se non ce ne sono, verso l'**alga raggiungibile più vicina**. Ricalcola ogni `turtle_replan_seconds` (0.5 s); mentre mangia un'alga la lascia se compare una minaccia raggiungibile.
 - **Predatore**: gli va addosso e lo allontana (il predatore smette di cacciare e lascia l'isola). La tartaruga resta.
 - **Busta**: la elimina toccandola, poi **se ne va**.
@@ -278,5 +278,5 @@ ideologia_marina/
 
 ## 12. Domande aperte
 - I parametri numerici sono solo un punto di partenza da verificare in playtest.
-- `collapse_grace_seconds` (10 s) rispetto a `hatch_seconds` (20 s): con questi valori le uova salvano solo se sono state deposte almeno 10 s prima della morte dell'ultimo pesce. Va verificato in playtest.
+- `collapse_grace_seconds` (7 s) rispetto a `hatch_seconds` (20 s): con questi valori le uova salvano solo se sono state deposte almeno 13 s prima della morte dell'ultimo pesce. Va verificato in playtest.
 - Il punteggio deve premiare i coralli vivi (es. punti/s = numero di coralli)?
