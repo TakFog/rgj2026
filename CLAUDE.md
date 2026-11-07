@@ -11,6 +11,26 @@ The game design document is `docs/GDD.md`.
   verified branch.
 - Always write commit messages (and PR titles/descriptions) in **English**.
 
+### Project files shared with CI/CD
+
+`project.godot` and `export_presets.cfg` are read by CI (`.github/workflows/ci.yml`)
+and CD (`.github/workflows/cd.yml`, which exports the `"Web"` preset, single-threaded,
+to `build/web/index.html`). The Godot editor rewrites both with machine-specific
+settings, so **never commit local editor changes to them**:
+
+- Never stage `project.godot` or `export_presets.cfg` unless the task is explicitly
+  about changing project or export settings. Stage files by explicit path
+  (`git add <paths>`), never with `git add -A` / `git add .` / `git commit -a`, and
+  check `git diff --cached --stat` before every commit.
+- Never commit local-only settings: `[editor]` entries such as `movie_writer/*`
+  (absolute paths like `/Users/...`), extra presets (e.g. `macOS`), empty or local
+  `export_path` values, or removals of sections other people added (e.g. `[audio]`).
+- If one of those files shows up modified or staged without being part of the task,
+  leave it alone (do not commit, revert or overwrite it) and tell the user.
+- When a change to them *is* intended, keep the `"Web"` preset name, its
+  `export_path="build/web/index.html"` and `variant/thread_support=false` as CD
+  expects, then run `tools/test.sh` and `tools/smoke.sh`.
+
 ### Git flow
 
 1. **Never implement features directly on `main`.** Start every new feature from an up-to-date `main` on a personal feature branch prefixed with the GitHub username:
@@ -42,4 +62,4 @@ so it can be inspected and toggled at runtime. When adding a new feature flag:
 2. Add a read-only (or toggleable) entry to the "Feature flags" section of `DebugOverlay`.
 3. Gate the feature on `Game.actors.<flag>` (or `Game.eco.<flag>`) in the system that uses it.
 
-Current flags: `co2_dies_on_coral`, `predator_enabled`.
+Current flags: `co2_dies_on_coral`, `predator_enabled`, `turtle_enabled`.

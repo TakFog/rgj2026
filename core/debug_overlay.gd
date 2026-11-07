@@ -73,6 +73,11 @@ func _ready() -> void:
 	add_child(predator)
 	_flag_buttons["predator_enabled"] = predator
 
+	var turtle := _make_flag_button("turtle_enabled", Game.actors.turtle_enabled)
+	turtle.pressed.connect(_toggle_turtle_enabled)
+	add_child(turtle)
+	_flag_buttons["turtle_enabled"] = turtle
+
 	# Threat spawn buttons (debug only).
 	var spawn_co2 := _make_action_button("Spawn CO2")
 	spawn_co2.pressed.connect(_spawn_co2)
@@ -93,6 +98,11 @@ func _ready() -> void:
 	spawn_predator.pressed.connect(_spawn_predator)
 	add_child(spawn_predator)
 	_spawn_buttons["predator"] = spawn_predator
+
+	var spawn_turtle := _make_action_button("Spawn Turtle")
+	spawn_turtle.pressed.connect(_spawn_turtle)
+	add_child(spawn_turtle)
+	_spawn_buttons["turtle"] = spawn_turtle
 
 
 func _on_debug_mode_changed(value: bool) -> void:
@@ -117,6 +127,11 @@ func _toggle_co2_dies_on_coral() -> void:
 ## Toggle the predator-enabled feature flag.
 func _toggle_predator_enabled() -> void:
 	Game.actors.predator_enabled = not Game.actors.predator_enabled
+
+
+## Toggle the turtle-enabled feature flag.
+func _toggle_turtle_enabled() -> void:
+	Game.actors.turtle_enabled = not Game.actors.turtle_enabled
 
 
 ## Spawn a CO2 cloud at a random edge of the visible seabed.
@@ -149,6 +164,15 @@ func _spawn_predator() -> void:
 	rng.randomize()
 	var entry := EdgeEntry.random(rng, Game.visible_world_polygon(), Rect2(Vector2.ZERO, Game.grid.world_size()))
 	Game.factory.spawn_predator(entry)
+
+
+## Spawn a sea turtle at a random edge of the visible seabed (ignores the
+## turtle_enabled flag: this is a manual debug spawn).
+func _spawn_turtle() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var entry := EdgeEntry.random(rng, Game.visible_world_polygon(), Rect2(Vector2.ZERO, Game.grid.world_size()))
+	Game.factory.spawn_turtle(entry)
 
 
 func _process(_delta: float) -> void:
@@ -254,6 +278,7 @@ func _flag_value(name: StringName) -> bool:
 	match name:
 		"co2_dies_on_coral": return Game.actors.co2_dies_on_coral
 		"predator_enabled": return Game.actors.predator_enabled
+		"turtle_enabled": return Game.actors.turtle_enabled
 		_: return false
 
 
