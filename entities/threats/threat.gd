@@ -9,6 +9,10 @@ extends Area2D
 enum End { IN_PLAY, OFF_SCREEN }
 
 signal destroyed(end: int)
+## Emitted when this threat enters (true) or leaves (false) the visible seabed.
+signal view_changed(in_view: bool)
+## Emitted when this threat destroys something (see ThreatRules), with the victim.
+signal hit(victim: Node2D)
 
 ## Distance beyond the visible seabed (on top of 2 × radius) before a threat is removed.
 const EXIT_MARGIN := 32.0
@@ -29,6 +33,7 @@ var outside_turn_scale := 1.0
 var color := Color.WHITE
 var heading := 0.0
 
+var _in_view := false
 var _drift: DriftMotion
 var _hit := {} # target instance id -> true
 var _dead := false
@@ -65,7 +70,11 @@ func _physics_process(delta: float) -> void:
 		heading = _drift.step(heading, delta, _turn_scale())
 		heading = _steer_inward(heading, delta)
 	position += Vector2.from_angle(heading) * speed * delta
-	if not _in_alive_area():
+	var in_view := _in_alive_area()
+	if in_view != _in_view:
+		_in_view = in_view
+		view_changed.emit(in_view)
+	if not in_view:
 		destroy(End.OFF_SCREEN)
 
 
@@ -113,6 +122,7 @@ func _on_contact(other: Node2D) -> void:
 			(other as Coral).apply_oxygen_damage(outcome.amount)
 		ThreatRules.Effect.DESTROY:
 			other.call(&"destroy")
+			hit.emit(other)
 		ThreatRules.Effect.ABSORB_CO2:
 			(other as Algae).on_co2_absorbed()
 		ThreatRules.Effect.KILL_EGGS:
