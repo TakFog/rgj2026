@@ -36,9 +36,9 @@ func test_bag_visual_is_the_body_alone() -> void:
 	assert_true(bag._body == visual.get_child(0), "_body must be the floating sprite")
 
 
-func test_cyclone_visual_keeps_its_shadow() -> void:
-	# The shared shadow builder projects through Game.projection, which only
-	# exists while the game runs.
+func test_cyclone_visual_uses_the_swirl_shader() -> void:
+	# The shadow is drawn by CycloneVisual itself; the children are the funnel
+	# and the orbiting spray.
 	var previous := Game.projection
 	Game.projection = ViewProjection.from_settings(Game.VIEW_SETTINGS)
 	var cyclone := Cyclone.new()
@@ -46,8 +46,11 @@ func test_cyclone_visual_keeps_its_shadow() -> void:
 	var visual := cyclone._make_visual()
 	autofree(visual)
 	Game.projection = previous
-	assert_eq(visual.get_child_count(), 2, "shadow plus body")
+	assert_true(visual is CycloneVisual, "cyclone must use its own visual")
+	assert_eq(visual.get_child_count(), 2, "funnel plus spray")
 	assert_true(cyclone._body is Sprite2D)
+	assert_true((cyclone._body as Sprite2D).material is ShaderMaterial,
+		"the funnel must use the swirl shader")
 
 
 func test_bag_without_setup_does_not_crash_when_animating() -> void:
