@@ -3,6 +3,8 @@ extends Node
 ## Places inventory items on the grid (GDD §5.1). While active, Game.placing is
 ## true and this node owns the command/cancel input (roadmap contract #8).
 
+## Emitted when an item is picked from the inventory to start placing it.
+signal placement_started
 ## Emitted after a successful placement, with the kind of the placed item.
 signal placement_finished(kind: StringName)
 
@@ -31,6 +33,7 @@ func begin(slot: int) -> void:
 		return
 	active_slot = slot
 	Game.placing = true
+	placement_started.emit()
 
 
 func cancel() -> void:
