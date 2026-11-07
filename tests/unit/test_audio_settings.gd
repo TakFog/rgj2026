@@ -29,6 +29,14 @@ func test_every_shipped_event_is_configured() -> void:
 		assert_almost(event.low_pass_hz, 0.0)
 
 
+func test_shipped_music_track_is_set_and_loops() -> void:
+	var shipped: AudioSettings = load("res://data/audio_settings.tres")
+	assert_true(shipped.music_track != null, "no music track in data/audio_settings.tres")
+	var wav := shipped.music_track as AudioStreamWAV
+	assert_true(wav != null, "music track is not a WAV")
+	assert_true(wav.loop_mode != AudioStreamWAV.LOOP_DISABLED, "music track does not loop")
+
+
 func test_event_gain_adds_to_the_effects_gain() -> void:
 	settings.events[&"placement"].gain_db = -2.0
 	assert_almost(settings.effect_gain_db(&"placement"), 6.0)

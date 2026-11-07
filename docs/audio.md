@@ -22,8 +22,8 @@ level and is added to every event; each event's `gain_db` then balances it
 against the others. The quiet effect takes (peaking around -10 dBFS) rely on the
 default `effects_gain_db = 8.0` to sit under the music.
 
-Shipped tuning: the item-available sounds sit at `-2.0` dB (`item_available`),
-everything else is at `0.0`.
+Shipped tuning: `item_available` sits at `-3.0` dB, `placement` at `-3.0` dB and
+`bag_destroyed` at `0.0`.
 
 ## Pitch
 
@@ -43,7 +43,7 @@ filters never affect the other sounds; the music has its own `Music` bus. The
 buses are created at startup from the settings — nothing to set up by hand in
 the Audio panel.
 
-Shipped tuning: the placement sound is slightly high-passed at `250` Hz
+Shipped tuning: the placement sound is slightly high-passed at `350` Hz
 (`placement`).
 
 ## Adding a sound
@@ -72,8 +72,14 @@ Shipped tuning: the placement sound is slightly high-passed at `250` Hz
 
 ## Music
 
-The music is a single looping track played by `Main` (`main/main.gd`). Its level,
-pitch and filters are `music_gain_db`, `music_pitch`, `music_high_pass_hz` and
-`music_low_pass_hz` in `data/audio_settings.tres`. The loop comes from the WAV
-import setting `edit/loop_mode` (`2` = forward) in
-`assets/audio/game_loop.wav.import`.
+The music is a single looping track played by `Main` (`main/main.gd`). To change
+it, set `music_track` in `data/audio_settings.tres` (Music section): pick any
+`.wav` from `assets/audio/` in the inspector, or clear it for silence. The
+available tracks are `game_loop.wav` and `game_loop_alt.wav` (currently used);
+`intro.wav` and `outro.wav` are kept for later.
+
+Level, pitch and filters are `music_gain_db`, `music_pitch`,
+`music_high_pass_hz` and `music_low_pass_hz` in the same resource. The loop comes
+from the WAV import setting `edit/loop_mode` (`2` = forward) in the track's
+`.wav.import` file, so a new track must have it set — `tools/test.sh` fails if the
+configured track does not loop.

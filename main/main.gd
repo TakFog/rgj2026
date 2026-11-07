@@ -10,23 +10,23 @@ const DevASystems := preload("res://main/dev_a_systems.gd")
 const DevBSystems := preload("res://main/dev_b_systems.gd")
 const DebugOverlay := preload("res://core/debug_overlay.gd")
 const Ground := preload("res://main/ground.gd")
-## Looping background track (loops via the WAV import's loop setting).
-const MUSIC := preload("res://assets/audio/game_loop.wav")
 
 
 func _ready() -> void:
 	Game.reset()
 
+	# Looping background track, chosen in data/audio_settings.tres.
 	var music := AudioStreamPlayer.new()
 	music.name = "Music"
-	music.stream = MUSIC
+	music.stream = Game.AUDIO_SETTINGS.music_track
 	music.bus = Game.AUDIO_SETTINGS.music_bus()
 	music.volume_db = Game.AUDIO_SETTINGS.music_gain_db
 	music.pitch_scale = Game.AUDIO_SETTINGS.music_pitch
 	# Keep the track going while the game is paused (e.g. menus).
 	music.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(music)
-	music.play()
+	if music.stream != null:
+		music.play()
 
 	var world := Node2D.new()
 	world.name = "World"

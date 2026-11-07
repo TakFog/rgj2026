@@ -10,6 +10,10 @@ const SFX_BUS_PREFIX := "Sfx_"
 const SILENCE_DB := -80.0
 
 @export_group("Music")
+## Looping track played during the run: pick a .wav from assets/audio in the
+## inspector. It must loop, which comes from the WAV import (edit/loop_mode = 2).
+## Empty means silence.
+@export var music_track: AudioStream
 @export_range(-80.0, 24.0, 0.1) var music_gain_db := 0.0
 ## Playback speed multiplier: 1.0 unmodified, 0.5 an octave down, 2.0 up.
 @export_range(0.25, 4.0, 0.05) var music_pitch := 1.0
