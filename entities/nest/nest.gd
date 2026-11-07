@@ -10,16 +10,15 @@ signal destroyed
 const FOOTPRINT_ALPHA := 0.3
 const EMPTY_COLOR := Color(0.95, 0.85, 0.4, FOOTPRINT_ALPHA)
 const EGGS_COLOR := Color(1.0, 0.55, 0.2, FOOTPRINT_ALPHA)
-## Empty nests still use temporary art; the full nest is the designer's sprite.
-const EMPTY_TEXTURE := preload("res://assets/sprites/temp/nest_empty.png")
+## Designer's nest sprites: empty and full of eggs.
+const EMPTY_TEXTURE := preload("res://assets/sprites/nest_empty.png")
 const EGGS_TEXTURE := preload("res://assets/sprites/nest_eggs.png")
 ## Row (texture px, measured on the art) where each nest touches the ground.
 ## Used to keep the base consistent when the state swaps the texture.
-const EMPTY_FOOT_Y := 165.0
+const EMPTY_FOOT_Y := 158.0
 const EGGS_FOOT_Y := 158.0
-## Height every nest texture is drawn at, in grid cells. Textures can have
-## different sizes (the full nest art is wider than tall), so the sprite is
-## rescaled when the state swaps the texture.
+## Height every nest texture is drawn at, in grid cells. Both textures are
+## wider than tall, so the sprite is rescaled when the state swaps the texture.
 const SPRITE_HEIGHT_CELLS := 0.9
 ## Juveniles appear around the nest centre, this far apart (world units).
 const HATCH_SPREAD := 8.0
