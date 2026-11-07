@@ -81,6 +81,7 @@ func _physics_process(delta: float) -> void:
 		FishBrain.State.ORDERED, FishBrain.State.SEEKING_FOOD:
 			_follow_path(_speed() * delta)
 	_visual.hunger_ratio = brain.hunger_ratio()
+	_visual.heading = Game.projection.to_screen(_heading) - Game.projection.to_screen(Vector2.ZERO)
 
 
 func is_adult() -> bool:

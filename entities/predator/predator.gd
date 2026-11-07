@@ -81,6 +81,7 @@ func _physics_process(delta: float) -> void:
 			if _path.is_empty() and not _in_alive_area():
 				destroy()
 	_visual.satiety_ratio = brain.satiety_ratio()
+	_visual.heading = Game.projection.to_screen(_heading) - Game.projection.to_screen(Vector2.ZERO)
 	_visual.leaving = brain.state == PredatorBrain.State.LEAVING
 
 

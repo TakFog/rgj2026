@@ -1,17 +1,33 @@
 class_name PredatorVisual
 extends Node2D
-## Placeholder predator drawing in screen space (until real art lands):
-## big dark-red projected body and a satiety bar while it hunts.
+## Predator drawing in screen space: sprite facing its heading (dimmed while
+## leaving) and a satiety bar while it hunts.
 
-const BODY_COLOR := Color(0.55, 0.1, 0.12)
-const LEAVING_COLOR := Color(0.4, 0.2, 0.22)
-const OUTLINE_COLOR := Color(1.0, 0.35, 0.3, 0.9)
+const TEXTURE := preload("res://assets/sprites/predator.png")
+## Body centre, tail→head angle and body length in the texture (measured on the art).
+const FACING_CENTER := Vector2(297, 295)
+const FACING_AXIS_DEG := 32.0
+const FACING_LENGTH := 720.0
+## Half the sprite height, as a fraction of its body length (bars sit above it).
+const SPRITE_HALF_HEIGHT := 0.3
+const MAX_TILT_DEG := 30.0
+## On-screen body length, in predator radii (world units).
+const BODY_LENGTH_RADII := 4.5
+const LEAVING_TINT := Color(0.65, 0.65, 0.75)
 const BAR_BACK := Color(0.0, 0.0, 0.0, 0.6)
 const BAR_FILL := Color(1.0, 0.6, 0.2)
 const BAR_SIZE := Vector2(36.0, 5.0)
 const SEGMENTS := 20
 
+static var _facing := SpriteFacing.new(FACING_CENTER, deg_to_rad(FACING_AXIS_DEG), FACING_LENGTH, deg_to_rad(MAX_TILT_DEG))
+
 var radius_world := 22.0
+## Swimming direction in screen space.
+var heading := Vector2.RIGHT:
+	set(value):
+		if not value.is_equal_approx(heading):
+			heading = value
+			queue_redraw()
 var satiety_ratio := 0.0:
 	set(value):
 		if not is_equal_approx(value, satiety_ratio):
@@ -26,13 +42,13 @@ var leaving := false:
 
 func _draw() -> void:
 	var body := _ellipse(radius_world)
-	draw_colored_polygon(body, LEAVING_COLOR if leaving else BODY_COLOR)
-	var outline := body.duplicate()
-	outline.append(body[0])
-	draw_polyline(outline, OUTLINE_COLOR, 2.0)
+	var length := radius_world * BODY_LENGTH_RADII * Game.VIEW_SETTINGS.pixels_per_unit
+	draw_set_transform_matrix(_facing.transform(heading, length))
+	draw_texture(TEXTURE, Vector2.ZERO, LEAVING_TINT if leaving else Color.WHITE)
+	draw_set_transform_matrix(Transform2D.IDENTITY)
 	if leaving:
 		return
-	var top := 0.0
+	var top := -length * SPRITE_HALF_HEIGHT
 	for point in body:
 		top = minf(top, point.y)
 	var back := Rect2(Vector2(-BAR_SIZE.x * 0.5, top - 10.0), BAR_SIZE)
