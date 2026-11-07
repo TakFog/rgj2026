@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="ViewSettings" format=3]
+
+[ext_resource type="Script" path="res://data/view_settings.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+x_axis = Vector2(1, 0)
+y_axis = Vector2(-0.5, 0.5)
+pixels_per_unit = 1.25
