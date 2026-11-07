@@ -7,9 +7,13 @@ signal destroyed
 
 const HEALTHY_COLOR := Color(1.0, 0.45, 0.55)
 const SUFFOCATED_COLOR := Color(0.45, 0.42, 0.42)
+## Tint of the (grayscale) coral art: red at full oxygen, fading to its own gray at 0.
+const CORAL_HEALTHY_TINT := Color(1.0, 0.3, 0.3)
+const CORAL_SUFFOCATED_TINT := Color.WHITE
 const CRUMBLE_SECONDS := 0.6
-## Temporary art, until the designer's coral sprite is ready.
-const TEXTURE := preload("res://assets/sprites/temp/coral.png")
+## Rock the corals grow on (never tinted) and the grayscale corals drawn over it.
+const BASE_TEXTURE := preload("res://assets/sprites/coral_base.png")
+const CORAL_TEXTURE := preload("res://assets/sprites/coral.png")
 
 var shape_id: StringName
 var origin_cell: Vector2i
@@ -51,7 +55,8 @@ func _build_visuals() -> void:
 		add_child(marker)
 		var visual := PlaceholderShape.cell(Game.grid.cell_to_world(cell), HEALTHY_COLOR)
 		_visuals.append(visual)
-		_sprites.append(visual.add_sprite(TEXTURE))
+		visual.add_sprite(BASE_TEXTURE)
+		_sprites.append(visual.add_sprite(CORAL_TEXTURE))
 		_followers.append(ViewFollower.attach(marker, visual))
 
 
@@ -65,7 +70,7 @@ func _process(delta: float) -> void:
 	var tint := SUFFOCATED_COLOR.lerp(HEALTHY_COLOR, _oxygen.ratio())
 	for visual in _visuals:
 		visual.color = tint
-	var sprite_tint := Color.WHITE.lerp(SUFFOCATED_COLOR, 1.0 - _oxygen.ratio())
+	var sprite_tint := CORAL_SUFFOCATED_TINT.lerp(CORAL_HEALTHY_TINT, _oxygen.ratio())
 	for sprite in _sprites:
 		sprite.modulate = sprite_tint
 

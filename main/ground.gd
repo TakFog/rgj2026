@@ -7,15 +7,15 @@ extends Node2D
 const MAP := preload("res://assets/sprites/map.png")
 ## The map's sand area as a parallelogram (texture px, measured on the art):
 ## top/bottom rows and the range of `x + SAND_SLANT * y` across it.
-const SAND_TOP := 94.0
-const SAND_BOTTOM := 1022.0
+const SAND_TOP := 602.0
+const SAND_BOTTOM := 1550.0
 const SAND_SLANT := 0.55
-const SAND_LEFT := 544.0
-const SAND_RIGHT := 1923.0
+const SAND_LEFT := 1799.0
+const SAND_RIGHT := 3185.0
 ## Grows the fitted sand past the island border, so its ragged edge stays outside.
 const SAND_MARGIN := 0.04
 ## Average colour of the map's outer border, fills the screen around it.
-const OPEN_SEABED := Color8(2, 126, 188)
+const OPEN_SEABED := Color8(6, 18, 23)
 ## Fraction of the map width/height (per side) faded out into OPEN_SEABED,
 ## hiding its edges. Kept inside the water margin around the sand.
 const MAP_EDGE_FADE := Vector2(0.1, 0.08)

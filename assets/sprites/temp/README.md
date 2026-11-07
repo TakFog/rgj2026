@@ -2,11 +2,10 @@
 
 Everything in this folder is **temporary** and MUST be replaced with the
 designer's sprites as soon as they are ready. Final art lives in
-`assets/sprites/` (already done: `fish.png`, `map.png`, `predator.png`).
+`assets/sprites/` (already done: `fish.png`, `map.png`, `predator.png`, `coral.png`, `coral_base.png`).
 
 | File | Used by | Source |
 |------|---------|--------|
-| `coral.png` | `entities/coral/coral.gd` | Supplied by the team (stock image) |
 | `algae.png` | `entities/algae/algae.gd` | Supplied by the team (stock image) |
 | `nest_empty.png` | `entities/nest/nest.gd` | Supplied by the team (stock image) |
 | `nest_eggs.png` | `entities/nest/nest.gd` | Supplied by the team (stock image) |
