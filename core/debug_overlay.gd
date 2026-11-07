@@ -12,6 +12,7 @@ signal enabled_changed(enabled: bool)
 ## or by a fixed name (panel entries).
 var _labels: Dictionary = {} # Variant -> Label
 var _slider: HSlider
+var _panel_bg: ColorRect
 ## Editable feature-flag toggle buttons, keyed by flag name.
 var _flag_buttons: Dictionary = {} # StringName -> Button
 ## Threat spawn buttons, keyed by threat type.
@@ -20,14 +21,20 @@ var _spawn_buttons: Dictionary = {} # String -> Button
 const FONT_SIZE := 11
 ## Pixels above the entity anchor so the text does not sit on the sprite.
 const OFFSET := Vector2(0, -14)
-## Fixed panel padding from the top-right screen corner.
+## Fixed panel padding from the bottom-right screen corner (the only corner
+## free of HUD elements: counters top-left, thermometer top-right, inventory
+## bottom-centre).
 const PANEL_PAD := 16.0
 const PANEL_WIDTH := 190.0
+## Inner padding between the panel background and its contents.
+const PANEL_INSET := 6.0
 const LINE_HEIGHT := FONT_SIZE + 4.0
-## Gap between the temperature text and its slider.
-const TEMP_SLIDER_GAP := 6.0
-## Height of a flag toggle button row.
-const FLAG_ROW_HEIGHT := 22.0
+const SLIDER_HEIGHT := 16.0
+## Vertical gap between panel sections and between button rows.
+const ROW_GAP := 4.0
+## Height of a flag toggle / spawn button row.
+const FLAG_ROW_HEIGHT := 20.0
+const PANEL_BG := Color(0.0, 0.0, 0.0, 0.55)
 
 const COLOR_CORAL := Color(0.7, 1.0, 0.7)
 const COLOR_CORAL_LOW := Color(1.0, 0.5, 0.5)
@@ -53,7 +60,12 @@ func _ready() -> void:
     mouse_filter = Control.MOUSE_FILTER_IGNORE
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     Game.debug_mode_changed.connect(_on_debug_mode_changed)
-    visible = Game.debug_mode
+    enabled = Game.debug_mode
+
+    _panel_bg = ColorRect.new()
+    _panel_bg.color = PANEL_BG
+    _panel_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    add_child(_panel_bg)
 
     _slider = HSlider.new()
     _slider.min_value = 0.0
@@ -183,38 +195,50 @@ func _process(_delta: float) -> void:
     _sync_slider()
 
 
-## Positions the temperature slider right under the temperature text and
-## keeps its value in sync with Game.temperature. Positions the flag buttons.
-func _sync_slider() -> void:
+## Total height of the fixed panel contents (without the inset).
+func _panel_height() -> float:
+    var rows := _flag_buttons.size() + _spawn_buttons.size()
+    return (LINE_HEIGHT + SLIDER_HEIGHT + ROW_GAP # temperature + slider
+        + LINE_HEIGHT * 2.0 + ROW_GAP # rates
+        + LINE_HEIGHT # "Feature flags:" header
+        + rows * (FLAG_ROW_HEIGHT + ROW_GAP) - ROW_GAP)
+
+
+## Top-left corner of the fixed panel contents, anchored bottom-right.
+func _panel_origin() -> Vector2:
     var size := get_viewport_rect().size
-    var x := size.x - PANEL_WIDTH - PANEL_PAD
-    # Temperature text is at PANEL_PAD; slider sits one line below it.
-    var y := PANEL_PAD + LINE_HEIGHT + TEMP_SLIDER_GAP
+    return Vector2(
+        size.x - PANEL_WIDTH - PANEL_PAD - PANEL_INSET,
+        size.y - _panel_height() - PANEL_PAD - PANEL_INSET)
+
+
+## Positions the panel background, the temperature slider (right under the
+## temperature text) and the flag/spawn buttons; keeps the slider value in
+## sync with Game.temperature. Must match the row layout of _update_labels.
+func _sync_slider() -> void:
+    var origin := _panel_origin()
+    var x := origin.x
+    _panel_bg.position = origin - Vector2(PANEL_INSET, PANEL_INSET)
+    _panel_bg.size = Vector2(PANEL_WIDTH, _panel_height()) + Vector2(PANEL_INSET, PANEL_INSET) * 2.0
+
+    var y := origin.y + LINE_HEIGHT
     _slider.position = Vector2(x, y)
-    _slider.size = Vector2(PANEL_WIDTH, 20.0)
+    _slider.size = Vector2(PANEL_WIDTH, SLIDER_HEIGHT)
     _slider.value = Game.temperature
 
-    # Flag buttons sit below the rates section (temp + 2 rate lines + header gap).
-    var flag_y := PANEL_PAD + LINE_HEIGHT * 3.0 + 8.0
-    for name in _flag_buttons.keys():
-        var btn := _flag_buttons[name] as Button
-        btn.position = Vector2(x, flag_y)
+    # Buttons sit below the rates section and the "Feature flags:" header.
+    y += SLIDER_HEIGHT + ROW_GAP + LINE_HEIGHT * 2.0 + ROW_GAP + LINE_HEIGHT
+    for btn: Button in _flag_buttons.values() + _spawn_buttons.values():
+        btn.position = Vector2(x, y)
         btn.size = Vector2(PANEL_WIDTH, FLAG_ROW_HEIGHT)
-        flag_y += FLAG_ROW_HEIGHT + 4.0
-
-    # Spawn buttons sit below the flag buttons.
-    var spawn_y := flag_y
-    for name in _spawn_buttons.keys():
-        var btn := _spawn_buttons[name] as Button
-        btn.position = Vector2(x, spawn_y)
-        btn.size = Vector2(PANEL_WIDTH, FLAG_ROW_HEIGHT)
-        spawn_y += FLAG_ROW_HEIGHT + 4.0
+        y += FLAG_ROW_HEIGHT + ROW_GAP
 
 
 ## Creates a toggle-styled button showing the flag name and current state.
 func _make_flag_button(name: String, value: bool) -> Button:
     var btn := Button.new()
     btn.text = _flag_label(name, value)
+    btn.add_theme_font_size_override("font_size", FONT_SIZE)
     btn.mouse_filter = Control.MOUSE_FILTER_STOP
     btn.focus_mode = Control.FOCUS_NONE
     return btn
@@ -224,6 +248,7 @@ func _make_flag_button(name: String, value: bool) -> Button:
 func _make_action_button(label: String) -> Button:
     var btn := Button.new()
     btn.text = label
+    btn.add_theme_font_size_override("font_size", FONT_SIZE)
     btn.mouse_filter = Control.MOUSE_FILTER_STOP
     btn.focus_mode = Control.FOCUS_NONE
     return btn
@@ -233,16 +258,16 @@ func _make_action_button(label: String) -> Button:
 ## are tracked automatically. Also rebuilds the fixed panel labels.
 func _update_labels() -> void:
     var wanted := {}
-    var size := get_viewport_rect().size
-    var x := size.x - PANEL_WIDTH - PANEL_PAD
-    var y := PANEL_PAD
+    var origin := _panel_origin()
+    var x := origin.x
+    var y := origin.y
 
     # --- Fixed panel: temperature ---
     var temp_text := "T: %.2f" % Game.temperature
     if Game.debug_temperature_manual:
         temp_text += " (manual)"
     _set_label(&"_temp", temp_text, Vector2(x, y), COLOR_TEMP, wanted)
-    y += LINE_HEIGHT
+    y += LINE_HEIGHT + SLIDER_HEIGHT + ROW_GAP
 
     # --- Fixed panel: temperature-dependent rates ---
     var regen := Game.by_temperature(Game.eco.coral_regen_per_sec, Game.eco.coral_regen_hot_per_sec)
@@ -251,7 +276,7 @@ func _update_labels() -> void:
 
     var egg_death := Game.by_temperature(Game.eco.egg_death_chance_cold, Game.eco.egg_death_chance_hot)
     _set_label(&"_eggdeath", "Egg death: %.0f%%" % (egg_death * 100.0), Vector2(x, y), COLOR_DIM, wanted)
-    y += LINE_HEIGHT + 4.0
+    y += LINE_HEIGHT + ROW_GAP
 
     # --- Fixed panel: feature flags (editable, see _flag_buttons) ---
     _set_label(&"_flags", "Feature flags:", Vector2(x, y), COLOR_TEMP, wanted)

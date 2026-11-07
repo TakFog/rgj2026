@@ -2,7 +2,7 @@ class_name Threat
 extends Area2D
 ## Base for moving threats (GDD §7). Moves freely in the logical world, applies
 ## ThreatRules on contact (GDD §8) and frees itself after leaving the visible seabed.
-## Subclasses only set kind / radius / speed / turn_noise / color in _init().
+## Subclasses only set kind / radius / speed / turn_noise / color (/ texture) in _init().
 
 signal destroyed
 
@@ -23,6 +23,10 @@ var turn_noise := 0.0
 ## 1.0 the threat crosses the open seabed almost straight.
 var outside_turn_scale := 1.0
 var color := Color.WHITE
+## Optional sprite drawn instead of the placeholder body circle.
+var texture: Texture2D
+## On-screen sprite height, in threat radii (world units).
+var sprite_height_radii := 2.5
 var heading := 0.0
 
 var _drift: DriftMotion
@@ -121,7 +125,15 @@ func _on_contact(other: Node2D) -> void:
 func _make_visual() -> Node2D:
 	var root := Node2D.new()
 	root.add_child(PlaceholderShape.circle(position, radius, Color(0, 0, 0, 0.3)))
-	var body := PlaceholderShape.circle(position, radius * 0.8, color)
+	var body: Node2D
+	if texture:
+		var sprite := Sprite2D.new()
+		sprite.texture = texture
+		var height := radius * sprite_height_radii * Game.VIEW_SETTINGS.pixels_per_unit
+		sprite.scale = Vector2.ONE * height / texture.get_height()
+		body = sprite
+	else:
+		body = PlaceholderShape.circle(position, radius * 0.8, color)
 	body.position = Vector2(0, -HOVER_PX)
 	root.add_child(body)
 	return root
