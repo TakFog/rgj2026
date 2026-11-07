@@ -181,6 +181,17 @@ func _algae(cell: Vector2) -> Sprite2D:
 	return sprite
 
 
+## The real animated cyclone (swirl shader + spiral shadow + spray), so the
+## tutorial's Ciclone rows match the reef instead of showing a still image.
+func _cyclone(cell: Vector2) -> CycloneVisual:
+	var visual := CycloneVisual.new()
+	visual.setup(Game.actors.cyclone_radius, Cyclone.COLOR, Cyclone.TEXTURE)
+	visual.position = _pos(cell)
+	visual.z_index = Z_BY_ID[&"cyclone"]
+	_visual_layer().add_child(visual)
+	return visual
+
+
 func _co2(cell: Vector2) -> Co2Bubbles:
 	var cloud := Co2Bubbles.new()
 	cloud.radius_px = 55.0
@@ -297,6 +308,8 @@ func _generic_visual(id: StringName, cell: Vector2) -> Node2D:
 	match id:
 		&"co2":
 			visual = _co2(cell)
+		&"cyclone":
+			visual = _cyclone(cell)
 		&"fish":
 			visual = _fish(cell, true, Vector2.RIGHT)
 		&"algae":
