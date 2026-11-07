@@ -14,6 +14,8 @@ var _labels: Dictionary = {} # Variant -> Label
 var _slider: HSlider
 ## Editable feature-flag toggle buttons, keyed by flag name.
 var _flag_buttons: Dictionary = {} # StringName -> Button
+## Threat spawn buttons, keyed by threat type.
+var _spawn_buttons: Dictionary = {} # String -> Button
 
 const FONT_SIZE := 11
 ## Pixels above the entity anchor so the text does not sit on the sprite.
@@ -34,6 +36,8 @@ const COLOR_NEST_EMPTY := Color(0.55, 0.55, 0.55)
 const COLOR_FISH := Color(0.7, 0.85, 1.0)
 const COLOR_TEMP := Color(1.0, 1.0, 1.0)
 const COLOR_DIM := Color(0.7, 0.7, 0.7)
+
+const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
 
 var _enabled := false
 var enabled:
@@ -69,6 +73,27 @@ func _ready() -> void:
 	add_child(predator)
 	_flag_buttons["predator_enabled"] = predator
 
+	# Threat spawn buttons (debug only).
+	var spawn_co2 := _make_action_button("Spawn CO2")
+	spawn_co2.pressed.connect(_spawn_co2)
+	add_child(spawn_co2)
+	_spawn_buttons["co2"] = spawn_co2
+
+	var spawn_bag := _make_action_button("Spawn Bag")
+	spawn_bag.pressed.connect(_spawn_bag)
+	add_child(spawn_bag)
+	_spawn_buttons["bag"] = spawn_bag
+
+	var spawn_cyclone := _make_action_button("Spawn Cyclone")
+	spawn_cyclone.pressed.connect(_spawn_cyclone)
+	add_child(spawn_cyclone)
+	_spawn_buttons["cyclone"] = spawn_cyclone
+
+	var spawn_predator := _make_action_button("Spawn Predator")
+	spawn_predator.pressed.connect(_spawn_predator)
+	add_child(spawn_predator)
+	_spawn_buttons["predator"] = spawn_predator
+
 
 func _on_debug_mode_changed(value: bool) -> void:
 	enabled = value
@@ -92,6 +117,38 @@ func _toggle_co2_dies_on_coral() -> void:
 ## Toggle the predator-enabled feature flag.
 func _toggle_predator_enabled() -> void:
 	Game.actors.predator_enabled = not Game.actors.predator_enabled
+
+
+## Spawn a CO2 cloud at a random edge of the visible seabed.
+func _spawn_co2() -> void:
+	_spawn_threat(ThreatSchedule.Type.CO2)
+
+
+## Spawn a plastic bag at a random edge of the visible seabed.
+func _spawn_bag() -> void:
+	_spawn_threat(ThreatSchedule.Type.BAG)
+
+
+## Spawn a cyclone at a random edge of the visible seabed.
+func _spawn_cyclone() -> void:
+	_spawn_threat(ThreatSchedule.Type.CYCLONE)
+
+
+## Spawns a threat of `kind` at a random edge of the visible seabed.
+func _spawn_threat(kind: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var entry := EdgeEntry.random(rng, Game.visible_world_polygon(), Rect2(Vector2.ZERO, Game.grid.world_size()))
+	ThreatSpawner.spawn(kind, entry, rng)
+
+
+## Spawn a predator at a random edge of the visible seabed (ignores the
+## predator_enabled flag: this is a manual debug spawn).
+func _spawn_predator() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var entry := EdgeEntry.random(rng, Game.visible_world_polygon(), Rect2(Vector2.ZERO, Game.grid.world_size()))
+	Game.factory.spawn_predator(entry)
 
 
 func _process(_delta: float) -> void:
@@ -120,11 +177,28 @@ func _sync_slider() -> void:
 		btn.size = Vector2(PANEL_WIDTH, FLAG_ROW_HEIGHT)
 		flag_y += FLAG_ROW_HEIGHT + 4.0
 
+	# Spawn buttons sit below the flag buttons.
+	var spawn_y := flag_y
+	for name in _spawn_buttons.keys():
+		var btn := _spawn_buttons[name] as Button
+		btn.position = Vector2(x, spawn_y)
+		btn.size = Vector2(PANEL_WIDTH, FLAG_ROW_HEIGHT)
+		spawn_y += FLAG_ROW_HEIGHT + 4.0
+
 
 ## Creates a toggle-styled button showing the flag name and current state.
 func _make_flag_button(name: String, value: bool) -> Button:
 	var btn := Button.new()
 	btn.text = _flag_label(name, value)
+	btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	btn.focus_mode = Control.FOCUS_NONE
+	return btn
+
+
+## Creates an action button with the given label.
+func _make_action_button(label: String) -> Button:
+	var btn := Button.new()
+	btn.text = label
 	btn.mouse_filter = Control.MOUSE_FILTER_STOP
 	btn.focus_mode = Control.FOCUS_NONE
 	return btn
