@@ -47,20 +47,27 @@ settings, so **never commit local editor changes to them**:
    - `gh api user -q .login` when the GitHub CLI is available;
    - otherwise take it from `git config user.email` / `user.name` and **confirm with the user**.
    Never borrow a prefix from the remote URL (e.g. `TakFog/rgj2026` is the repository owner, which is usually not you), from `git branch -r`, or from a branch by someone else.
-2. Commit the work on the feature branch.
-3. **Before merging, bring `main` into the feature branch** to integrate the latest changes and verify everything is stable and safe there:
+2. **Before every commit, check Godot for errors and warnings and fix all of them.**
+   Run `tools/lint.sh` (loads every GDScript file headless with all warnings
+   escalated to errors) and `tools/test.sh`; both must pass with **zero** errors
+   and **zero** GDScript warnings. Fix every reported issue — including ones not
+   introduced by your change — rather than suppressing it (no new `@warning_ignore`,
+   no lowering warning levels in `project.godot`). Never commit while either reports
+   a problem.
+3. Commit the work on the feature branch.
+4. **Before merging, bring `main` into the feature branch** to integrate the latest changes and verify everything is stable and safe there:
    ```sh
    git fetch origin
    git merge origin/main          # resolve any conflicts on the feature branch
    ```
    Then check that the project still opens/runs correctly in Godot with no errors before proceeding.
-4. Only once the feature branch is verified, merge it into `main` and push:
+5. Only once the feature branch is verified, merge it into `main` and push:
    ```sh
    git switch main && git pull origin main
    git merge <your-gh-username>/<feature-name>
    git push origin main
    ```
-5. **Never delete feature branches**, even after they have been merged. Keep them for reference.
+6. **Never delete feature branches**, even after they have been merged. Keep them for reference.
 
 ## Feature flags
 
