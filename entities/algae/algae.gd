@@ -7,7 +7,7 @@ extends StaticBody2D
 signal destroyed
 
 ## Temporary art, until the designer's algae sprite is ready.
-const TEXTURE := preload("res://assets/sprites/temp/algae.svg")
+const TEXTURE := preload("res://assets/sprites/temp/algae.png")
 
 var cell: Vector2i
 ## Last fish that reserved this algae (to swim to it or eat it), or null. It

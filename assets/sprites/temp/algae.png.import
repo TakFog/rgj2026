@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://2gmvh5nq50c7"
-path="res://.godot/imported/nest_empty.svg-4f978b5901347daf32c72ddbc5e0b09d.ctex"
+uid="uid://bma7ph0v88vni"
+path="res://.godot/imported/algae.png-0770a1ab79b68f6d25bead969baea4a8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/temp/nest_empty.svg"
-dest_files=["res://.godot/imported/nest_empty.svg-4f978b5901347daf32c72ddbc5e0b09d.ctex"]
+source_file="res://assets/sprites/temp/algae.png"
+dest_files=["res://.godot/imported/algae.png-0770a1ab79b68f6d25bead969baea4a8.ctex"]
 
 [params]
 
@@ -38,6 +38,3 @@ process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
 detect_3d/compress_to=1
-svg/scale=4.0
-editor/scale_with_editor_scale=false
-editor/convert_colors_with_editor_theme=false

@@ -7,15 +7,15 @@ designer's sprites as soon as they are ready. Final art lives in
 | File | Used by | Source |
 |------|---------|--------|
 | `coral.png` | `entities/coral/coral.gd` | Supplied by the team (stock image) |
-| `algae.svg` | `entities/algae/algae.gd` | Twemoji 🌿 (U+1F33F) |
-| `nest_empty.svg` | `entities/nest/nest.gd` | Twemoji 🪹 (U+1FAB9) |
-| `nest_eggs.svg` | `entities/nest/nest.gd` | Twemoji 🪺 (U+1FABA) |
+| `algae.png` | `entities/algae/algae.gd` | Supplied by the team (stock image) |
+| `nest_empty.png` | `entities/nest/nest.gd` | Supplied by the team (stock image) |
+| `nest_eggs.png` | `entities/nest/nest.gd` | Supplied by the team (stock image) |
 | `turtle.png` | `entities/turtle/turtle_visual.gd` | Supplied by the team (stock image) |
 | `co2_cloud.svg` | `entities/threats/co2_cloud.gd` | Twemoji ☁️ (U+2601) |
 | `cyclone.png` | `entities/threats/cyclone.gd` | Supplied by the team (stock image; baked checkerboard keyed out) |
 | `plastic_bag.png` | `entities/threats/plastic_bag.gd` | Supplied by the team (stock image) |
 
-The Twemoji SVGs are imported at `svg/scale=4.0` (144 px) so they stay sharp when scaled; PNGs are downscaled to at most 256 px.
+The Twemoji SVG is imported at `svg/scale=4.0` (144 px) so it stays sharp when scaled; PNGs are downscaled to at most 256 px.
 
 ## Attribution
 

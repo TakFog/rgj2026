@@ -9,8 +9,8 @@ signal destroyed
 const EMPTY_COLOR := Color(0.95, 0.85, 0.4)
 const EGGS_COLOR := Color(1.0, 0.55, 0.2)
 ## Temporary art, until the designer's nest sprites are ready.
-const EMPTY_TEXTURE := preload("res://assets/sprites/temp/nest_empty.svg")
-const EGGS_TEXTURE := preload("res://assets/sprites/temp/nest_eggs.svg")
+const EMPTY_TEXTURE := preload("res://assets/sprites/temp/nest_empty.png")
+const EGGS_TEXTURE := preload("res://assets/sprites/temp/nest_eggs.png")
 ## Juveniles appear around the nest centre, this far apart (world units).
 const HATCH_SPREAD := 8.0
 
