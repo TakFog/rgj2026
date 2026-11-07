@@ -17,6 +17,9 @@ var monitor: PopulationMonitor
 var _streams := {} # StringName -> Array[AudioStream]
 var _players: Array[AudioStreamPlayer] = []
 var _outro: AudioStreamPlayer
+var _wind: AudioStreamPlayer
+## Cyclones currently on screen, by instance id.
+var _cyclones_in_view := {}
 var _next := 0
 var _rng := RandomNumberGenerator.new()
 
@@ -47,6 +50,14 @@ func _ready() -> void:
 	add_child(_outro)
 	if monitor != null:
 		monitor.game_over.connect(_on_game_over)
+
+	_wind = AudioStreamPlayer.new()
+	_wind.name = "CycloneWind"
+	_wind.stream = _first_take(&"cyclone_wind")
+	_wind.bus = Game.AUDIO_SETTINGS.event_bus(&"cyclone_wind")
+	_wind.volume_db = Game.AUDIO_SETTINGS.effect_gain_db(&"cyclone_wind")
+	_wind.pitch_scale = Game.AUDIO_SETTINGS.event(&"cyclone_wind").pitch
+	add_child(_wind)
 	if placement != null:
 		placement.placement_finished.connect(_on_placement_finished)
 	if inventory != null:
@@ -96,6 +107,37 @@ func _on_entity_added(node: Node) -> void:
 		_play_when_in_play((node as Co2Cloud).destroyed, &"co2_gone")
 	elif node is Predator:
 		(node as Predator).ate.connect(func() -> void: play(&"predator_ate"))
+	elif node is Cyclone:
+		_on_cyclone_added(node as Cyclone)
+
+
+## A cyclone has its own wind loop while it is on screen and a very quiet hit
+## each time it destroys something (GDD §7.3).
+func _on_cyclone_added(cyclone: Cyclone) -> void:
+	var id := cyclone.get_instance_id()
+	cyclone.view_changed.connect(func(in_view: bool) -> void: _set_cyclone_in_view(id, in_view))
+	cyclone.destroyed.connect(func(_end: int) -> void: _set_cyclone_in_view(id, false))
+	cyclone.hit.connect(func(_victim: Node2D) -> void: play(&"cyclone_hit"))
+
+
+## The wind plays while at least one cyclone is on screen.
+func _set_cyclone_in_view(id: int, in_view: bool) -> void:
+	if in_view:
+		_cyclones_in_view[id] = true
+	else:
+		_cyclones_in_view.erase(id)
+	if _cyclones_in_view.is_empty():
+		_wind.stop()
+	elif not _wind.playing and _wind.stream != null:
+		_wind.play()
+
+
+## First loaded take of `name`, or null.
+func _first_take(name: StringName) -> AudioStream:
+	if not _streams.has(name):
+		return null
+	var takes: Array[AudioStream] = _streams[name]
+	return takes[0] if not takes.is_empty() else null
 
 
 ## A threat drifting out of the visible seabed makes no sound; only the ones

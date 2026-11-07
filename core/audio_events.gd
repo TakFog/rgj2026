@@ -25,6 +25,12 @@ const TAKES := {
 		"res://assets/audio/item/i1.wav",
 		"res://assets/audio/item/i2.wav",
 	],
+	&"cyclone_wind": [ # looping wind while a cyclone is on screen
+		"res://assets/audio/wind/wind.wav",
+	],
+	&"cyclone_hit": [ # a cyclone destroys something
+		"res://assets/audio/wind_hit.wav",
+	],
 	&"co2_gone": [ # a CO2 cloud disappears
 		"res://assets/audio/co2/fart.wav",
 	],
