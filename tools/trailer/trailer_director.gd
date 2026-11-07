@@ -21,6 +21,7 @@ const TEAM_LINE := "Flavio De Benedictis  ·  Lorenzo Patané  ·  Maria Elena P
 
 var _placement: PlacementController
 var _commander: FishCommander
+var _pause: PauseController
 var _rng := RandomNumberGenerator.new()
 
 var _layer: CanvasLayer
@@ -119,6 +120,11 @@ func _run() -> void:
 	tree.quit()
 
 
+func _on_pause_toggled(paused: bool) -> void:
+	if paused:
+		_pause.set_paused(false)
+
+
 # --- Gameplay actions ------------------------------------------------------
 
 
@@ -129,6 +135,12 @@ func _wait_for_game() -> void:
 	var main := tree.current_scene
 	_placement = main.get_node("DevASystems/PlacementController") as PlacementController
 	_commander = main.get_node("DevBSystems/FishCommander") as FishCommander
+	# The game pauses when its window loses focus (alt-tab, another app opening
+	# during the take). Movie Maker records anyway, so a focus change would
+	# bury the trailer under the pause menu: undo any pause at once. Both calls
+	# run before the frame is drawn, so the menu never reaches the recording.
+	_pause = main.get_node("DevBSystems/PauseController") as PauseController
+	_pause.pause_toggled.connect(_on_pause_toggled)
 	# The placement preview follows the real OS mouse, which is not part of
 	# the recording: hide it, the fake cursor shows the clicks instead.
 	var ghost := Game.view.get_node_or_null("PlacementGhost") as CanvasItem

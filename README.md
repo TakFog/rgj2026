@@ -46,6 +46,7 @@ installed in `/Applications`:
 tools/test.sh    # run all unit tests in tests/unit/
 tools/smoke.sh   # boot the main scene for ~5 s and fail on any script error
 tools/audio.sh   # print the resolved audio settings (track, gains, filters, takes)
+tools/trailer.sh # record the game-jam trailer to video/trailer.mp4 (see docs/trailer.md)
 ```
 
 Elsewhere, point the scripts at your Godot binary:
