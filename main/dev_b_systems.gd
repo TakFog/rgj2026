@@ -7,13 +7,13 @@ func _ready() -> void:
 	var commander := FishCommander.new()
 	commander.name = "FishCommander"
 	add_child(commander)
-	_setup_population_and_hud()
+	_setup_population_and_hud(commander)
 
 
 ## B2: population monitor, HUD, pause and game over (GDD §3, §9).
 ## Game.ui is not in the tree yet when this runs (Main adds it last); adding
 ## children to it is fine, they enter the tree together with it.
-func _setup_population_and_hud() -> void:
+func _setup_population_and_hud(commander: FishCommander) -> void:
 	var monitor := PopulationMonitor.new()
 	monitor.name = "PopulationMonitor"
 	add_child(monitor)
@@ -31,4 +31,5 @@ func _setup_population_and_hud() -> void:
 	var pause := PauseController.new()
 	pause.name = "PauseController"
 	pause.monitor = monitor
+	pause.commander = commander
 	add_child(pause)
