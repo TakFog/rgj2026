@@ -47,6 +47,20 @@ the Audio panel.
 The placement sound is the one that ships with a filter (a gentle high-pass, so
 it cuts less through the music).
 
+## Placement sounds
+
+Placing an item reports its kind, and the sound is `placement_<kind>` (kind is
+`coral`, `algae` or `nest`). When that event has no takes, the generic
+`placement` (the coral takes) is used instead:
+
+| Placed item | Event | Files |
+|---|---|---|
+| nest | `placement_nest` | `assets/audio/nido/` |
+| coral, algae | `placement` | `assets/audio/corallo/` |
+
+Giving another kind its own sound needs no code: add e.g. `placement_algae` to
+`AudioEvents.TAKES` with its files and an `AudioEvent` entry in the settings.
+
 ## Adding a sound
 
 1. Drop the `.wav` file(s) under a folder in `assets/audio/`, e.g.

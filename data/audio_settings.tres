@@ -4,18 +4,24 @@
 ; Every value here overrides the defaults in data/audio_settings.gd.
 ; Levels are in dB: 0.0 is unmodified, negative is quieter, positive louder.
 ; Each AudioEvent_<name> sub-resource below is the audio of that event, and its
-; name matches the event keys in systems/b_audio.gd EVENTS.
+; name matches the event keys in core/audio_events.gd AudioEvents.TAKES.
 ; Music tracks available in assets/audio: game_loop.wav, game_loop_alt.wav.
 
 [ext_resource type="Script" path="res://data/audio_settings.gd" id="1_audio_settings"]
 [ext_resource type="Script" path="res://data/audio_event.gd" id="2_audio_event"]
 [ext_resource type="AudioStream" path="res://assets/audio/game_loop_alt.wav" id="3_music_track"]
 
-; Placing an inventory item (assets/audio/corallo). Slightly high-passed.
+; Placing an item that has no sound of its own (assets/audio/corallo).
+; Slightly high-passed.
 [sub_resource type="Resource" id="AudioEvent_placement"]
 script = ExtResource("2_audio_event")
 gain_db = -6.0
 high_pass_hz = 400.0
+
+; Placing a nest (assets/audio/nido).
+[sub_resource type="Resource" id="AudioEvent_placement_nest"]
+script = ExtResource("2_audio_event")
+gain_db = -6.0
 
 ; An inventory slot refills (assets/audio/item).
 [sub_resource type="Resource" id="AudioEvent_item_available"]
@@ -33,6 +39,7 @@ music_track = ExtResource("3_music_track")
 ; One entry per event, keyed by its event name.
 events = Dictionary[StringName, ExtResource("2_audio_event")]({
 &"placement": SubResource("AudioEvent_placement"),
+&"placement_nest": SubResource("AudioEvent_placement_nest"),
 &"item_available": SubResource("AudioEvent_item_available"),
 &"bag_destroyed": SubResource("AudioEvent_bag_destroyed")
 })

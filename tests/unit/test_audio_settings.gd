@@ -36,6 +36,12 @@ func test_shipped_music_track_is_set_and_loops() -> void:
 	assert_true(wav.loop_mode != AudioStreamWAV.LOOP_DISABLED, "music track does not loop")
 
 
+func test_placement_uses_the_item_kind_sound_when_it_has_one() -> void:
+	assert_eq(AudioEvents.placement_event(&"nest"), &"placement_nest")
+	assert_eq(AudioEvents.placement_event(&"coral"), &"placement")
+	assert_eq(AudioEvents.placement_event(&"algae"), &"placement")
+
+
 func test_event_gain_adds_to_the_effects_gain() -> void:
 	settings.events[&"placement"].gain_db = -2.0
 	assert_almost(settings.effect_gain_db(&"placement"), 6.0)

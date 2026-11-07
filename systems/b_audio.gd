@@ -34,7 +34,7 @@ func _ready() -> void:
 		add_child(player)
 		_players.append(player)
 	if placement != null:
-		placement.placement_finished.connect(func() -> void: play(&"placement"))
+		placement.placement_finished.connect(_on_placement_finished)
 	if inventory != null:
 		inventory.model.item_available.connect(func(_index: int) -> void: play(&"item_available"))
 	# Entities spawned during the run (the level's starting ones are already in).
@@ -56,6 +56,11 @@ func play(name: StringName) -> void:
 	player.volume_db = gain_db
 	player.pitch_scale = Game.AUDIO_SETTINGS.event(name).random_pitch(_rng)
 	player.play()
+
+
+## Placing an item: its own sound when it has one (e.g. a nest), else the generic.
+func _on_placement_finished(kind: StringName) -> void:
+	play(AudioEvents.placement_event(kind))
 
 
 ## A plastic bag popping plays its own sound (GDD §7.2).

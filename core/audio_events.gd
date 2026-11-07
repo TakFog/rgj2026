@@ -5,11 +5,14 @@ extends RefCounted
 ## in the audio settings (see docs/audio.md).
 
 const TAKES := {
-	&"placement": [ # placing an inventory item
+	&"placement": [ # placing any inventory item, unless its kind has its own event
 		"res://assets/audio/corallo/c0.wav",
 		"res://assets/audio/corallo/c1.wav",
 		"res://assets/audio/corallo/c2.wav",
 		"res://assets/audio/corallo/c3.wav",
+	],
+	&"placement_nest": [ # placing a nest (nido)
+		"res://assets/audio/nido/nido0.wav",
 	],
 	&"item_available": [ # an inventory slot refills
 		"res://assets/audio/item/i0.wav",
@@ -20,3 +23,9 @@ const TAKES := {
 		"res://assets/audio/busta/b0.wav",
 	],
 }
+
+## Event for placing an item of `kind` (an InventoryModel kind): its own
+## `placement_<kind>` when it has takes, otherwise the generic `placement`.
+static func placement_event(kind: StringName) -> StringName:
+	var specific := StringName("placement_%s" % kind)
+	return specific if TAKES.has(specific) else &"placement"

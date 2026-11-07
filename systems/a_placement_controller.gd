@@ -3,7 +3,8 @@ extends Node
 ## Places inventory items on the grid (GDD §5.1). While active, Game.placing is
 ## true and this node owns the command/cancel input (roadmap contract #8).
 
-signal placement_finished
+## Emitted after a successful placement, with the kind of the placed item.
+signal placement_finished(kind: StringName)
 
 const VALID_COLOR := Color(0.3, 1.0, 0.4, 0.45)
 const INVALID_COLOR := Color(1.0, 0.25, 0.25, 0.45)
@@ -73,7 +74,7 @@ func try_place_at(origin: Vector2i) -> bool:
 		InventoryModel.NEST:
 			Game.factory.spawn_nest(origin)
 	cancel()
-	placement_finished.emit()
+	placement_finished.emit(item["kind"])
 	return true
 
 

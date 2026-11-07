@@ -28,6 +28,7 @@ const SILENCE_DB := -80.0
 ## An event missing here plays at the neutral defaults.
 @export var events: Dictionary[StringName, AudioEvent] = {
 	&"placement": AudioEvent.new(),
+	&"placement_nest": AudioEvent.new(),
 	&"item_available": AudioEvent.new(),
 	&"bag_destroyed": AudioEvent.new(),
 }
