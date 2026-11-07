@@ -140,6 +140,9 @@ func _connect_ui() -> void:
 	var menu := Game.ui.get_node_or_null("MainMenu") as MainMenuScreen
 	if menu != null:
 		menu.button_pressed.connect(func() -> void: play(&"ui_click"))
+	var tutorial := Game.ui.get_node_or_null("Tutorial") as TutorialScreen
+	if tutorial != null:
+		tutorial.button_pressed.connect(func() -> void: play(&"ui_click"))
 	var game_over := Game.ui.get_node_or_null("GameOver") as GameOverScreen
 	if game_over != null:
 		game_over.restart_pressed.connect(func() -> void: play(&"ui_click"))
