@@ -6,10 +6,18 @@ extends Area2D
 
 signal destroyed
 
-enum State { EMPTY, EGGS }
+const EMPTY_COLOR := Color(0.95, 0.85, 0.4)
+const EGGS_COLOR := Color(1.0, 0.55, 0.2)
+## Juveniles appear around the nest centre, this far apart (world units).
+const HATCH_SPREAD := 8.0
 
 var cell: Vector2i
-var state := State.EMPTY
+var state: int:
+	get:
+		return _cycle.state if _cycle else NestCycle.State.EMPTY
+
+var _cycle: NestCycle
+var _visual: PlaceholderShape
 
 
 func setup(p_cell: Vector2i) -> void:
@@ -25,31 +33,38 @@ func _ready() -> void:
 	add_to_group(Groups.NESTS)
 	Game.grid.occupy([cell], self)
 	CellShapes.add_collision(self, [cell], cell)
-	ViewFollower.attach(self, PlaceholderShape.cell(position, Color(0.95, 0.85, 0.4)))
+	_cycle = NestCycle.new(Game.eco.nest_hatch_seconds, Game.eco.nest_hatch_count)
+	_cycle.hatched.connect(_on_hatched)
+	_visual = PlaceholderShape.cell(position, EMPTY_COLOR)
+	ViewFollower.attach(self, _visual)
+
+
+func _process(delta: float) -> void:
+	_cycle.tick(delta)
+	_visual.color = EGGS_COLOR if has_eggs() else EMPTY_COLOR
 
 
 func is_empty() -> bool:
-	return state == State.EMPTY
+	return _cycle.state == NestCycle.State.EMPTY
 
 
 func has_eggs() -> bool:
-	return state == State.EGGS
+	return _cycle.state == NestCycle.State.EGGS
 
 
 ## Called by a fish that stayed on the nest for fertilize_seconds.
 func fertilize() -> void:
-	if is_empty():
-		state = State.EGGS
+	_cycle.fertilize()
 
 
 ## Called by CO2: eggs die, nest becomes empty.
 func kill_eggs() -> void:
-	state = State.EMPTY
+	_cycle.kill_eggs()
 
 
 ## Seconds until the eggs hatch, or -1.0 if there are no eggs.
 func eggs_time_left() -> float:
-	return -1.0
+	return _cycle.eggs_time_left()
 
 
 func destroy() -> void:
@@ -59,3 +74,9 @@ func destroy() -> void:
 	Game.grid.release([cell])
 	destroyed.emit()
 	queue_free()
+
+
+func _on_hatched(count: int) -> void:
+	for i in count:
+		var offset := Vector2.from_angle(TAU * i / count) * HATCH_SPREAD
+		Game.factory.spawn_fish.call_deferred(position + offset, false)
