@@ -8,4 +8,6 @@ const FISH := &"fish"
 const NESTS := &"nests"
 const THREATS := &"threats"
 const PREDATORS := &"predators"
+## The node playing the background music (Main's Music player).
+const MUSIC := &"music"
 const TURTLES := &"turtles"

@@ -18,6 +18,7 @@ func _ready() -> void:
 	# Looping background track, chosen in data/audio_settings.tres.
 	var music := AudioStreamPlayer.new()
 	music.name = "Music"
+	music.add_to_group(Groups.MUSIC)
 	music.stream = Game.AUDIO_SETTINGS.music_track
 	music.bus = Game.AUDIO_SETTINGS.music_bus()
 	music.volume_db = Game.AUDIO_SETTINGS.music_gain_db

@@ -17,6 +17,10 @@ const SILENCE_DB := -80.0
 @export_range(-80.0, 24.0, 0.1) var music_gain_db := 0.0
 ## Playback speed multiplier: 1.0 unmodified, 0.5 an octave down, 2.0 up.
 @export_range(0.25, 4.0, 0.05) var music_pitch := 1.0
+## Track played once when the run is lost, replacing the loop (empty = none).
+## It should not loop (the WAV import's edit/loop_mode = 1 or "detect").
+@export var outro_track: AudioStream
+@export_range(-80.0, 24.0, 0.1) var outro_gain_db := 0.0
 @export_range(0.0, 21000.0, 10.0) var music_high_pass_hz := 0.0
 @export_range(0.0, 21000.0, 10.0) var music_low_pass_hz := 0.0
 

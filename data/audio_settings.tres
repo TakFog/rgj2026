@@ -5,11 +5,13 @@
 ; Levels are in dB: 0.0 is unmodified, negative is quieter, positive louder.
 ; Each AudioEvent_<name> sub-resource below is the audio of that event, and its
 ; name matches the event keys in core/audio_events.gd AudioEvents.TAKES.
-; Music tracks available in assets/audio: game_loop.wav, game_loop_alt.wav.
+; Music tracks available in assets/audio: game_loop.wav, game_loop_alt.wav (loop),
+; outro.wav and intro.wav (one-shot).
 
 [ext_resource type="Script" path="res://data/audio_settings.gd" id="1_audio_settings"]
 [ext_resource type="Script" path="res://data/audio_event.gd" id="2_audio_event"]
 [ext_resource type="AudioStream" path="res://assets/audio/game_loop_alt.wav" id="3_music_track"]
+[ext_resource type="AudioStream" path="res://assets/audio/outro.wav" id="4_outro_track"]
 
 ; Placing an item that has no sound of its own (assets/audio/corallo).
 ; Slightly high-passed.
@@ -42,6 +44,8 @@ script = ExtResource("2_audio_event")
 script = ExtResource("1_audio_settings")
 ; The looping background track: point this at another .wav in assets/audio.
 music_track = ExtResource("3_music_track")
+; Played once when the run is lost (the loop above stops first).
+outro_track = ExtResource("4_outro_track")
 ; One entry per event, keyed by its event name.
 events = Dictionary[StringName, ExtResource("2_audio_event")]({
 &"placement": SubResource("AudioEvent_placement"),
