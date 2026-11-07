@@ -91,10 +91,12 @@ func order(destination: Vector2) -> void:
 	_path = _pathfinder.find_path(global_position, destination)
 
 
-## True while this fish is eating `algae` (used by Algae to stay exclusive).
-func is_eating(algae: Object) -> bool:
-	return brain != null and not brain.dead and not is_queued_for_deletion() \
-		and brain.state == FishBrain.State.EATING and brain.food == algae
+## True while this fish has reserved `algae`: swimming to it on its own or
+## eating it (used by Algae to stay exclusive).
+func holds(algae: Object) -> bool:
+	if brain == null or brain.dead or is_queued_for_deletion() or brain.food != algae:
+		return false
+	return brain.state == FishBrain.State.EATING or brain.state == FishBrain.State.SEEKING_FOOD
 
 
 func destroy() -> void:
@@ -111,16 +113,21 @@ func _speed() -> float:
 	return Game.actors.fish_speed * Game.by_temperature(1.0, Game.actors.fish_speed_hot_factor)
 
 
-## Hungry and wandering: head for the nearest reachable algae no other fish
-## is eating, if any.
+## Hungry and wandering: reserve the nearest reachable free algae, if any.
 func _seek_food() -> void:
 	var result := _pathfinder.nearest_occupant(global_position, _is_free_algae)
 	if result.is_empty():
 		brain.seek_failed()
 		return
-	brain.seek_food(result["occupant"])
+	_reserve(result["occupant"])
 	_replans_left = MAX_REPLANS
 	_path = result["path"]
+
+
+## Swims to `algae` and books it, so other fish pick a different one.
+func _reserve(algae: Algae) -> void:
+	brain.seek_food(algae)
+	algae.eater = self
 
 
 ## Swims up to `budget` world units along the waypoints.
@@ -178,7 +185,7 @@ func _replan() -> void:
 		# No algae reachable now: give up, the brain retries after a cooldown.
 		brain.blocked_by_other()
 		return
-	brain.seek_food(result["occupant"])
+	_reserve(result["occupant"])
 	_path = result["path"]
 
 
@@ -199,9 +206,6 @@ func _empty_nest_under() -> Nest:
 func _check_targets_still_exist() -> void:
 	var has_food := brain.state == FishBrain.State.EATING or brain.state == FishBrain.State.SEEKING_FOOD
 	if has_food and not _alive_in(brain.food, Groups.ALGAE):
-		brain.food_lost()
-	elif brain.state == FishBrain.State.SEEKING_FOOD and (brain.food as Algae).is_taken_by_other(self):
-		# Another fish got there first: wander, and look again next frame.
 		brain.food_lost()
 	elif brain.state == FishBrain.State.FERTILIZING:
 		if not _alive_in(brain.nest, Groups.NESTS) or not (brain.nest as Nest).is_empty():

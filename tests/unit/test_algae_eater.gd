@@ -3,10 +3,10 @@ extends TestCase
 
 class FakeFish:
 	extends RefCounted
-	var eating: Object = null
+	var holding: Object = null
 
-	func is_eating(algae: Object) -> bool:
-		return eating == algae
+	func holds(algae: Object) -> bool:
+		return holding == algae
 
 
 var algae: RefCounted
@@ -24,24 +24,24 @@ func test_free_when_nobody_ate_it() -> void:
 	assert_false(Algae.taken_by_other(null, algae, me))
 
 
-func test_taken_while_other_fish_eats_it() -> void:
-	other.eating = algae
+func test_taken_while_other_fish_holds_it() -> void:
+	other.holding = algae
 	assert_true(Algae.taken_by_other(other, algae, me))
 
 
 func test_not_taken_by_the_eater_itself() -> void:
-	me.eating = algae
+	me.holding = algae
 	assert_false(Algae.taken_by_other(me, algae, me))
 
 
-func test_released_when_eater_stops_eating() -> void:
-	other.eating = algae
-	other.eating = null
+func test_released_when_eater_lets_go() -> void:
+	other.holding = algae
+	other.holding = null
 	assert_false(Algae.taken_by_other(other, algae, me))
 
 
-func test_released_when_eater_eats_something_else() -> void:
-	other.eating = RefCounted.new()
+func test_released_when_eater_holds_something_else() -> void:
+	other.holding = RefCounted.new()
 	assert_false(Algae.taken_by_other(other, algae, me))
 
 

@@ -2,13 +2,14 @@ class_name Algae
 extends StaticBody2D
 ## Algae: single-cell obstacle that spreads and suffocates corals (GDD §5.3).
 ## CONTRACT (used by Dev B fish/threats): cell, on_co2_absorbed(), destroy(),
-## eater / is_taken_by_other() (one fish eats an algae at a time).
+## eater / is_taken_by_other() (one fish reserves an algae at a time).
 
 signal destroyed
 
 var cell: Vector2i
-## Last fish that started eating this algae, or null. It only counts while that
-## fish still reports is_eating(self), so no release bookkeeping is needed.
+## Last fish that reserved this algae (to swim to it or eat it), or null. It
+## only counts while that fish still reports holds(self), so no release
+## bookkeeping is needed.
 var eater: Object = null
 
 var _rng := RandomNumberGenerator.new()
@@ -58,7 +59,7 @@ func on_co2_absorbed() -> void:
 	try_expand.call_deferred()
 
 
-## True if a fish other than `fish` is eating this algae right now.
+## True if a fish other than `fish` has reserved this algae right now.
 func is_taken_by_other(fish: Object) -> bool:
 	return taken_by_other(eater, self, fish)
 
@@ -83,4 +84,4 @@ func _is_coral(entity: Object) -> bool:
 
 ## Pure rule behind is_taken_by_other(). Untyped `p_eater`: it may be freed.
 static func taken_by_other(p_eater: Variant, algae: Object, fish: Object) -> bool:
-	return is_instance_valid(p_eater) and p_eater != fish and p_eater.is_eating(algae)
+	return is_instance_valid(p_eater) and p_eater != fish and p_eater.holds(algae)
