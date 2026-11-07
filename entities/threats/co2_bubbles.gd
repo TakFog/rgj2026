@@ -19,7 +19,7 @@ const FIZZ_MAX_PX := 3.5
 const FIZZ_SPEED := Vector2(28.0, 60.0) # px/s, min..max
 const POP_TIME := 0.18
 
-const BODY := Color(0.2, 0.21, 0.24, 0.6)
+const BODY := Color(0.04, 0.04, 0.05, 0.8)
 const FILL := Color(0.82, 0.9, 1.0, 0.18)
 const RIM := Color(1.0, 1.0, 1.0, 0.8)
 const GLINT := Color(1.0, 1.0, 1.0, 0.95)
