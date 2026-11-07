@@ -51,6 +51,27 @@ func test_predator_draws_above_nest() -> void:
 	assert_true(predator_z > nest_z, "predator %d, nest %d" % [predator_z, nest_z])
 
 
+func test_predator_fish_leaves_blood() -> void:
+	var stage := TutorialStage.new()
+	autofree(stage)
+	stage.show_interaction(_row(&"predator_fish"))
+	stage._hit_effect(&"predator_fish", stage.get("_target"))
+	var found := false
+	for node in stage.visual_nodes():
+		if node is BloodBurst:
+			found = true
+	assert_true(found, "predator eating a fish must leave blood")
+
+
+func test_only_a_predator_fish_kill_bleeds() -> void:
+	var stage := TutorialStage.new()
+	autofree(stage)
+	stage.show_interaction(_row(&"bag_fish"))
+	stage._hit_effect(&"bag_fish", stage.get("_target"))
+	for node in stage.visual_nodes():
+		assert_false(node is BloodBurst, "a bag kill must not bleed")
+
+
 func test_stage_fills_the_tutorial_pane() -> void:
 	var stage := TutorialStage.new()
 	autofree(stage)

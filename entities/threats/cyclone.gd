@@ -11,8 +11,17 @@ func _init() -> void:
 	radius = Game.actors.cyclone_radius
 	speed = Game.actors.cyclone_speed
 	turn_noise = 0.0
-	color = Color(0.45, 0.85, 0.95, 0.8)
+	color = Color(0.6, 0.9, 1.0, 0.9)
 	texture = TEXTURE
+
+
+## The swirling funnel, its spiral ground shadow and orbiting spray. All
+## cosmetic: the contact footprint stays the threat's collision circle.
+func _make_visual() -> Node2D:
+	var visual := CycloneVisual.new()
+	visual.setup(radius, color, TEXTURE)
+	_body = visual.body
+	return visual
 
 
 ## Cyclones are perfectly straight (GDD §7.3): they keep their heading even
