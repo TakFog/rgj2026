@@ -28,7 +28,7 @@ The full game design document (in Italian) is in [`docs/GDD.md`](docs/GDD.md).
 
 ## Requirements
 
-- [Godot **4.7.2** stable](https://godotengine.org/download/archive/) (standard build, no .NET needed).
+- [Godot **4.7.2** stable](https://godotengine.org/download/archive/4.7.2-stable/) (standard build, no .NET needed).
   Other versions may work but are not tested; CI uses exactly 4.7.2.
 
 ## Running the game
