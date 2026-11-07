@@ -36,3 +36,10 @@ func spawn_predator(entry: EdgeEntry) -> Predator:
 	predator.setup(entry)
 	Game.world.add_child(predator)
 	return predator
+
+
+func spawn_turtle(entry: EdgeEntry) -> Turtle:
+	var turtle := Turtle.new()
+	turtle.setup(entry)
+	Game.world.add_child(turtle)
+	return turtle

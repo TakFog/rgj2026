@@ -4,6 +4,7 @@ extends Node
 
 const ThreatSpawner := preload("res://systems/b_threat_spawner.gd")
 const PredatorSpawner := preload("res://systems/b_predator_spawner.gd")
+const TurtleSpawner := preload("res://systems/b_turtle_spawner.gd")
 
 
 func _ready() -> void:
@@ -21,6 +22,11 @@ func _ready() -> void:
 	var predator_spawner := PredatorSpawner.new()
 	predator_spawner.name = "PredatorSpawner"
 	add_child(predator_spawner)
+
+	# Sea turtle helper (issue #4), behind the turtle_enabled feature flag.
+	var turtle_spawner := TurtleSpawner.new()
+	turtle_spawner.name = "TurtleSpawner"
+	add_child(turtle_spawner)
 
 
 ## B2: population monitor, HUD, pause and game over (GDD §3, §9).

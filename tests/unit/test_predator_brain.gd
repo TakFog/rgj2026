@@ -90,3 +90,11 @@ func test_hunt_time_only_runs_on_the_island() -> void:
 	brain.tick(100.0, false)
 	assert_eq(brain.state, PredatorBrain.State.HUNTING)
 	assert_almost(brain.hunt_time, 0.0)
+
+
+func test_scare_makes_it_leave_and_stay_gone() -> void:
+	brain.scare()
+	assert_eq(brain.state, PredatorBrain.State.LEAVING)
+	brain.ate(1.0)
+	brain.tick(1.0)
+	assert_eq(brain.state, PredatorBrain.State.LEAVING)

@@ -76,6 +76,11 @@ func tick(delta: float, on_island := true) -> void:
 		state = State.LEAVING
 
 
+## Rammed by the sea turtle (issue #4): it gives up hunting and leaves.
+func scare() -> void:
+	state = State.LEAVING
+
+
 ## The predator swallowed a prey worth `amount`: pause briefly, or leave if sated.
 func ate(amount: float) -> void:
 	if state == State.LEAVING:
