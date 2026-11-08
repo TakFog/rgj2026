@@ -36,7 +36,7 @@ func test_bag_visual_is_the_body_alone() -> void:
 	assert_true(bag._body == visual.get_child(0), "_body must be the floating sprite")
 
 
-func test_cyclone_visual_uses_the_swirl_shader() -> void:
+func test_cyclone_visual_uses_the_animated_sheet() -> void:
 	# The shadow is drawn by CycloneVisual itself; the children are the funnel
 	# and the orbiting spray.
 	var previous := Game.projection
@@ -49,8 +49,23 @@ func test_cyclone_visual_uses_the_swirl_shader() -> void:
 	assert_true(visual is CycloneVisual, "cyclone must use its own visual")
 	assert_eq(visual.get_child_count(), 2, "funnel plus spray")
 	assert_true(cyclone._body is Sprite2D)
-	assert_true((cyclone._body as Sprite2D).material is ShaderMaterial,
-		"the funnel must use the swirl shader")
+	var sprite := cyclone._body as Sprite2D
+	assert_eq(sprite.texture, Cyclone.TEXTURE, "the funnel must use the cyclone spritesheet")
+	assert_eq(sprite.hframes, CycloneVisual.FRAMES, "the funnel must cycle the whole sheet")
+
+
+func test_cyclone_funnel_advances_through_the_frames() -> void:
+	var previous := Game.projection
+	Game.projection = ViewProjection.from_settings(Game.VIEW_SETTINGS)
+	var cyclone := Cyclone.new()
+	autofree(cyclone)
+	var visual := cyclone._make_visual()
+	autofree(visual)
+	Game.projection = previous
+	var sprite := cyclone._body as Sprite2D
+	var start := sprite.frame
+	visual._process(0.2)
+	assert_true(sprite.frame != start, "the funnel must advance through the sheet")
 
 
 func test_cyclone_sheet_is_nine_web_safe_square_frames() -> void:

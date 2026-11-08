@@ -1,10 +1,13 @@
 class_name CycloneVisual
 extends Node2D
-## Cyclone body in screen space: a swirling funnel (shader), a soft spiral
-## ground shadow and orbiting spray. Purely cosmetic; the contact footprint is
-## the threat's collision circle.
+## Cyclone body in screen space: an animated funnel from the 9-frame
+## spritesheet, a soft spiral ground shadow and orbiting spray. Purely
+## cosmetic; the contact footprint is the threat's collision circle.
 
-const SHADER := preload("res://entities/threats/cyclone_swirl.gdshader")
+## Frames in the funnel spritesheet, laid out horizontally.
+const FRAMES := 9
+## Loop speed of the funnel frames.
+const FRAME_FPS := 9.0
 
 ## On-screen funnel height, in threat radii (same default as Threat).
 const BODY_HEIGHT_RADII := 2.5
@@ -32,7 +35,8 @@ var _tint := Color.WHITE
 var _phase := 0.0
 var _time := 0.0
 var _base_scale := 1.0
-var _material: ShaderMaterial
+var _frames := FRAMES
+var _frame_offset := 0
 var _rng := RandomNumberGenerator.new()
 ## Visible art size in screen pixels, measured once from the texture.
 var _funnel_height := 93.0
@@ -50,13 +54,16 @@ func setup(p_radius_world: float, p_tint: Color, p_texture: Texture2D) -> void:
 	_rng.randomize()
 	_phase = _rng.randf() * TAU
 	var texture_size := Vector2(p_texture.get_width(), p_texture.get_height())
-	var bounds := _content_rect(p_texture, texture_size)
+	_frames = maxi(1, roundi(texture_size.x / texture_size.y))
+	var frame_size := Vector2(texture_size.x / float(_frames), texture_size.y)
+	var content := _content_rect(p_texture, texture_size)
 	var sprite_scale := p_radius_world * BODY_HEIGHT_RADII * Game.VIEW_SETTINGS.pixels_per_unit \
-		/ texture_size.y
+		/ frame_size.y
 	_base_scale = sprite_scale
-	_funnel_height = bounds.size.y * sprite_scale
-	_funnel_half_width = bounds.size.x * 0.5 * sprite_scale / Game.VIEW_SETTINGS.pixels_per_unit
-	_make_body(p_texture, texture_size, bounds, sprite_scale)
+	_funnel_height = content.size.y * sprite_scale
+	_funnel_half_width = frame_size.x * 0.5 * sprite_scale / Game.VIEW_SETTINGS.pixels_per_unit
+	_frame_offset = _rng.randi_range(0, _frames - 1)
+	_make_body(p_texture, frame_size, content, sprite_scale)
 	_make_spray()
 	queue_redraw()
 
@@ -64,6 +71,7 @@ func setup(p_radius_world: float, p_tint: Color, p_texture: Texture2D) -> void:
 func _process(delta: float) -> void:
 	_time += delta
 	if body:
+		body.frame = (_frame_offset + int(_time * FRAME_FPS)) % _frames
 		body.position.y = sin(_time * BOB_SPEED + _phase) * BOB_PX
 		var breathe := 1.0 + sin(_time * BREATHE_SPEED + _phase) * BREATHE
 		body.scale = Vector2.ONE * _base_scale * breathe
@@ -72,24 +80,17 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-## The sprite is offset so the visible tip sits on the ground shadow and the
-## funnel axis passes through the anchor, however much transparent padding the
-## stock art has.
-func _make_body(p_texture: Texture2D, texture_size: Vector2, bounds: Rect2, sprite_scale: float) -> void:
+## The sprite is anchored on the union of every frame's visible content, not
+## on per-frame bounds: the frames have different padding, and following each
+## one would make the funnel jump vertically as the animation plays.
+func _make_body(p_texture: Texture2D, frame_size: Vector2, content: Rect2, sprite_scale: float) -> void:
 	body = Sprite2D.new()
 	body.texture = p_texture
+	body.hframes = _frames
+	body.frame = _frame_offset
 	body.modulate = _tint
 	body.scale = Vector2.ONE * sprite_scale
-	var tex_center := texture_size * 0.5
-	var content_center := bounds.get_center()
-	body.offset = Vector2(
-		-(content_center.x - tex_center.x),
-		-(bounds.end.y - tex_center.y))
-	_material = ShaderMaterial.new()
-	_material.shader = SHADER
-	_material.set_shader_parameter("phase", _phase)
-	_material.set_shader_parameter("pivot", content_center / texture_size)
-	body.material = _material
+	body.offset = Vector2(0.0, -(content.end.y - frame_size.y * 0.5))
 	add_child(body)
 
 

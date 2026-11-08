@@ -181,7 +181,7 @@ func _algae(cell: Vector2) -> Sprite2D:
 	return sprite
 
 
-## The real animated cyclone (swirl shader + spiral shadow + spray), so the
+## The real animated cyclone (9-frame funnel + spiral shadow + spray), so the
 ## tutorial's Ciclone rows match the reef instead of showing a still image.
 func _cyclone(cell: Vector2) -> CycloneVisual:
 	var visual := CycloneVisual.new()

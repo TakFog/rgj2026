@@ -31,10 +31,8 @@ func test_cyclone_agent_uses_the_animated_visual() -> void:
 	var body := (agent as CycloneVisual).body
 	assert_true(body != null, "the tutorial cyclone funnel is missing")
 	if body != null:
-		assert_true(body.material is ShaderMaterial, "the tutorial funnel must use the swirl shader")
-		if body.material is ShaderMaterial:
-			assert_true((body.material as ShaderMaterial).shader == CycloneVisual.SHADER,
-				"the tutorial funnel must use the cyclone swirl shader")
+		assert_eq(body.hframes, CycloneVisual.FRAMES,
+			"the tutorial funnel must play the full sheet")
 
 
 func test_stage_does_not_join_gameplay_groups() -> void:
