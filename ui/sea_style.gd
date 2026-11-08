@@ -44,6 +44,8 @@ const OVERLAY_COLOR := Color(0.02, 0.05, 0.1, 0.85)
 ## slightly lighter blue so it still stands out.
 const BUTTON_FONT_COLOR := Color("#101f25")
 const BUTTON_HIGHLIGHT_FONT_COLOR := Color("#23434a")
+## The label outline that separates the dark blue from the sand frame.
+const BUTTON_TEXT_OUTLINE_COLOR := Color.WHITE
 ## Divider under a menu title: a short sea-glass rule, not a full-width
 ## separator. Keeps its decorative role without reading as default chrome.
 const DIVIDER_COLOR := Color(0.47, 0.8, 0.78, 0.3)
@@ -122,7 +124,7 @@ static func style_button(button: Button, thin := false) -> void:
 	button.add_theme_stylebox_override("hover_pressed", pressed)
 	button.add_theme_stylebox_override("disabled", stone_box(BUTTON_DISABLED_TINT, thin))
 	# Dark outline keeps the label readable over the mottled stones.
-	button.add_theme_color_override("font_outline_color", SHADOW_COLOR)
+	button.add_theme_color_override("font_outline_color", BUTTON_TEXT_OUTLINE_COLOR)
 	button.add_theme_constant_override("outline_size", 4)
 
 

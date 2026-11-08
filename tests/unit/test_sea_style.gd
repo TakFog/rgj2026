@@ -31,3 +31,18 @@ func test_highlighted_button_labels_are_lighter_blue() -> void:
 	assert_eq(button.get_theme_color(&"font_focus_color"), SeaStyle.BUTTON_HIGHLIGHT_FONT_COLOR)
 	assert_eq(button.get_theme_color(&"font_hover_color"), SeaStyle.BUTTON_HIGHLIGHT_FONT_COLOR)
 	button.free()
+
+
+func test_button_text_outline_is_white() -> void:
+	var button := Button.new()
+	SeaStyle.style_button(button)
+	assert_eq(button.get_theme_color(&"font_outline_color"), SeaStyle.BUTTON_TEXT_OUTLINE_COLOR)
+	assert_eq(button.get_theme_constant(&"outline_size"), 4)
+	button.free()
+
+
+func test_highlighted_button_text_outline_is_white() -> void:
+	var button := Button.new()
+	SeaStyle.style_highlighted_button(button)
+	assert_eq(button.get_theme_color(&"font_outline_color"), SeaStyle.BUTTON_TEXT_OUTLINE_COLOR)
+	button.free()
