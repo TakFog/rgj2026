@@ -3,7 +3,8 @@ name: CD
 # Runs the full test suite, then builds the Web (single-threaded) export.
 # The export (and the itch.io push) only happen if every test passes.
 # Once the web build is on itch.io, the Android APK that CI released for the
-# same commit (GitHub release v<N>, see ci.yml) is pushed to its own channel.
+# same commit (GitHub release v<N>, see ci.yml) is pushed to its own channel,
+# and the Windows, macOS and Linux desktop builds are exported and pushed to theirs.
 #
 # The itch.io pushes are skipped until both of these exist in the repository settings:
 #   secrets.BUTLER_API_KEY  - itch.io API key (https://itch.io/user/settings/api-keys)
@@ -184,3 +185,124 @@ jobs:
         run: |
           ~/butler/butler push build/android/balansea.apk "${ITCH_TARGET}:${ITCH_ANDROID_CHANNEL}" \
             --userversion "${RELEASE_TAG#v}"
+
+  # Desktop exports, one job per platform, all built on Linux once the web
+  # build is on itch.io. Each lands in its own channel; itch.io tags the
+  # platform from the channel name.
+  desktop:
+    name: ${{ matrix.name }} export and itch.io push
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            preset: Windows Desktop
+            dir: build/windows
+            output: build/windows/BalanSea.exe
+            templates: templates/windows_release_x86_64.exe templates/windows_debug_x86_64.exe
+            channel: windows
+          - name: macOS
+            preset: macOS
+            dir: build/macos
+            output: build/macos/BalanSea.zip
+            templates: templates/macos.zip
+            channel: mac
+          - name: Linux
+            preset: Linux
+            dir: build/linux
+            output: build/linux/BalanSea.x86_64
+            templates: templates/linux_release.x86_64 templates/linux_debug.x86_64
+            channel: linux
+    env:
+      BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      ITCH_TARGET: ${{ vars.ITCH_TARGET }}
+      DIR: ${{ matrix.dir }}
+      OUTPUT: ${{ matrix.output }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: Download Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          curl -fsSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/"Godot_v${GODOT_VERSION}-stable_linux.x86_64" ~/godot/godot
+          chmod +x ~/godot/godot
+
+      - name: Cache ${{ matrix.name }} export templates
+        id: cache-templates
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          key: godot-templates-${{ matrix.channel }}-${{ env.GODOT_VERSION }}
+
+      - name: Download ${{ matrix.name }} export templates
+        if: steps.cache-templates.outputs.cache-hit != 'true'
+        env:
+          TEMPLATES: ${{ matrix.templates }}
+        run: |
+          dest=~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+          mkdir -p "$dest"
+          curl -fsSL -o /tmp/templates.tpz \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          # Only this platform's templates are needed.
+          # shellcheck disable=SC2086 # TEMPLATES is a space-separated list
+          unzip -j -q /tmp/templates.tpz $TEMPLATES -d "$dest"
+          rm /tmp/templates.tpz
+
+      - name: Export ${{ matrix.name }} build
+        env:
+          PRESET: ${{ matrix.preset }}
+        run: |
+          mkdir -p "$DIR"
+          ~/godot/godot --headless --import || true
+          ~/godot/godot --headless --export-release "$PRESET" "$OUTPUT"
+          test -s "$OUTPUT"
+          # The macOS export is a zipped .app: push the bundle itself, so
+          # itch.io keeps it as an app (the zip would be nested in a folder).
+          if [ "${OUTPUT##*.}" = zip ]; then
+            unzip -q "$OUTPUT" -d "$DIR"
+            rm "$OUTPUT"
+          fi
+          ls -la "$DIR"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.channel }}-build
+          path: ${{ matrix.dir }}
+          retention-days: 7
+
+      - name: Install butler
+        if: env.BUTLER_API_KEY != '' && env.ITCH_TARGET != ''
+        run: |
+          mkdir -p ~/butler
+          curl -fsSL -o /tmp/butler.zip \
+            https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q /tmp/butler.zip -d ~/butler
+          chmod +x ~/butler/butler
+          ~/butler/butler -V
+
+      - name: Push to itch.io
+        if: env.BUTLER_API_KEY != '' && env.ITCH_TARGET != ''
+        env:
+          CHANNEL: ${{ matrix.channel }}
+        run: |
+          ~/butler/butler push "$DIR" "${ITCH_TARGET}:${CHANNEL}" \
+            --userversion "$(git rev-parse --short HEAD)"
+
+      - name: Note skipped itch.io push
+        if: env.BUTLER_API_KEY == '' || env.ITCH_TARGET == ''
+        run: echo "::notice::itch.io ${{ matrix.name }} push skipped - set secret BUTLER_API_KEY and variable ITCH_TARGET to enable it."

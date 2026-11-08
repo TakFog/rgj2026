@@ -79,6 +79,20 @@ and builds a signed Android APK (downloadable as the `android-apk` artifact of t
 to `main` publishes it as a GitHub release tagged `v1`, `v2`, …, which CD then pushes to the itch.io
 `android` channel after the web build (see [`docs/android.md`](docs/android.md)).
 
+CD (`.github/workflows/cd.yml`) runs on every push to `main` and publishes to itch.io:
+
+| Channel | Build | Preset |
+| --- | --- | --- |
+| `html5` | Web, single-threaded | `Web` |
+| `android` | the APK from CI's `v<N>` release | `Android` |
+| `windows` | `BalanSea.exe`, x86_64, data embedded | `Windows Desktop` |
+| `mac` | `BalanSea.app`, universal (Intel + Apple Silicon), ad-hoc signed, not notarized | `macOS` |
+| `linux` | `BalanSea.x86_64`, data embedded | `Linux` |
+
+The desktop builds are exported on Linux after the web push, one job per platform. The macOS app
+is not notarized, so on first launch players must right-click it and choose **Open** (or allow it
+in System Settings → Privacy & Security).
+
 ## Audio
 
 Music and sound effects are tuned from `data/audio_settings.tres` (level in dB, pitch,
