@@ -376,12 +376,13 @@ func _build_chip(row: Dictionary, index: int) -> Button:
 
 
 ## Captures SeaStyle's (highlighted) button look once, so chips can share it.
+## Chips are short, so they use the thin stone frame.
 func _chip_look(highlighted: bool) -> Dictionary:
 	var template := Button.new()
 	if highlighted:
-		SeaStyle.style_highlighted_button(template)
+		SeaStyle.style_highlighted_button(template, true)
 	else:
-		SeaStyle.style_button(template)
+		SeaStyle.style_button(template, true)
 	var styles := {}
 	for state in CHIP_STYLE_STATES:
 		styles[state] = template.get_theme_stylebox(state)
