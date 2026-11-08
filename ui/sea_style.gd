@@ -16,10 +16,11 @@ const HOVER_TEXT_COLOR := Color(1, 1, 1)
 
 const BUTTON_PADDING := Vector2(18, 7)
 ## Small copy of the inventory cards' stone ring, nine-sliced around buttons:
-## corner stones kept whole, edge stones tiled along the sides.
+## corner stones kept whole, edge stones tiled along the sides. The margin is a
+## quarter of the texture, so the centre slice is pure sand.
 const BUTTON_FRAME_TEXTURE := preload("res://assets/ui/button_frame.png")
 ## Source pixels kept unscaled at each corner of the button frame.
-const BUTTON_FRAME_MARGIN := 16.0
+const BUTTON_FRAME_MARGIN := 15.0
 ## Frame tints per state, like InventoryCard's frame.
 const BUTTON_HOVER_TINT := Color(1.15, 1.15, 1.15)
 const BUTTON_PRESSED_TINT := Color(1.25, 1.12, 0.9)
