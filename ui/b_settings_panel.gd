@@ -12,6 +12,9 @@ const LABEL_WIDTH := 90.0
 const SLIDER_WIDTH := 260.0
 const VALUE_WIDTH := 56.0
 
+## Plain sea-card buttons, to match the main menu; stone frame otherwise.
+var flat_buttons := false
+
 var _music_slider: HSlider
 var _effects_slider: HSlider
 var _music_value: Label
@@ -48,7 +51,7 @@ func _ready() -> void:
 	_music_slider = _add_volume_row(box, "Musica")
 	_effects_slider = _add_volume_row(box, "Effetti")
 
-	var back := SeaStyle.menu_button("Indietro")
+	var back := SeaStyle.menu_button("Indietro", flat_buttons)
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	back.pressed.connect(_on_back_pressed)
 	box.add_child(back)
