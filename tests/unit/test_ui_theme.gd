@@ -42,3 +42,11 @@ func test_label_inherits_project_font() -> void:
 	if theme == null:
 		return
 	assert_eq(label.get_theme_default_font(), theme.default_font)
+
+
+func test_fish_warning_uses_project_font() -> void:
+	var theme := load(THEME_PATH) as Theme
+	assert_true(theme != null)
+	if theme == null:
+		return
+	assert_eq(FishVisual.warning_font(), theme.default_font)

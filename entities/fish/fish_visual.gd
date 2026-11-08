@@ -86,6 +86,14 @@ func _draw() -> void:
 		_draw_warning(back)
 
 
+## The project UI font, so the warning glyph matches every label and button.
+static func warning_font() -> Font:
+	var theme := ThemeDB.get_project_theme()
+	if theme != null and theme.default_font != null:
+		return theme.default_font
+	return ThemeDB.fallback_font
+
+
 ## Pulses a small "!" above the bar while the fish is close to starving.
 func _draw_warning(bar: Rect2) -> void:
 	if not shows_warning(hunger_ratio, hunger_threshold):
@@ -96,7 +104,7 @@ func _draw_warning(bar: Rect2) -> void:
 	var center := Vector2(bar.get_center().x, bar.position.y - radius - 5.0 + bob)
 	draw_circle(center, radius, Color(BAR_EMPTY, 0.95))
 	draw_arc(center, radius, 0.0, TAU, 24, Color(1.0, 1.0, 1.0, 0.85), 1.5, true)
-	var font: Font = ThemeDB.fallback_font
+	var font := warning_font()
 	var text := "!"
 	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, WARNING_FONT_SIZE)
 	var baseline := center + Vector2(-text_size.x * 0.5, WARNING_FONT_SIZE * 0.35)
