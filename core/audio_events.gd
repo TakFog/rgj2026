@@ -42,7 +42,6 @@ const TAKES := {
 	],
 	&"ui_click": [ # menu, pause and restart buttons
 		"res://assets/audio/ui_click/click_0.wav",
-		"res://assets/audio/ui_click/click_1.wav",
 	],
 	&"ui_cancel": [ # cancelling placement or a selection
 		"res://assets/audio/ui_cancel/cancel.wav",
