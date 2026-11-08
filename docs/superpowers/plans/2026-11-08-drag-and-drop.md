@@ -263,7 +263,7 @@ Add the pointer helper near `_preview_origin()`:
 ## Cell under `pointer_screen`, lifted above the fingertip while dragging on
 ## touch. Static so the edge behaviour is unit-testable.
 static func pointer_cell(pointer_screen: Vector2, touch: bool, dragging: bool) -> Vector2i:
-	var point := pointer_screen - drag_lift(touch, dragging)
+	var point := pointer_screen + drag_lift(touch, dragging)
 	return Game.grid.world_to_cell(Game.projection.to_world(point))
 
 

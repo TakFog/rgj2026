@@ -21,6 +21,7 @@ The full game design document (in Italian) is in [`docs/GDD.md`](docs/GDD.md).
 | Input | Action |
 | --- | --- |
 | Left click | Select a fish, give it an order, confirm a placement |
+| Drag an inventory card onto the reef | Place it (release on a valid cell) |
 | 1 / 2 / 3 / 4 | Pick the matching inventory slot (number row or keypad) |
 | Right click / Esc | Cancel placement / deselect |
 | Space / Esc | Pause (Esc pauses only when there is nothing to cancel) |
@@ -34,6 +35,7 @@ The Android build adds touch controls; every other build (web included) keeps th
 | --- | --- |
 | Tap | Select a fish, give it an order, tap an inventory card |
 | Tap / drag on the reef while placing | Move the placement preview; tap the preview again to place |
+| Drag an inventory card onto the reef | Place it in one gesture (the preview sits above the finger) |
 | **Annulla** button / Back | Cancel placement / deselect |
 | **Pausa** button / Back | Pause (Back pauses only when there is nothing to cancel) |
 | Three-finger tap | Debug overlay |

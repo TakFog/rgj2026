@@ -36,3 +36,37 @@ func test_touch_drag_lifts_the_ghost_above_the_finger() -> void:
 func test_mouse_drag_and_tap_preview_do_not_lift() -> void:
 	assert_eq(PlacementController.drag_lift(false, true), Vector2.ZERO)
 	assert_eq(PlacementController.drag_lift(true, false), Vector2.ZERO)
+
+
+func test_drag_from_a_refilling_slot_is_ignored() -> void:
+	var inventory := InventorySystem.new()
+	inventory.model = InventoryModel.new(
+		Game.eco, RandomNumberGenerator.new(), func() -> int: return 0)
+	var placement := PlacementController.new()
+	placement.inventory = inventory
+	placement.begin_drag(0)
+	assert_eq(placement.active_slot, -1)
+	placement.free()
+	inventory.free()
+
+
+func test_disarming_a_drag_stops_tracking() -> void:
+	var placement := PlacementController.new()
+	placement._dragging = true
+	placement._disarm_drag()
+	assert_false(placement._dragging)
+	placement.free()
+
+
+func test_a_lifted_touch_drag_can_still_reach_the_bottom_row() -> void:
+	var previous_grid := Game.grid
+	var previous_projection := Game.projection
+	Game.grid = GridModel.new(Vector2i(20, 20), 32.0)
+	Game.projection = ViewProjection.from_settings(Game.VIEW_SETTINGS)
+	var last_row := Vector2i(5, 19)
+	var finger := Game.projection.to_screen(Game.grid.cell_to_world(last_row)) \
+			+ Vector2(0.0, PlacementController.TOUCH_DRAG_LIFT)
+	var dropped := PlacementController.pointer_cell(finger, true, true)
+	Game.grid = previous_grid
+	Game.projection = previous_projection
+	assert_eq(dropped, last_row)

@@ -12,6 +12,7 @@ Android build (or on desktop with `-- --touch-ui`, to try the touch controls wit
 | --- | --- |
 | Left click | Tap (Godot emulates the mouse from touch) |
 | Placement preview follows the mouse, click places | Tap or drag moves the preview, tapping the preview again places (`PlacementController.touch_mode`) |
+| Click a card, then click the reef | Drag a card onto the reef and release; the preview is lifted above the finger while dragging |
 | Right click / Esc | **Annulla** button (`ui/b_touch_controls.gd`) or Back |
 | Space / Esc | **Pausa** button or Back |
 | 1-4 keys (badges on the cards) | Tap the card; badges hidden |

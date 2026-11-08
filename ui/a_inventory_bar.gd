@@ -19,7 +19,8 @@ func _ready() -> void:
 		var card := InventoryCard.new()
 		# Touch builds have no number keys, so no shortcut badge.
 		card.hotkey = 0 if Platform.is_touch() else i + 1
-		card.pressed.connect(placement.begin.bind(i))
+		# Press starts placement and arms a drag; releasing over the reef places.
+		card.button_down.connect(placement.begin_drag.bind(i))
 		add_child(card)
 		_cards.append(card)
 	inventory.model.item_available.connect(_on_item_available)
