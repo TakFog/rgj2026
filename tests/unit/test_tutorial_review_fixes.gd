@@ -41,7 +41,7 @@ func test_only_the_selected_chip_is_highlighted() -> void:
 	var rows: Array[int] = screen.get("_chip_rows")
 	var highlighted := 0
 	for i in chips.size():
-		var lit := chips[i].get_theme_color(&"font_color") == SeaStyle.SAND_COLOR
+		var lit := chips[i].get_theme_color(&"font_color") == SeaStyle.BUTTON_HIGHLIGHT_FONT_COLOR
 		if lit:
 			highlighted += 1
 			assert_eq(rows[i], 3)

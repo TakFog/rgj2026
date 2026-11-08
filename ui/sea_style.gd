@@ -10,7 +10,6 @@ const RIM_COLOR := InventoryCard.RIM_COLOR
 const SAND_COLOR := InventoryCard.SAND_COLOR
 const CAPTION_COLOR := InventoryCard.CAPTION_COLOR
 const SHADOW_COLOR := InventoryCard.SHADOW_COLOR
-const HOVER_TEXT_COLOR := Color(1, 1, 1)
 
 const BUTTON_PADDING := Vector2(18, 7)
 ## Small copy of the inventory cards' stone ring, nine-sliced around buttons:
@@ -40,6 +39,11 @@ const BUTTON_SIZE := Vector2(200, 52)
 const MENU_SEPARATION := 18
 ## Same translucent navy backdrop for every full-screen menu overlay.
 const OVERLAY_COLOR := Color(0.02, 0.05, 0.1, 0.85)
+## Stone-button labels sit on the sand frame: the window's navy reads better
+## there than the near-white caption, and a highlighted/selected action uses a
+## lighter blue so it still stands out.
+const BUTTON_FONT_COLOR := Color(OVERLAY_COLOR, 1.0)
+const BUTTON_HIGHLIGHT_FONT_COLOR := Color("#6fb7e8")
 ## Divider under a menu title: a short sea-glass rule, not a full-width
 ## separator. Keeps its decorative role without reading as default chrome.
 const DIVIDER_COLOR := Color(0.47, 0.8, 0.78, 0.3)
@@ -133,23 +137,23 @@ static func _apply_button_colors(button: Button) -> void:
 	focus.set_corner_radius_all(CORNER_RADIUS)
 	focus.anti_aliasing = true
 	button.add_theme_stylebox_override("focus", focus)
-	button.add_theme_color_override("font_color", CAPTION_COLOR)
-	button.add_theme_color_override("font_hover_color", HOVER_TEXT_COLOR)
-	button.add_theme_color_override("font_focus_color", CAPTION_COLOR)
-	button.add_theme_color_override("font_pressed_color", SAND_COLOR)
-	button.add_theme_color_override("font_hover_pressed_color", SAND_COLOR)
-	button.add_theme_color_override("font_disabled_color", Color(CAPTION_COLOR, 0.35))
+	button.add_theme_color_override("font_color", BUTTON_FONT_COLOR)
+	button.add_theme_color_override("font_hover_color", BUTTON_HIGHLIGHT_FONT_COLOR)
+	button.add_theme_color_override("font_focus_color", BUTTON_FONT_COLOR)
+	button.add_theme_color_override("font_pressed_color", BUTTON_HIGHLIGHT_FONT_COLOR)
+	button.add_theme_color_override("font_hover_pressed_color", BUTTON_HIGHLIGHT_FONT_COLOR)
+	button.add_theme_color_override("font_disabled_color", Color(BUTTON_FONT_COLOR, 0.35))
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 
-## Primary action (e.g. Resume): the stone frame already lit warm with a sand
-## caption, like a selected inventory card.
+## Primary action (e.g. Resume): the stone frame already lit warm with the
+## lighter blue caption, like a selected inventory card.
 static func style_highlighted_button(button: Button, thin := false) -> void:
 	style_button(button, thin)
 	button.add_theme_stylebox_override("normal", stone_box(BUTTON_PRESSED_TINT, thin))
-	button.add_theme_color_override("font_color", SAND_COLOR)
-	button.add_theme_color_override("font_focus_color", SAND_COLOR)
-	button.add_theme_color_override("font_hover_color", HOVER_TEXT_COLOR)
+	button.add_theme_color_override("font_color", BUTTON_HIGHLIGHT_FONT_COLOR)
+	button.add_theme_color_override("font_focus_color", BUTTON_HIGHLIGHT_FONT_COLOR)
+	button.add_theme_color_override("font_hover_color", BUTTON_HIGHLIGHT_FONT_COLOR)
 
 
 ## Nine-sliced stone frame tinted with `tint`, padded like the sea-card buttons;
