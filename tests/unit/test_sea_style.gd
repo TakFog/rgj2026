@@ -2,8 +2,9 @@ extends TestCase
 ## Guards the stone-button label colours: the menu window's navy on the sand
 ## frame, and a lighter blue once the button is highlighted or selected.
 
-func test_window_navy_is_the_opaque_overlay_blue() -> void:
-	assert_eq(SeaStyle.BUTTON_FONT_COLOR, Color(SeaStyle.OVERLAY_COLOR, 1.0))
+func test_button_colors_match_the_chosen_palette() -> void:
+	assert_eq(SeaStyle.BUTTON_FONT_COLOR, Color("#101f25"))
+	assert_eq(SeaStyle.BUTTON_HIGHLIGHT_FONT_COLOR, Color("#23434a"))
 
 
 func test_normal_button_labels_are_navy() -> void:

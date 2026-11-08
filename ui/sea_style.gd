@@ -39,11 +39,11 @@ const BUTTON_SIZE := Vector2(200, 52)
 const MENU_SEPARATION := 18
 ## Same translucent navy backdrop for every full-screen menu overlay.
 const OVERLAY_COLOR := Color(0.02, 0.05, 0.1, 0.85)
-## Stone-button labels sit on the sand frame: the window's navy reads better
+## Stone-button labels sit on the sand frame: the dark window blue reads better
 ## there than the near-white caption, and a highlighted/selected action uses a
-## lighter blue so it still stands out.
-const BUTTON_FONT_COLOR := Color(OVERLAY_COLOR, 1.0)
-const BUTTON_HIGHLIGHT_FONT_COLOR := Color("#6fb7e8")
+## slightly lighter blue so it still stands out.
+const BUTTON_FONT_COLOR := Color("#101f25")
+const BUTTON_HIGHLIGHT_FONT_COLOR := Color("#23434a")
 ## Divider under a menu title: a short sea-glass rule, not a full-width
 ## separator. Keeps its decorative role without reading as default chrome.
 const DIVIDER_COLOR := Color(0.47, 0.8, 0.78, 0.3)
