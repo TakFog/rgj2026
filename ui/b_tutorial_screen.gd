@@ -55,6 +55,17 @@ static func starts_run(mode: Mode) -> bool:
 	return mode == Mode.START
 
 
+## Caption under the stage. Rows can override the generic "agent → target"
+## line to teach an input (the fish/nest clicks); touch builds get their own
+## wording without changing the mouse one.
+static func caption_for(row: Dictionary, touch: bool) -> String:
+	if touch and row.has("caption_touch"):
+		return row["caption_touch"]
+	if row.has("caption"):
+		return row["caption"]
+	return "%s → %s: %s" % [row["agent"], row["target"], row["short"]]
+
+
 ## Esc is both CANCEL and PAUSE: cancel wins, so Esc goes back/skips and Space
 ## (pause only) advances the vignette.
 static func action_for(is_cancel: bool, is_pause: bool) -> InputAction:
@@ -207,7 +218,7 @@ func _select_interaction(index: int) -> void:
 	_elapsed = 0.0
 	var row := TutorialInteractions.ROWS[index]
 	_stage.show_interaction(row)
-	_caption.text = "%s → %s: %s" % [row["agent"], row["target"], row["short"]]
+	_caption.text = caption_for(row, Platform.is_touch())
 	_refresh_chips()
 
 

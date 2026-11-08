@@ -21,10 +21,7 @@ func test_rows_cover_the_gdd_interactions() -> void:
 		"CO₂|Nido con uova",
 		"Busta|Pesce",
 		"Busta|Corallo",
-		"Ciclone|Pesce o alga",
-		"Ciclone|Nido",
-		"Ciclone|CO₂ o busta",
-		"Ciclone|Predatore",
+		"Ciclone|Pesce, alga, nido e predatore",
 		"Ciclone|Corallo",
 		"Predatore|Pesce",
 		"Predatore|Nido con uova",
@@ -36,7 +33,20 @@ func test_rows_cover_the_gdd_interactions() -> void:
 
 
 func test_rows_have_enough_entries_for_a_real_reference() -> void:
-	assert_true(TutorialInteractions.ROWS.size() >= 16)
+	assert_true(TutorialInteractions.ROWS.size() >= 15)
+
+
+func test_cyclone_rows_are_compacted_into_one_sweep() -> void:
+	var ids := {}
+	for row in TutorialInteractions.ROWS:
+		ids[row["id"]] = true
+	for old in [
+		&"cyclone_fish_algae", &"cyclone_nest", &"cyclone_threat", &"cyclone_predator",
+	]:
+		assert_false(ids.has(old), "%s must be folded into the cyclone sweep" % old)
+	assert_true(ids.has(&"cyclone_rampage"), "the compacted cyclone row is missing")
+	assert_true(ids.has(&"cyclone_coral"),
+			"the coral destroying the cyclone keeps its own row")
 
 
 func test_turtle_leaves_the_predator_on_stage() -> void:

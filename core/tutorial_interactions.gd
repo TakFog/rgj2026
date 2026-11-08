@@ -19,6 +19,8 @@ const ROWS: Array[Dictionary] = [
 		"agent_id": &"fish", "target": "Nido", "target_id": &"nest",
 		"short": "feconda il nido", "color": Color(0.55, 0.8, 1.0),
 		"agent_end": "stay", "target_end": "stay",
+		"caption": "Clicca il pesce, poi il nido: dalle uova nascono due piccoli.",
+		"caption_touch": "Tocca il pesce, poi il nido: dalle uova nascono due piccoli.",
 	},
 	{
 		"id": &"fish_algae", "group": "Pesce", "agent": "Pesce",
@@ -63,28 +65,14 @@ const ROWS: Array[Dictionary] = [
 		"agent_end": "vanish", "target_end": "damage",
 	},
 	{
-		"id": &"cyclone_fish_algae", "group": "Ciclone", "agent": "Ciclone",
-		"agent_id": &"cyclone", "target": "Pesce o alga", "target_id": &"fish",
+		# One sweep for everything the cyclone wipes out; the coral reaction keeps
+		# its own row because there the coral is the one that destroys the cyclone.
+		"id": &"cyclone_rampage", "group": "Ciclone", "agent": "Ciclone",
+		"agent_id": &"cyclone", "target": "Pesce, alga, nido e predatore",
+		"target_id": &"fish",
 		"short": "distrutti", "color": Color(0.45, 0.85, 0.95),
 		"agent_end": "pass", "target_end": "vanish",
-	},
-	{
-		"id": &"cyclone_nest", "group": "Ciclone", "agent": "Ciclone",
-		"agent_id": &"cyclone", "target": "Nido", "target_id": &"nest",
-		"short": "nido distrutto", "color": Color(0.45, 0.85, 0.95),
-		"agent_end": "pass", "target_end": "vanish",
-	},
-	{
-		"id": &"cyclone_threat", "group": "Ciclone", "agent": "Ciclone",
-		"agent_id": &"cyclone", "target": "CO₂ o busta", "target_id": &"co2",
-		"short": "minaccia via", "color": Color(0.45, 0.85, 0.95),
-		"agent_end": "pass", "target_end": "vanish",
-	},
-	{
-		"id": &"cyclone_predator", "group": "Ciclone", "agent": "Ciclone",
-		"agent_id": &"cyclone", "target": "Predatore", "target_id": &"predator",
-		"short": "predatore via", "color": Color(0.45, 0.85, 0.95),
-		"agent_end": "pass", "target_end": "vanish",
+		"caption": "Il ciclone spazza via pesce, alga, nido e predatore, uno dopo l'altro.",
 	},
 	{
 		"id": &"cyclone_coral", "group": "Ciclone", "agent": "Ciclone",

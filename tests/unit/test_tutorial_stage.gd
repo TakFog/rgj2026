@@ -23,7 +23,7 @@ func test_rebuilding_an_interaction_does_not_stack_visuals() -> void:
 func test_cyclone_agent_uses_the_animated_visual() -> void:
 	var stage := TutorialStage.new()
 	autofree(stage)
-	stage.show_interaction(_row(&"cyclone_fish_algae"))
+	stage.show_interaction(_row(&"cyclone_rampage"))
 	var agent: Node2D = stage.get("_agent")
 	assert_true(agent is CycloneVisual, "the tutorial cyclone must use the game's animated visual")
 	if not (agent is CycloneVisual):
@@ -107,6 +107,30 @@ func test_hatching_empties_the_nest() -> void:
 	tween.custom_step(3.5)
 	assert_eq(nest.texture, Nest.EMPTY_TEXTURE, "nest must be empty after the eggs hatch")
 	stage.free()
+
+
+func test_nest_vignette_points_the_hand_at_fish_and_nest() -> void:
+	var stage := TutorialStage.new()
+	autofree(stage)
+	stage.show_interaction(_row(&"fish_nest"))
+	var hand: Sprite2D = stage.get("_hand")
+	var adult: FishVisual = stage.get("_adult")
+	assert_true(hand != null, "the fish/nest vignette needs a pointing hand")
+	if hand == null:
+		return
+	assert_eq(hand.texture, TutorialStage.HAND_TEXTURE)
+	assert_true(hand.z_index > adult.z_index, "the hand must draw over the fish")
+
+
+func test_cyclone_rampage_wipes_out_four_targets() -> void:
+	var stage := TutorialStage.new()
+	autofree(stage)
+	stage.show_interaction(_row(&"cyclone_rampage"))
+	assert_true(stage.get("_agent") is CycloneVisual, "the sweep needs the animated cyclone")
+	var victims: Array = stage.get("_rampage")
+	assert_eq(victims.size(), 4, "the sweep destroys four targets")
+	stage.stop()
+	assert_eq(stage.sprite_count(), 0)
 
 
 func test_turtle_faces_the_way_it_swims() -> void:

@@ -13,6 +13,17 @@ func test_review_mode_only_goes_back() -> void:
 	assert_false(TutorialScreen.starts_run(TutorialScreen.Mode.REVIEW))
 
 
+func test_nest_caption_explains_the_two_clicks() -> void:
+	var row := {}
+	for candidate in TutorialInteractions.ROWS:
+		if candidate["id"] == &"fish_nest":
+			row = candidate
+	assert_false(row.is_empty(), "fish_nest row missing")
+	assert_true("Clicca il pesce" in TutorialScreen.caption_for(row, false))
+	assert_true("Tocca il pesce" in TutorialScreen.caption_for(row, true),
+			"the touch build must not tell the player to click")
+
+
 func test_input_mapping() -> void:
 	assert_eq(TutorialScreen.action_for(true, true), TutorialScreen.InputAction.PRIMARY)
 	assert_eq(TutorialScreen.action_for(false, true), TutorialScreen.InputAction.NEXT)

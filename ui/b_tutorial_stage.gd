@@ -15,6 +15,21 @@ const CONTENT_CENTER := Vector2(3.7, 2.0)
 const NEST_HEIGHT := 130.0
 const ALGAE_HEIGHT := 105.0
 const CORAL_HEIGHT := 140.0
+## Pointing hand used to show the clicks the game asks for. The fingertip sits
+## at the top of the art, so the sprite is shifted down by this fraction of its
+## height to put the tip on the target cell.
+const HAND_TEXTURE: Texture2D = preload("res://assets/ui/hand_pointer.png")
+const HAND_HEIGHT := 46.0
+const HAND_TIP_OFFSET_RATIO := 0.46
+## The compacted cyclone vignette: one funnel sweeps across the reef and wipes
+## out these four, in this order (CO₂ and the bag are left out to fit).
+const RAMPAGE_START_CELL := Vector2(0.5, 2.1)
+const RAMPAGE_END_CELL := Vector2(6.6, 2.1)
+const RAMPAGE_CELLS: Array[Vector2] = [
+	Vector2(2.0, 2.1), Vector2(3.1, 2.1), Vector2(4.2, 2.1), Vector2(5.8, 2.1),
+]
+const RAMPAGE_HIT_DELAYS: Array[float] = [1.2, 2.0, 2.8, 3.8]
+const RAMPAGE_SWEEP_SECONDS := 4.2
 ## Every vignette starts fading out at FADE_START and is gone after FADE_SECONDS;
 ## TIMELINE_SECONDS covers the whole animation, so the screen can loop on it.
 const FADE_START := 5.2
@@ -33,6 +48,7 @@ const Z_BY_ID := {
 	&"predator": 20,
 	&"turtle": 22,
 	&"cyclone": 24,
+	&"hand": 30,
 }
 
 var _projection: ViewProjection
@@ -43,6 +59,7 @@ var _extra: Array[Tween] = []
 var _nest: Sprite2D
 var _ring: ClockRing
 var _adult: FishVisual
+var _hand: Sprite2D
 var _co2_cloud: Co2Bubbles
 var _algae_a: Sprite2D
 var _ghost_algae: Sprite2D
@@ -51,6 +68,9 @@ var _oxygen_bar: OxygenBar
 ## Generic interaction vignette (agent on the left, target on the right).
 var _agent: Node2D
 var _target: Node2D
+## Compacted cyclone vignette: the funnel and the row of victims it sweeps.
+var _cyclone_visual: CycloneVisual
+var _rampage: Array[Node2D] = []
 ## The row currently being shown; its agent_end/target_end drive the outcome.
 var _data: Dictionary = {}
 ## Stage origin the current vignette was built around; on resize the visual
@@ -106,6 +126,7 @@ func show_interaction(data: Dictionary) -> void:
 		&"fish_nest": _build_nest()
 		&"co2_algae": _build_co2()
 		&"algae_coral": _build_coral()
+		&"cyclone_rampage": _build_rampage()
 		_: _build_generic(data)
 	if is_inside_tree():
 		_animate(id)
@@ -145,6 +166,11 @@ func _pos(cell: Vector2) -> Vector2:
 	return _origin + _projection.to_screen(cell - CONTENT_CENTER) - _projection.to_screen(Vector2.ZERO)
 
 
+## Screen point where the pointing hand's fingertip should land.
+func _hand_at(cell: Vector2) -> Vector2:
+	return _pos(cell) + Vector2(0.0, HAND_HEIGHT * HAND_TIP_OFFSET_RATIO)
+
+
 func _sprite(texture: Texture2D, height_px: float, cell: Vector2, tint := Color.WHITE) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.modulate = tint
@@ -172,8 +198,8 @@ func _fish(cell: Vector2, adult: bool, heading: Vector2) -> FishVisual:
 	return fish
 
 
-func _algae(cell: Vector2) -> Sprite2D:
-	var sprite := _sprite(Algae.TEXTURE, ALGAE_HEIGHT, cell, Algae.SPRITE_TINT)
+func _algae(cell: Vector2, height_px := ALGAE_HEIGHT) -> Sprite2D:
+	var sprite := _sprite(Algae.TEXTURE, height_px, cell, Algae.SPRITE_TINT)
 	var sway := ShaderMaterial.new()
 	sway.shader = Algae.SWAY_SHADER
 	sway.set_shader_parameter("phase", cell.x * 0.73 + cell.y * 1.21)
@@ -241,6 +267,11 @@ func _pulse(item: Node2D, amount: float, seconds: float) -> void:
 	tween.tween_property(item, "scale", base, seconds * 0.6)
 
 
+## Quick press-and-release, read as a click on the item under the hand.
+func _press(item: Node2D) -> void:
+	_pulse(item, 0.82, 0.22)
+
+
 ## Fades every stage visual; used at the end of each vignette.
 func _fade_all(progress: float) -> void:
 	for child in visual_nodes():
@@ -259,6 +290,7 @@ func _clear() -> void:
 	_nest = null
 	_ring = null
 	_adult = null
+	_hand = null
 	_co2_cloud = null
 	_algae_a = null
 	_ghost_algae = null
@@ -266,6 +298,8 @@ func _clear() -> void:
 	_oxygen_bar = null
 	_agent = null
 	_target = null
+	_cyclone_visual = null
+	_rampage.clear()
 	_data = {}
 	if _layer == null:
 		return
@@ -277,6 +311,10 @@ func _build_nest() -> void:
 	_nest = _sprite(Nest.EMPTY_TEXTURE, NEST_HEIGHT, Vector2(5.0, 2.0))
 	_nest.z_index = Z_BY_ID[&"nest"]
 	_adult = _fish(Vector2(1.2, 2.7), true, Vector2.RIGHT)
+	_hand = _sprite(HAND_TEXTURE, HAND_HEIGHT, Vector2(1.2, 2.7))
+	_hand.position = _hand_at(Vector2(1.2, 2.7))
+	_hand.modulate.a = 0.0
+	_hand.z_index = Z_BY_ID[&"hand"]
 	_ring = ClockRing.new()
 	_ring.position = _pos(Vector2(5.0, 2.0))
 	_ring.visible = false
@@ -296,6 +334,26 @@ func _build_coral() -> void:
 	_ghost_algae = _algae(Vector2(4.0, 2.2))
 	_ghost_algae.scale = Vector2.ZERO
 	_oxygen_bar = _make_oxygen_bar(Vector2(5.0, 2.2))
+
+
+## One funnel sweeping across a row of victims, smaller than in the single-target
+## vignettes so all four fit on the stage at once.
+func _build_rampage() -> void:
+	_agent = _cyclone(RAMPAGE_START_CELL)
+	_cyclone_visual = _agent as CycloneVisual
+	_rampage = []
+	_rampage.append(_fish(RAMPAGE_CELLS[0], true, Vector2.RIGHT))
+	_rampage.append(_algae(RAMPAGE_CELLS[1], 70.0))
+	_rampage.append(_rampage_sprite(Nest.EMPTY_TEXTURE, 80.0, RAMPAGE_CELLS[2],
+			Z_BY_ID[&"nest"]))
+	_rampage.append(_rampage_sprite(PredatorVisual.TEXTURE, 52.0, RAMPAGE_CELLS[3],
+			Z_BY_ID[&"predator"]))
+
+
+func _rampage_sprite(texture: Texture2D, height_px: float, cell: Vector2, z: int) -> Sprite2D:
+	var sprite := _sprite(texture, height_px, cell)
+	sprite.z_index = z
+	return sprite
 
 
 func _build_generic(data: Dictionary) -> void:
@@ -335,6 +393,7 @@ func _animate(id: StringName) -> void:
 		&"fish_nest": _animate_nest(tween)
 		&"co2_algae": _animate_co2(tween)
 		&"algae_coral": _animate_coral(tween)
+		&"cyclone_rampage": _animate_rampage(tween)
 		_: _animate_generic(tween)
 
 
@@ -342,22 +401,36 @@ func _animate_nest(tween: Tween) -> void:
 	var adult := _adult
 	var nest := _nest
 	var ring := _ring
-	tween.tween_property(adult, "position", _pos(Vector2(5.0, 2.0)), 1.6).set_delay(0.2)
+	var hand := _hand
+	# The hand shows the two clicks the game asks for: select the fish, then
+	# send it to the nest by clicking the nest.
+	tween.tween_property(hand, "modulate:a", 1.0, 0.15).set_delay(0.1)
 	tween.tween_callback(func() -> void:
+		adult.selected = true
+		_press(hand)
+	).set_delay(0.3)
+	tween.tween_property(hand, "position", _hand_at(Vector2(5.0, 2.0)), 0.35).set_delay(0.55)
+	tween.tween_callback(func() -> void:
+		_press(hand)
+	).set_delay(0.95)
+	tween.tween_property(hand, "modulate:a", 0.0, 0.3).set_delay(1.1)
+	tween.tween_property(adult, "position", _pos(Vector2(5.0, 2.0)), 1.2).set_delay(1.0)
+	tween.tween_callback(func() -> void:
+		adult.selected = false
 		_fit(nest, Nest.EGGS_TEXTURE, NEST_HEIGHT)
 		_pulse(nest, 1.08, 0.3)
 		ring.visible = true
-	).set_delay(1.8)
-	tween.tween_property(ring, "ratio", 1.0, 1.6).set_delay(1.8)
+	).set_delay(2.2)
+	tween.tween_property(ring, "ratio", 1.0, 1.1).set_delay(2.2)
 	tween.tween_callback(func() -> void:
 		_hatch_nest(nest)
-	).set_delay(3.4)
+	).set_delay(3.3)
 	for i in 2:
 		var juvenile := _fish(Vector2(5.0, 2.0), false, Vector2.LEFT if i == 0 else Vector2.RIGHT)
 		juvenile.modulate.a = 0.0
 		var target := Vector2(3.8, 1.5) if i == 0 else Vector2(6.2, 1.5)
-		tween.tween_property(juvenile, "modulate:a", 1.0, 0.2).set_delay(3.4)
-		tween.tween_property(juvenile, "position", _pos(target), 1.4).set_delay(3.4)
+		tween.tween_property(juvenile, "modulate:a", 1.0, 0.2).set_delay(3.3)
+		tween.tween_property(juvenile, "position", _pos(target), 1.4).set_delay(3.3)
 	tween.tween_method(_fade_all, 0.0, 1.0, FADE_SECONDS).set_delay(FADE_START)
 
 
@@ -391,6 +464,23 @@ func _animate_coral(tween: Tween) -> void:
 	tween.tween_property(_coral_sprite, "modulate", Color(2.0, 0.6, 0.6), 0.3).set_delay(1.0)
 	tween.tween_property(_coral_sprite, "modulate", Coral.CORAL_HEALTHY_TINT, 0.3).set_delay(1.3)
 	tween.tween_property(_oxygen_bar, "ratio", 0.8, 0.4).set_delay(1.2)
+	tween.tween_method(_fade_all, 0.0, 1.0, FADE_SECONDS).set_delay(FADE_START)
+
+
+## The funnel crosses the row; each victim disappears as it reaches it.
+func _animate_rampage(tween: Tween) -> void:
+	var cyclone := _cyclone_visual
+	tween.tween_property(cyclone, "position", _pos(RAMPAGE_END_CELL),
+			RAMPAGE_SWEEP_SECONDS).set_delay(0.2)
+	for i in _rampage.size():
+		var victim: Node2D = _rampage[i]
+		tween.tween_callback(func() -> void:
+			_pulse(cyclone, 1.06, 0.2)
+			_fade_out(victim, 0.3)
+		).set_delay(RAMPAGE_HIT_DELAYS[i])
+	tween.tween_callback(func() -> void:
+		_move_out(cyclone, Vector2.RIGHT, 140.0, 0.6)
+	).set_delay(4.4)
 	tween.tween_method(_fade_all, 0.0, 1.0, FADE_SECONDS).set_delay(FADE_START)
 
 
