@@ -3,13 +3,22 @@ extends BaseButton
 ## One inventory slot drawn as a sea-themed card (GDD §9): the item's own art
 ## (corals in their actual footprint, seen through the game's oblique view),
 ## a caption, and a radial refill ring while the slot is empty.
-## Fully custom-drawn: no default Godot button styling.
+## Fully custom-drawn: no default Godot button styling. The frame is a painted
+## ring of sea stones around a sandy floor; the art sits on the sand.
 
 const CARD_SIZE := Vector2(104, 114)
 const CORNER_RADIUS := 14
-const CAPTION_HEIGHT := 22.0
 const CAPTION_FONT_SIZE := 14
-const ICON_PADDING := 10.0
+## Painted stone ring, stretched over the whole card.
+const FRAME_TEXTURE := preload("res://assets/ui/inventory_card.png")
+## The frame's sandy interior, as fractions of the card: the item art goes here.
+const SAND_AREA := Rect2(0.22, 0.22, 0.56, 0.54)
+## Caption baseline, measured up from the card's bottom edge (on the stones).
+const CAPTION_BOTTOM := 9.0
+## Frame tints: dimmed while the slot refills, brighter on hover, warm when selected.
+const FRAME_EMPTY_TINT := Color(0.6, 0.62, 0.62, 0.8)
+const FRAME_HOVER_TINT := Color(1.15, 1.15, 1.15)
+const FRAME_SELECTED_TINT := Color(1.25, 1.12, 0.9)
 ## Radius of the keyboard-shortcut badge drawn in the top-left corner.
 const SHORTCUT_RADIUS := 10.0
 const SHORTCUT_FONT_SIZE := 12
@@ -28,7 +37,6 @@ const RIM_COLOR := Color(0.47, 0.8, 0.78)
 const SAND_COLOR := Color(0.98, 0.78, 0.45)
 const SHADOW_COLOR := Color(0.0, 0.03, 0.04, 0.5)
 const CAPTION_COLOR := Color(0.88, 0.94, 0.91)
-const SEABED_COLOR := Color(0.98, 0.78, 0.45, 0.06)
 
 const NAMES := {
 	InventoryModel.CORAL: "Corallo",
@@ -66,7 +74,9 @@ func _ready() -> void:
 	focus_mode = Control.FOCUS_NONE
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	pivot_offset = CARD_SIZE * 0.5
-	_style.set_corner_radius_all(CORNER_RADIUS)
+	# Only the glow behind the stones: no fill, no border.
+	_style.draw_center = false
+	_style.set_corner_radius_all(CORNER_RADIUS * 2)
 	_style.anti_aliasing = true
 	mouse_entered.connect(queue_redraw)
 	mouse_exited.connect(queue_redraw)
@@ -130,46 +140,34 @@ func _draw_shortcut() -> void:
 
 func _draw_frame() -> void:
 	var hovered := is_hovered() and not disabled
-	_style.bg_color = BG_EMPTY_COLOR if item.is_empty() else BG_COLOR
-	_style.set_border_width_all(3 if selected else 2)
-	if selected:
-		_style.border_color = SAND_COLOR
-		_style.shadow_color = Color(SAND_COLOR, 0.3)
-		_style.shadow_size = 9
-		_style.shadow_offset = Vector2.ZERO
+	var tint := Color.WHITE
+	if item.is_empty():
+		tint = FRAME_EMPTY_TINT
+	elif selected:
+		tint = FRAME_SELECTED_TINT
 	elif hovered:
-		_style.border_color = Color(RIM_COLOR, 0.9)
-		_style.shadow_color = Color(RIM_COLOR, 0.18)
-		_style.shadow_size = 7
-		_style.shadow_offset = Vector2.ZERO
-	else:
-		_style.border_color = Color(RIM_COLOR, 0.18 if item.is_empty() else 0.45)
-		# No drop shadow at rest: the thin rim is enough, and avoids a heavy
-		# dashboard look over the bright reef.
-		_style.shadow_color = SHADOW_COLOR
-		_style.shadow_size = 0
-		_style.shadow_offset = Vector2.ZERO
-	draw_style_box(_style, Rect2(Vector2.ZERO, size))
+		tint = FRAME_HOVER_TINT
+	if selected or hovered:
+		_style.shadow_color = Color(SAND_COLOR, 0.35) if selected else Color(RIM_COLOR, 0.2)
+		_style.shadow_size = 9 if selected else 7
+		draw_style_box(_style, Rect2(Vector2.ZERO, size).grow(-4.0))
+	draw_texture_rect(FRAME_TEXTURE, Rect2(Vector2.ZERO, size), false, tint)
 
 
 func _icon_rect() -> Rect2:
-	var rect := Rect2(Vector2.ZERO, size - Vector2(0, CAPTION_HEIGHT))
-	return rect.grow(-ICON_PADDING)
+	return Rect2(SAND_AREA.position * size, SAND_AREA.size * size)
 
 
 func _draw_caption() -> void:
 	var font := get_theme_default_font()
 	var color := SAND_COLOR if selected else CAPTION_COLOR
-	var baseline := size.y - (CAPTION_HEIGHT - CAPTION_FONT_SIZE) * 0.5 - 6.0
-	draw_string(font, Vector2(0, baseline), caption(item), HORIZONTAL_ALIGNMENT_CENTER, size.x, CAPTION_FONT_SIZE, color)
+	var baseline := Vector2(0, size.y - CAPTION_BOTTOM)
+	# Dark outline keeps the caption readable over the mottled stones.
+	draw_string_outline(font, baseline, caption(item), HORIZONTAL_ALIGNMENT_CENTER, size.x, CAPTION_FONT_SIZE, 4, SHADOW_COLOR)
+	draw_string(font, baseline, caption(item), HORIZONTAL_ALIGNMENT_CENTER, size.x, CAPTION_FONT_SIZE, color)
 
 
 func _draw_icon(area: Rect2) -> void:
-	# A soft patch of sand under the art ties the card to the reef map.
-	var seabed_center := Vector2(area.get_center().x, area.end.y - area.size.y * 0.12)
-	draw_set_transform(seabed_center - Vector2(0, _lift), 0.0, Vector2(1.0, 0.38))
-	draw_circle(Vector2.ZERO, area.size.x * 0.5, SEABED_COLOR)
-	draw_set_transform(Vector2(0, -_lift))
 	match item["kind"]:
 		InventoryModel.CORAL:
 			_draw_coral(area, item["shape_id"])
