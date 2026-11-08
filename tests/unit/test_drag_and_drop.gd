@@ -70,3 +70,39 @@ func test_a_lifted_touch_drag_can_still_reach_the_bottom_row() -> void:
 	Game.grid = previous_grid
 	Game.projection = previous_projection
 	assert_eq(dropped, last_row)
+
+
+func test_a_cancelled_touch_release_does_not_place() -> void:
+	var placement := PlacementController.new()
+	placement.active_slot = 0
+	placement._dragging = true
+	var event := InputActions.mouse_event(MOUSE_BUTTON_LEFT, false)
+	event.pressed = false
+	event.canceled = true
+	placement._input(event)
+	assert_false(placement._dragging)
+	assert_eq(placement.active_slot, 0, "a cancelled gesture leaves placement active")
+	placement.free()
+
+
+func test_focus_loss_disarms_the_drag() -> void:
+	var placement := PlacementController.new()
+	placement.active_slot = 0
+	placement._dragging = true
+	placement._notification(PlacementController.NOTIFICATION_WM_WINDOW_FOCUS_OUT)
+	assert_false(placement._dragging)
+	placement._dragging = true
+	placement._notification(PlacementController.NOTIFICATION_APPLICATION_FOCUS_OUT)
+	assert_false(placement._dragging)
+	placement.free()
+
+
+func test_a_new_press_disarms_a_stale_drag() -> void:
+	var placement := PlacementController.new()
+	placement.active_slot = 0
+	placement._dragging = true
+	var event := InputActions.mouse_event(MOUSE_BUTTON_LEFT, false)
+	event.pressed = true
+	placement._input(event)
+	assert_false(placement._dragging)
+	placement.free()

@@ -396,4 +396,4 @@ git commit -m "Place inventory items by dragging cards onto the reef"
 - Desktop: press a card, drag over the reef, release on a valid cell — the item is placed. Press and release the card without moving, then click the reef — the old flow still works.
 - Desktop: drag and release on an occupied cell — the red preview stays and the item is not consumed. Drag outside the reef — placement cancels.
 - Android (`-- --touch-ui` on desktop, or an APK on a phone): drag a card with a finger; the preview sits above the fingertip, including the bottom row. Releasing places it there.
-- Pause or alt-tab mid-drag, resume, then click the reef — no item is placed by the stale drag.
+- Pause or alt-tab mid-drag, resume: the stale drag must not place the item; the next deliberate click on the reef places normally (placement stays active, as the spec says). An OS-cancelled touch gesture (call, notification shade) behaves the same way.

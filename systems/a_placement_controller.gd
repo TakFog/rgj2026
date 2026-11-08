@@ -227,9 +227,10 @@ func _input(event: InputEvent) -> void:
 	var button := event as InputEventMouseButton
 	if button == null or button.button_index != MOUSE_BUTTON_LEFT:
 		return
-	if button.pressed:
-		# A release was missed (e.g. the tree paused mid-drag): never let the
-		# stale drag place the item on this new press.
+	if button.pressed or button.canceled:
+		# A release was missed or the OS cancelled the touch gesture (system
+		# gesture, call, notification shade). Never let the stale drag place
+		# the item; leave placement active so the player can try again.
 		_disarm_drag()
 		return
 	_finish_drag()
