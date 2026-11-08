@@ -22,6 +22,21 @@ const GHOST_REFRESH_SECONDS := 0.1
 ## Touch preview origin before the first tap on the reef: no ghost is shown.
 const NO_CELL := Vector2i(-(1 << 30), -(1 << 30))
 
+## What releasing a drag does.
+enum DropResult {
+	IGNORED, ## Moved less than the dead zone: it was a click/tap, placement stays active.
+	PLACE, ## Released on a valid cell: place the item.
+	KEEP, ## Released on an invalid cell inside the reef: keep placing it.
+	CANCEL, ## Released outside the reef: cancel and return the item.
+}
+
+## Screen pixels the pointer must travel before a press becomes a drag. Keeps a
+## plain click/tap on a card from being treated as a zero-length drag.
+const DRAG_DEAD_ZONE := 10.0
+## Touch drags lift the ghost this many screen pixels above the fingertip, so
+## the finger does not cover it. About two rows at the default camera zoom.
+const TOUCH_DRAG_LIFT := 40.0
+
 var inventory: InventorySystem
 var active_slot := -1
 ## Touch builds (Platform.is_touch) have no hover: the ghost sits where the
@@ -107,6 +122,24 @@ func try_place_at(origin: Vector2i) -> bool:
 ## tap only moves the preview there.
 static func touch_tap_confirms(previewed: Vector2i, tapped: Vector2i) -> bool:
 	return previewed != NO_CELL and previewed == tapped
+
+
+## What a drag release does. `moved_px` is the pointer travel since the card
+## was pressed, `inside` is whether the drop cell is on the reef and `valid`
+## is whether the item can be placed there.
+static func drop_result(moved_px: float, inside: bool, valid: bool) -> DropResult:
+	if moved_px < DRAG_DEAD_ZONE:
+		return DropResult.IGNORED
+	if not inside:
+		return DropResult.CANCEL
+	return DropResult.PLACE if valid else DropResult.KEEP
+
+
+## Screen-space offset applied to the pointer while dragging on touch.
+static func drag_lift(touch: bool, dragging: bool) -> Vector2:
+	if touch and dragging:
+		return Vector2(0.0, -TOUCH_DRAG_LIFT)
+	return Vector2.ZERO
 
 
 ## Cell the ghost is anchored to: the mouse, or the last tap/drag on touch.
