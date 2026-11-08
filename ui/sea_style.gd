@@ -21,6 +21,9 @@ const BUTTON_PADDING := Vector2(18, 7)
 const BUTTON_FRAME_TEXTURE := preload("res://assets/ui/button_frame.png")
 ## Source pixels kept unscaled at each corner of the button frame.
 const BUTTON_FRAME_MARGIN := 15.0
+## Smaller stones for short buttons (tutorial chips), same quarter-margin rule.
+const THIN_FRAME_TEXTURE := preload("res://assets/ui/button_frame_thin.png")
+const THIN_FRAME_MARGIN := 9.0
 ## Frame tints per state, like InventoryCard's frame.
 const BUTTON_HOVER_TINT := Color(1.15, 1.15, 1.15)
 const BUTTON_PRESSED_TINT := Color(1.25, 1.12, 0.9)
@@ -110,15 +113,16 @@ static func menu_button(text: String, flat := false) -> Button:
 
 
 ## Restyles a Button as a stone-framed card, like the inventory cards: brighter
-## on hover, warm when pressed, dimmed when disabled.
-static func style_button(button: Button) -> void:
+## on hover, warm when pressed, dimmed when disabled. `thin` uses smaller
+## stones, for short buttons.
+static func style_button(button: Button, thin := false) -> void:
 	_apply_button_colors(button)
-	var pressed := stone_box(BUTTON_PRESSED_TINT)
-	button.add_theme_stylebox_override("normal", stone_box(Color.WHITE))
-	button.add_theme_stylebox_override("hover", stone_box(BUTTON_HOVER_TINT))
+	var pressed := stone_box(BUTTON_PRESSED_TINT, thin)
+	button.add_theme_stylebox_override("normal", stone_box(Color.WHITE, thin))
+	button.add_theme_stylebox_override("hover", stone_box(BUTTON_HOVER_TINT, thin))
 	button.add_theme_stylebox_override("pressed", pressed)
 	button.add_theme_stylebox_override("hover_pressed", pressed)
-	button.add_theme_stylebox_override("disabled", stone_box(BUTTON_DISABLED_TINT))
+	button.add_theme_stylebox_override("disabled", stone_box(BUTTON_DISABLED_TINT, thin))
 	# Dark outline keeps the label readable over the mottled stones.
 	button.add_theme_color_override("font_outline_color", SHADOW_COLOR)
 	button.add_theme_constant_override("outline_size", 4)
@@ -176,19 +180,20 @@ static func _apply_button_colors(button: Button) -> void:
 
 ## Primary action (e.g. Resume): the stone frame already lit warm with a sand
 ## caption, like a selected inventory card.
-static func style_highlighted_button(button: Button) -> void:
-	style_button(button)
-	button.add_theme_stylebox_override("normal", stone_box(BUTTON_PRESSED_TINT))
+static func style_highlighted_button(button: Button, thin := false) -> void:
+	style_button(button, thin)
+	button.add_theme_stylebox_override("normal", stone_box(BUTTON_PRESSED_TINT, thin))
 	button.add_theme_color_override("font_color", SAND_COLOR)
 	button.add_theme_color_override("font_focus_color", SAND_COLOR)
 	button.add_theme_color_override("font_hover_color", HOVER_TEXT_COLOR)
 
 
-## Nine-sliced stone frame tinted with `tint`, padded like the sea-card buttons.
-static func stone_box(tint: Color) -> StyleBoxTexture:
+## Nine-sliced stone frame tinted with `tint`, padded like the sea-card buttons;
+## `thin` uses the smaller stones.
+static func stone_box(tint: Color, thin := false) -> StyleBoxTexture:
 	var box := StyleBoxTexture.new()
-	box.texture = BUTTON_FRAME_TEXTURE
-	box.set_texture_margin_all(BUTTON_FRAME_MARGIN)
+	box.texture = THIN_FRAME_TEXTURE if thin else BUTTON_FRAME_TEXTURE
+	box.set_texture_margin_all(THIN_FRAME_MARGIN if thin else BUTTON_FRAME_MARGIN)
 	box.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT
 	box.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT
 	box.modulate_color = tint
