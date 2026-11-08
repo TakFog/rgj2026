@@ -37,7 +37,11 @@ Captions, tagline and credits are constants/strings in
 `tools/trailer/trailer_director.gd` (`_run()` holds the whole timeline, one
 numbered block per beat). Scripted events use a fixed seed (`SEED`), but the
 inventory draws and fish behaviour stay random, so each take differs slightly
-in what appears where and in total length (~70-75 s).
+in what appears where and in total length (~52-56 s).
+
+The trailer must last **at most 60 s** (jam rule): `tools/trailer.sh` fails
+after encoding if the take is longer. When adding a beat, shorten others to
+stay within the limit with a few seconds of margin for take-to-take variance.
 
 If a game change renames `DevASystems/PlacementController`,
 `DevBSystems/FishCommander`, `DevBSystems/PauseController`, the

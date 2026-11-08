@@ -12,7 +12,8 @@ const LOGO: Texture2D = preload("res://assets/ui/logo.png")
 ## Fixed seed: the scripted threats enter from the same edges on every take.
 const SEED := 2026
 const CAPTION_FONT_SIZE := 34
-const CURSOR_SPEED := 900.0 # screen pixels per second
+const CURSOR_SPEED := 1400.0 # screen pixels per second
+const CRUMBLE_SECONDS := 2.0
 
 const TAGLINE := "Il corallo non agisce.\nSubisce."
 const END_LINE := "Quanto riuscirai a resistere?"
@@ -49,16 +50,16 @@ func _run() -> void:
 	await _wait_for_game()
 
 	# 1. Title card over the live reef.
-	await _wait(0.6)
+	await _wait(0.4)
 	await _show_card(TAGLINE, "")
-	await _wait(2.8)
+	await _wait(2.0)
 	await _hide_card()
-	_fade(_black, 0.0, 1.6)
-	await _wait(1.2)
+	_fade(_black, 0.0, 1.2)
+	await _wait(0.6)
 
 	# 2. The reef.
 	await _say("Una barriera corallina da tenere in equilibrio.")
-	await _wait(3.0)
+	await _wait(1.8)
 
 	# 3. Placing from the inventory.
 	await _say("Piazza coralli, alghe e nidi.")
@@ -67,40 +68,39 @@ func _run() -> void:
 	await _place(InventoryModel.ALGAE, Vector2i(16, 7))
 	if not await _place(InventoryModel.NEST, Vector2i(5, 9)):
 		await _place(InventoryModel.CORAL, Vector2i(15, 9))
-	await _wait(0.8)
+	await _wait(0.3)
 
 	# 4. Commanding the fish.
 	await _say("Guida i pesci: mangiano le alghe e fecondano i nidi.")
 	await _order_nearest_fish(Game.grid.cell_to_world(Vector2i(16, 12)))
 	await _order_nearest_fish(_nest_world())
-	await _order_nearest_fish(Game.grid.cell_to_world(Vector2i(7, 5)))
-	await _wait(2.0)
+	await _wait(1.2)
 	_show_cursor(false)
 
 	# 5. Warming sea + threats.
-	_heat_up(0.85, 18.0)
+	_heat_up(0.85, 12.0)
 	await _say("Ma il mare si scalda...")
 	_spawn_threat(ThreatSchedule.Type.CO2)
-	await _wait(2.5)
+	await _wait(1.8)
 	_spawn_threat(ThreatSchedule.Type.BAG)
-	await _wait(2.0)
+	await _wait(1.4)
 	await _say("CO2, plastica e cicloni assediano il reef.")
 	_spawn_threat(ThreatSchedule.Type.CYCLONE)
-	await _wait(3.0)
+	await _wait(2.2)
 	_spawn_threat(ThreatSchedule.Type.BAG)
-	await _wait(3.5)
+	await _wait(1.5)
 
 	# 6. Predator and turtle.
 	_spawn_actor(true)
 	await _say("Predatori affamati...")
-	await _wait(4.0)
+	await _wait(2.8)
 	_spawn_actor(false)
 	await _say("...e tartarughe alleate.")
-	await _wait(5.0)
+	await _wait(3.2)
 
 	# 7. The balance rules.
 	await _say("Troppe alghe soffocano i coralli.\nTroppi coralli affamano i pesci.")
-	await _wait(5.0)
+	await _wait(3.8)
 
 	# 8. Collapse: the coral endures until it can't.
 	await _say("Se una specie scompare, la barriera crolla.")
@@ -109,14 +109,14 @@ func _run() -> void:
 	while not tree.paused: # the game-over screen pauses the tree
 		await _wait(0.25)
 	_hide_caption()
-	await _wait(3.5)
+	await _wait(2.5)
 
 	# 9. End card.
-	await _fade(_black, 1.0, 1.2)
+	await _fade(_black, 1.0, 1.0)
 	await _show_card(END_LINE, JAM_LINE + "\n\n" + TEAM_LINE)
-	await _wait(5.0)
+	await _wait(3.5)
 	await _hide_card()
-	await _wait(0.6)
+	await _wait(0.3)
 	tree.quit()
 
 
@@ -161,11 +161,11 @@ func _place(kind: StringName, cell: Vector2i) -> bool:
 		await _click()
 	_placement.begin(slot)
 	var origin := _free_origin_near(cell)
-	await _wait(0.25)
+	await _wait(0.15)
 	await _cursor_to(_screen_of(Game.grid.cell_to_world(origin)))
 	await _click()
 	_placement.try_place_at(origin)
-	await _wait(0.6)
+	await _wait(0.3)
 	return true
 
 
@@ -207,11 +207,11 @@ func _order_nearest_fish(target: Vector2) -> void:
 	if not is_instance_valid(fish):
 		return
 	_commander._on_command(fish.global_position)
-	await _wait(0.35)
+	await _wait(0.25)
 	await _cursor_to(_screen_of(target))
 	await _click()
 	_commander._on_command(target)
-	await _wait(0.5)
+	await _wait(0.3)
 
 
 func _nearest_fish(target: Vector2) -> Fish:
@@ -266,13 +266,16 @@ func _entry() -> EdgeEntry:
 
 
 ## Crumbles the corals one by one: the coral population hits zero and the
-## collapse countdown starts.
+## collapse countdown starts. However many corals there are, the whole
+## crumble lasts at most CRUMBLE_SECONDS, so the trailer length stays bounded.
 func _crumble_corals() -> void:
-	for node in get_tree().get_nodes_in_group(Groups.CORALS):
+	var corals := get_tree().get_nodes_in_group(Groups.CORALS)
+	var step := minf(0.45, CRUMBLE_SECONDS / maxf(corals.size(), 1.0))
+	for node in corals:
 		var coral := node as Coral
 		if coral != null and is_instance_valid(coral):
 			coral.destroy()
-			await _wait(0.45)
+			await _wait(step)
 
 
 # --- Overlay ---------------------------------------------------------------

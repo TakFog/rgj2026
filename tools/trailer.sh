@@ -57,3 +57,10 @@ ffmpeg -y -loglevel error -i "$RAW" \
 	-af "afade=t=in:d=1,afade=t=out:st=$FADE_OUT_START:d=1.5" -c:a aac -b:a 192k \
 	-movflags +faststart "$MP4"
 echo "Trailer: $MP4 (${DURATION}s)"
+# The jam caps the trailer at one minute.
+MAX_SECONDS="${MAX_SECONDS:-60}"
+if awk -v d="$DURATION" -v m="$MAX_SECONDS" 'BEGIN { exit !(d > m) }'; then
+	echo "The trailer is ${DURATION}s, over the ${MAX_SECONDS}s limit: shorten the" >&2
+	echo "timeline in tools/trailer/trailer_director.gd and record it again." >&2
+	exit 1
+fi
