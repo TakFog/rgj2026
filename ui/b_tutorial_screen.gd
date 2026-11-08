@@ -26,6 +26,12 @@ const CHIP_COLOR_STATES: Array[StringName] = [
 	&"font_color", &"font_hover_color", &"font_focus_color", &"font_pressed_color",
 	&"font_hover_pressed_color", &"font_disabled_color",
 ]
+## Button tints its icon through per-state theme colours, so a tinted icon (the
+## red coral) needs every state set, not just the normal one.
+const CHIP_ICON_COLOR_STATES: Array[StringName] = [
+	&"icon_normal_color", &"icon_hover_color", &"icon_focus_color",
+	&"icon_pressed_color", &"icon_hover_pressed_color", &"icon_disabled_color",
+]
 
 var _mode := Mode.START
 var _stage: TutorialStage
@@ -361,6 +367,9 @@ func _build_chip(row: Dictionary, index: int) -> Button:
 	chip.pressed.connect(_on_chip_pressed.bind(index))
 	chip.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_apply_chip_look(chip, _chip_normal)
+	if row["target_id"] == &"coral":
+		# The coral art is grayscale and red in the reef; keep the chip red too.
+		_tint_icon(chip, Coral.CORAL_HEALTHY_TINT)
 	_chips.append(chip)
 	_chip_rows.append(index)
 	return chip
@@ -390,3 +399,8 @@ func _apply_chip_look(chip: Button, look: Dictionary) -> void:
 	var colors: Dictionary = look["colors"]
 	for state: StringName in colors:
 		chip.add_theme_color_override(state, colors[state])
+
+
+func _tint_icon(chip: Button, tint: Color) -> void:
+	for state in CHIP_ICON_COLOR_STATES:
+		chip.add_theme_color_override(state, tint)

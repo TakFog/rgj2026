@@ -24,6 +24,22 @@ func test_nest_caption_explains_the_two_clicks() -> void:
 			"the touch build must not tell the player to click")
 
 
+func test_coral_chips_keep_the_in_game_red() -> void:
+	var screen := _open_screen(TutorialScreen.Mode.REVIEW)
+	var chips: Array[Button] = screen.get("_chips")
+	var rows: Array[int] = screen.get("_chip_rows")
+	var found := false
+	for i in chips.size():
+		if TutorialInteractions.ROWS[rows[i]]["target_id"] != &"coral":
+			continue
+		found = true
+		for state in TutorialScreen.CHIP_ICON_COLOR_STATES:
+			assert_eq(chips[i].get_theme_color(state), Coral.CORAL_HEALTHY_TINT,
+					"coral chip icon %s must stay red" % state)
+	assert_true(found, "no coral chip found")
+	_close_screen(screen)
+
+
 func test_input_mapping() -> void:
 	assert_eq(TutorialScreen.action_for(true, true), TutorialScreen.InputAction.PRIMARY)
 	assert_eq(TutorialScreen.action_for(false, true), TutorialScreen.InputAction.NEXT)
