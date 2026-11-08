@@ -28,6 +28,10 @@ func _is_weed(o: Object) -> bool:
 	return o.get_meta(&"kind") == &"weed"
 
 
+func _is_pad(o: Object) -> bool:
+	return o.get_meta(&"kind") == &"pad"
+
+
 func _c(x: int, y: int) -> Vector2:
 	return grid.cell_to_world(Vector2i(x, y))
 
@@ -165,6 +169,14 @@ func test_nearest_occupant_by_path_not_by_distance() -> void:
 	assert_true(result.get("occupant") == weed_b)
 	var path: PackedVector2Array = result["path"]
 	assert_almost(path[path.size() - 1], _c(0, 5), 0.001, "path ends at the weed centre")
+
+
+func test_nearest_occupant_respects_max_distance() -> void:
+	grid.occupy([Vector2i(4, 0)], pad)
+	assert_true(finder.nearest_occupant(_c(0, 0), _is_pad, CELL * 2.5).is_empty(),
+			"a nest outside the notice radius is ignored")
+	var result := finder.nearest_occupant(_c(0, 0), _is_pad, CELL * 4.5)
+	assert_true(result.get("occupant") == pad)
 
 
 func test_nearest_occupant_none_reachable() -> void:

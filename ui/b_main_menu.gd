@@ -1,16 +1,16 @@
 class_name MainMenuScreen
 extends ColorRect
 ## Main menu overlay shown at game start (GDD §9, roadmap: title screen).
-## Title at one quarter of the screen height, Play at the centre of the
-## screen, Credits bottom right, Exit bottom left (Exit hidden in web builds).
-## Works while the tree is paused; clicking Play unpauses and hides the menu.
+## The whole screen is the artist's painted menu; its five painted buttons are
+## invisible hotspots (MenuHotspots), so the art is the interface. Works while
+## the tree is paused; clicking Gioca unpauses and hides the menu.
 
-const BUTTON_SIZE := SeaStyle.BUTTON_SIZE
-const SCREEN_MARGIN := 24.0
-## The title screen shows the painted logo instead of the game name.
-const LOGO_TEXTURE: Texture2D = preload("res://assets/ui/logo.png")
-const LOGO_HEIGHT := 260.0
-const TITLE_Y_FRACTION := 0.25
+## The painted menu: the master is `video/MENU.png`, this is the web-sized copy.
+const MENU_TEXTURE: Texture2D = preload("res://assets/ui/menu.png")
+## How much the hover/focus glow brightens a painted button.
+const GLOW_ALPHA := 0.22
+## How much further it brightens while the button is held down.
+const GLOW_ALPHA_PRESSED := 0.4
 
 ## Player-facing name and credits, kept in one place so the credits panel and
 ## the rest of the UI cannot drift apart.
@@ -38,6 +38,12 @@ var _menu_panel: Control
 var _credits_panel: Control
 var _settings_panel: SettingsPanel
 var _play_button: Button
+## The painting, fitted and centred on screen; its hotspots are its children.
+var _art_box: Control
+## Hotspot key (see MenuHotspots.RECTS) -> its invisible Button.
+var _hotspots: Dictionary = {}
+## Shared additive material that makes the glow brighten the painted shape.
+var _glow_material: CanvasItemMaterial
 
 
 func _ready() -> void:
@@ -90,81 +96,94 @@ func _build_menu_panel() -> Control:
 	panel.name = "MenuPanel"
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# The painting is refitted whenever the window changes size.
+	panel.resized.connect(_layout_art)
 
-	# Logo across the full width, vertically centred on 1/4 of the screen.
-	var logo := TextureRect.new()
-	logo.name = "Logo"
-	logo.texture = LOGO_TEXTURE
-	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(logo)
-	logo.anchor_left = 0.0
-	logo.anchor_right = 1.0
-	logo.anchor_top = TITLE_Y_FRACTION
-	logo.anchor_bottom = TITLE_Y_FRACTION
-	logo.offset_left = 0.0
-	logo.offset_right = 0.0
-	logo.offset_top = -LOGO_HEIGHT * 0.5
-	logo.offset_bottom = LOGO_HEIGHT * 0.5
+	_art_box = Control.new()
+	_art_box.name = "ArtBox"
+	_art_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(_art_box)
 
-	# Play, centred both horizontally and vertically.
-	var play_btn := _button("Gioca")
-	play_btn.pressed.connect(_on_play_pressed)
-	_play_button = play_btn
-	panel.add_child(play_btn)
-	play_btn.set_anchors_preset(Control.PRESET_CENTER)
-	play_btn.offset_left = -BUTTON_SIZE.x * 0.5
-	play_btn.offset_right = BUTTON_SIZE.x * 0.5
-	play_btn.offset_top = -BUTTON_SIZE.y * 0.5
-	play_btn.offset_bottom = BUTTON_SIZE.y * 0.5
+	var art := TextureRect.new()
+	art.name = "Art"
+	art.texture = MENU_TEXTURE
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_SCALE
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_art_box.add_child(art)
+	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	# Settings, just below Play.
-	var settings_btn := _button("Impostazioni")
-	settings_btn.pressed.connect(_on_settings_pressed)
-	panel.add_child(settings_btn)
-	settings_btn.set_anchors_preset(Control.PRESET_CENTER)
-	settings_btn.offset_left = -BUTTON_SIZE.x * 0.5
-	settings_btn.offset_right = BUTTON_SIZE.x * 0.5
-	settings_btn.offset_top = BUTTON_SIZE.y * 0.5 + SeaStyle.MENU_SEPARATION
-	settings_btn.offset_bottom = BUTTON_SIZE.y * 1.5 + SeaStyle.MENU_SEPARATION
+	_glow_material = CanvasItemMaterial.new()
+	_glow_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 
-	# How to play, just below Settings.
-	var tutorial_btn := _button("Come si gioca")
-	tutorial_btn.add_theme_font_size_override("font_size", 22)
-	tutorial_btn.pressed.connect(_on_tutorial_pressed)
-	panel.add_child(tutorial_btn)
-	tutorial_btn.set_anchors_preset(Control.PRESET_CENTER)
-	tutorial_btn.offset_left = -BUTTON_SIZE.x * 0.5
-	tutorial_btn.offset_right = BUTTON_SIZE.x * 0.5
-	tutorial_btn.offset_top = BUTTON_SIZE.y * 1.5 + 32.0
-	tutorial_btn.offset_bottom = BUTTON_SIZE.y * 2.5 + 32.0
+	# One invisible hotspot per painted button, in MenuHotspots focus order.
+	var handlers := {
+		"play": _on_play_pressed,
+		"tutorial": _on_tutorial_pressed,
+		"settings": _on_settings_pressed,
+		"credits": _on_credits_pressed,
+		"exit": _on_exit_pressed,
+	}
+	for key: String in MenuHotspots.RECTS:
+		var button := _build_hotspot(key, handlers[key])
+		_hotspots[key] = button
+		_art_box.add_child(button)
+	_play_button = _hotspots["play"]
 
-	# Exit, bottom left of the screen.
-	var exit_btn := _button("Esci")
-	exit_btn.pressed.connect(_on_exit_pressed)
-	# Web builds cannot quit the host page, so the exit button is hidden there.
-	if OS.has_feature("web"):
-		exit_btn.visible = false
-	panel.add_child(exit_btn)
-	exit_btn.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	exit_btn.offset_left = SCREEN_MARGIN
-	exit_btn.offset_right = SCREEN_MARGIN + BUTTON_SIZE.x
-	exit_btn.offset_top = -SCREEN_MARGIN - BUTTON_SIZE.y
-	exit_btn.offset_bottom = -SCREEN_MARGIN
-
-	# Credits, bottom right of the screen.
-	var credits_btn := _button("Crediti")
-	credits_btn.pressed.connect(_on_credits_pressed)
-	panel.add_child(credits_btn)
-	credits_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	credits_btn.offset_left = -SCREEN_MARGIN - BUTTON_SIZE.x
-	credits_btn.offset_right = -SCREEN_MARGIN
-	credits_btn.offset_top = -SCREEN_MARGIN - BUTTON_SIZE.y
-	credits_btn.offset_bottom = -SCREEN_MARGIN
-
+	_layout_art()
 	return panel
+
+
+## An invisible button sitting exactly on one painted button. Hover and focus
+## brighten the painted shape by re-drawing its region of the art additively:
+## the art's transparent background stays transparent, so only the pill lights
+## up.
+func _build_hotspot(key: String, handler: Callable) -> Button:
+	var button := Button.new()
+	button.name = "Hotspot_" + key
+	button.focus_mode = Control.FOCUS_ALL
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	for item in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(item, StyleBoxEmpty.new())
+	button.pressed.connect(handler)
+
+	var glow := TextureRect.new()
+	var region := AtlasTexture.new()
+	region.atlas = MENU_TEXTURE
+	region.region = MenuHotspots.hotspot_region(key)
+	glow.texture = region
+	glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	glow.stretch_mode = TextureRect.STRETCH_SCALE
+	glow.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	glow.material = _glow_material
+	glow.modulate = Color(1, 1, 1, GLOW_ALPHA)
+	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	glow.visible = false
+	button.add_child(glow)
+	glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	button.mouse_entered.connect(func() -> void: glow.visible = true)
+	button.mouse_exited.connect(func() -> void: glow.visible = false)
+	button.focus_entered.connect(func() -> void: glow.visible = true)
+	button.focus_exited.connect(func() -> void: glow.visible = false)
+	button.button_down.connect(
+		func() -> void: glow.modulate = Color(1, 1, 1, GLOW_ALPHA_PRESSED))
+	button.button_up.connect(
+		func() -> void: glow.modulate = Color(1, 1, 1, GLOW_ALPHA))
+	return button
+
+
+## Fit the painting (and therefore its hotspots) into the window, centred.
+func _layout_art() -> void:
+	var art := MenuHotspots.art_box(size)
+	_art_box.position = art.position
+	_art_box.size = art.size
+	for key: String in _hotspots:
+		var rect := MenuHotspots.hotspot_rect(size, key)
+		var button: Button = _hotspots[key]
+		button.position = rect.position - art.position
+		button.size = rect.size
 
 
 func _build_credits_panel() -> Control:

@@ -6,6 +6,9 @@ extends Resource
 @export_group("Fish")
 @export var fish_radius := 10.0
 @export var fish_click_radius := 24.0
+## Pick radius used instead of fish_click_radius in touch builds: a fingertip
+## covers far more than a mouse pointer.
+@export var fish_touch_radius := 48.0
 @export var fish_speed := 60.0
 ## Turning radius (world units) when changing direction: higher = wider curves.
 @export var fish_turn_radius := 16.0
@@ -26,6 +29,11 @@ extends Resource
 @export var seek_food_threshold := 0.5
 ## Seconds a hungry fish waits before looking again when no algae is reachable.
 @export var seek_retry_seconds := 1.0
+## Minimum seconds between two autonomous fertilizations. The Fish node clamps
+## it to at least twice the nest hatching time.
+@export var reproduce_cooldown_seconds := 40.0
+## Straight-line distance (world units) within which an empty nest is noticed.
+@export var reproduce_nest_radius := 128.0
 
 @export_group("Predator")
 ## Feature flag: set to false to turn the carnivorous predator off entirely.
@@ -77,6 +85,19 @@ extends Resource
 @export var turtle_predator_aggro_radius := 160.0
 ## Straight-line distance within which it goes after a plastic bag.
 @export var turtle_bag_aggro_radius := 320.0
+## Chance (0..1) that a run starts with an early turtle rush. 0 disables it.
+@export_range(0.0, 1.0) var turtle_rush_chance := 0.2
+## Seconds into the run when the first rush turtle arrives.
+@export var turtle_rush_seconds := 15.0
+## Rush turtles in one event. The rush ignores `turtle_max_count` on purpose:
+## that cap limits the normal helper cadence, not this event.
+@export var turtle_rush_count := 2
+## Seconds between two rush turtles, so they arrive as a group, not one frame.
+@export var turtle_rush_spacing_seconds := 1.5
+## Rush turtles leave after eating this many algae (0 = no limit, like
+## `turtle_max_algae`). It keeps the rush hungry but finite, so a player who
+## reacts can keep one algae alive until the group leaves.
+@export var turtle_rush_max_algae := 4
 
 @export_group("Collapse")
 @export var collapse_grace_seconds := 10.0
@@ -92,9 +113,10 @@ extends Resource
 @export var co2_interval_cold := 30.0
 @export var co2_interval_hot := 8.0
 @export var co2_coral_damage := 50.0
-## If true the cloud disappears after damaging its first coral; if false it keeps
-## going and damages every coral it touches, each one only once.
-@export var co2_dies_on_coral := true
+## If true the cloud disappears after damaging its first coral. Default false:
+## it keeps going through the reef and damages every coral it touches, each one
+## only once.
+@export var co2_dies_on_coral := false
 @export var bag_radius := 16.0
 @export var bag_speed := 20.0
 @export var bag_turn_noise := 2.0

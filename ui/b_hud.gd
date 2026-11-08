@@ -4,7 +4,15 @@ extends Control
 ## roadmap contract #10).
 
 const NAMES := {&"corals": "Coralli", &"algae": "Alghe", &"fish": "Pesci", &"nests": "Nidi"}
-const CRITICAL_COLOR := Color(1.0, 0.3, 0.3)
+const CRITICAL_COLOR := Color(1.0, 0.45, 0.4)
+const SCORE_COLOR := Color(0.94, 0.97, 0.94)
+const SCORE_FONT_SIZE := 30
+const WARNING_FONT_SIZE := 22
+## Top edge shared with the inventory cards and the thermometer.
+const TOP := 20.0
+## A dark outline keeps the free-floating HUD text readable over the reef.
+const OUTLINE_SIZE := 5
+const OUTLINE_COLOR := Color(0.01, 0.04, 0.05, 0.75)
 ## The warning only needs to change when the displayed second changes; the
 ## countdown itself advances every frame in the tracker.
 const WARNING_REFRESH_SECONDS := 0.1
@@ -45,9 +53,10 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_score_label = _make_centered_label(12.0, 32)
+	_score_label = _make_centered_label(TOP, SCORE_FONT_SIZE)
 	_score_label.text = format_time(0.0)
-	_warning_label = _make_centered_label(56.0, 24)
+	_score_label.add_theme_color_override("font_color", SCORE_COLOR)
+	_warning_label = _make_centered_label(TOP + SCORE_FONT_SIZE + 8.0, WARNING_FONT_SIZE)
 	_warning_label.add_theme_color_override("font_color", CRITICAL_COLOR)
 	_warning_label.visible = false
 
@@ -88,6 +97,8 @@ func _make_centered_label(top: float, font_size: int) -> Label:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_constant_override("outline_size", OUTLINE_SIZE)
+	label.add_theme_color_override("font_outline_color", OUTLINE_COLOR)
 	add_child(label)
 	label.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	label.offset_top = top

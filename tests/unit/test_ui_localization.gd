@@ -16,6 +16,7 @@ func test_fish_state_labels_are_italian() -> void:
 	var overlay := DebugOverlay.new()
 	assert_eq(overlay._state_name(FishBrain.State.WANDER), "VAGA")
 	assert_eq(overlay._state_name(FishBrain.State.SEEKING_FOOD), "CERCA CIBO")
+	assert_eq(overlay._state_name(FishBrain.State.SEEKING_NEST), "CERCA NIDO")
 	overlay.free()
 
 

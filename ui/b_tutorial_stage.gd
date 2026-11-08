@@ -71,7 +71,9 @@ func _init(x_axis := Vector2(1, 0), y_axis := Vector2(-0.5, 0.5)) -> void:
 func _ready() -> void:
 	var seabed := ColorRect.new()
 	seabed.name = "Seabed"
-	seabed.color = Color8(100, 96, 70)
+	# Deep water, not the old olive fill: the olive read as a placeholder
+	# behind the painted reef art.
+	seabed.color = Color8(26, 78, 86)
 	seabed.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	seabed.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var shader_material := ShaderMaterial.new()
@@ -177,6 +179,17 @@ func _algae(cell: Vector2) -> Sprite2D:
 	sway.set_shader_parameter("phase", cell.x * 0.73 + cell.y * 1.21)
 	sprite.material = sway
 	return sprite
+
+
+## The real animated cyclone (swirl shader + spiral shadow + spray), so the
+## tutorial's Ciclone rows match the reef instead of showing a still image.
+func _cyclone(cell: Vector2) -> CycloneVisual:
+	var visual := CycloneVisual.new()
+	visual.setup(Game.actors.cyclone_radius, Cyclone.COLOR, Cyclone.TEXTURE)
+	visual.position = _pos(cell)
+	visual.z_index = Z_BY_ID[&"cyclone"]
+	_visual_layer().add_child(visual)
+	return visual
 
 
 func _co2(cell: Vector2) -> Co2Bubbles:
@@ -295,6 +308,8 @@ func _generic_visual(id: StringName, cell: Vector2) -> Node2D:
 	match id:
 		&"co2":
 			visual = _co2(cell)
+		&"cyclone":
+			visual = _cyclone(cell)
 		&"fish":
 			visual = _fish(cell, true, Vector2.RIGHT)
 		&"algae":

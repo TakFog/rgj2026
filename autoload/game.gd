@@ -110,6 +110,30 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+## Touch builds have no F3: a three-finger tap toggles the debug overlay.
+## In _input because the GUI may take touches before _unhandled_input.
+func _input(event: InputEvent) -> void:
+	if Platform.is_debug_touch(event, Platform.is_touch()):
+		debug_mode = not debug_mode
+
+
+## The Android back button acts as Esc (cancel placement, deselect, pause,
+## leave the tutorial or settings), so every screen reacts the way it does to
+## Esc on desktop and web. project.godot keeps it from quitting the app.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_press_escape()
+
+
+func _press_escape() -> void:
+	for pressed in [true, false]:
+		var event := InputEventKey.new()
+		event.keycode = KEY_ESCAPE
+		event.physical_keycode = KEY_ESCAPE
+		event.pressed = pressed
+		Input.parse_input_event(event)
+
+
 ## Drops the cached visible-area polygons (restart or viewport resize).
 func invalidate_view_cache() -> void:
 	_visible_polygon_valid = false

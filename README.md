@@ -21,10 +21,26 @@ The full game design document (in Italian) is in [`docs/GDD.md`](docs/GDD.md).
 | Input | Action |
 | --- | --- |
 | Left click | Select a fish, give it an order, confirm a placement |
+| Drag an inventory card onto the reef | Place it (release on a valid cell) |
 | 1 / 2 / 3 / 4 | Pick the matching inventory slot (number row or keypad) |
 | Right click / Esc | Cancel placement / deselect |
 | Space / Esc | Pause (Esc pauses only when there is nothing to cancel) |
 | F3 | Debug overlay (SHOW PATHS draws planned fish/predator/turtle routes) |
+
+### Android (touch)
+
+The Android build adds touch controls; every other build (web included) keeps the controls above.
+
+| Input | Action |
+| --- | --- |
+| Tap | Select a fish, give it an order, tap an inventory card |
+| Tap / drag on the reef while placing | Move the placement preview; tap the preview again to place |
+| Drag an inventory card onto the reef | Place it in one gesture (the preview sits above the finger) |
+| **Annulla** button / Back | Cancel placement / deselect |
+| **Pausa** button / Back | Pause (Back pauses only when there is nothing to cancel) |
+| Three-finger tap | Debug overlay |
+
+Building and installing the APK: [`docs/android.md`](docs/android.md).
 
 ## Requirements
 
@@ -58,7 +74,9 @@ GODOT=/path/to/godot tools/test.sh
 To add a test, create `tests/unit/test_<something>.gd` extending `TestCase`; every method whose name
 starts with `test_` is run automatically.
 
-CI (GitHub Actions, `.github/workflows/ci.yml`) runs both scripts on every push and pull request.
+CI (GitHub Actions, `.github/workflows/ci.yml`) runs both scripts on every push and pull request,
+and builds a signed Android APK (downloadable as the `android-apk` artifact of the run). Every push
+to `main` publishes it as a GitHub release tagged `v1`, `v2`, … (see [`docs/android.md`](docs/android.md)).
 
 ## Audio
 

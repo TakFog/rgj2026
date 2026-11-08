@@ -11,23 +11,21 @@ func _resolve(kind: int, target: int, nest_has_eggs := false, already_hit := fal
 	return ThreatRules.resolve(kind, target, actors, nest_has_eggs, already_hit)
 
 
-func test_co2_damages_coral_and_disappears() -> void:
+func test_co2_damages_coral_and_goes_through() -> void:
 	var outcome := _resolve(ThreatSchedule.Type.CO2, ThreatRules.Target.CORAL)
 	assert_eq(outcome.effect, ThreatRules.Effect.DAMAGE_CORAL)
 	assert_almost(outcome.amount, 50.0)
+	assert_false(outcome.threat_dies, "corals must not destroy the cloud")
+
+
+func test_co2_dies_on_coral_when_the_debug_flag_is_on() -> void:
+	actors.co2_dies_on_coral = true
+	var outcome := _resolve(ThreatSchedule.Type.CO2, ThreatRules.Target.CORAL)
+	assert_eq(outcome.effect, ThreatRules.Effect.DAMAGE_CORAL)
 	assert_true(outcome.threat_dies)
 
 
-func test_co2_keeps_going_after_coral_when_flag_is_off() -> void:
-	actors.co2_dies_on_coral = false
-	var outcome := _resolve(ThreatSchedule.Type.CO2, ThreatRules.Target.CORAL)
-	assert_eq(outcome.effect, ThreatRules.Effect.DAMAGE_CORAL)
-	assert_almost(outcome.amount, 50.0)
-	assert_false(outcome.threat_dies)
-
-
-func test_co2_damages_the_same_coral_only_once_when_flag_is_off() -> void:
-	actors.co2_dies_on_coral = false
+func test_co2_damages_the_same_coral_only_once_while_passing_through() -> void:
 	var outcome := _resolve(ThreatSchedule.Type.CO2, ThreatRules.Target.CORAL, false, true)
 	assert_eq(outcome.effect, ThreatRules.Effect.NOTHING)
 	assert_false(outcome.threat_dies)

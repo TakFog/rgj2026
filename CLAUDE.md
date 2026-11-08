@@ -34,7 +34,16 @@ settings, so **never commit local editor changes to them**:
   leave it alone (do not commit, revert or overwrite it) and tell the user.
 - When a change to them *is* intended, keep the `"Web"` preset name, its
   `export_path="build/web/index.html"` and `variant/thread_support=false` as CD
-  expects, then run `tools/test.sh` and `tools/smoke.sh`.
+  expects, keep the `"Android"` preset name that CI exports (`docs/android.md`),
+  never put keystore paths or passwords in it (CI signs from the
+  `ANDROID_KEYSTORE_*` secrets), then run `tools/test.sh` and `tools/smoke.sh`.
+
+## Android
+
+Touch-only behaviour (on-screen Pausa/Annulla, tap-to-preview placement, Back as
+Esc) is gated on `Platform.is_touch()`, true only in the Android build. Never
+change mouse/keyboard behaviour for it: the web build must stay identical.
+Details: `docs/android.md`.
 
 ### Git flow
 

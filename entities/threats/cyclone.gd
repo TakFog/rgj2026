@@ -4,6 +4,8 @@ extends Threat
 
 ## Temporary art, until the designer's sprite is ready.
 const TEXTURE := preload("res://assets/sprites/temp/cyclone.png")
+## Funnel tint, shared with the tutorial's reference vignette.
+const COLOR := Color(0.6, 0.9, 1.0, 0.9)
 
 
 func _init() -> void:
@@ -11,7 +13,7 @@ func _init() -> void:
 	radius = Game.actors.cyclone_radius
 	speed = Game.actors.cyclone_speed
 	turn_noise = 0.0
-	color = Color(0.6, 0.9, 1.0, 0.9)
+	color = COLOR
 	texture = TEXTURE
 
 

@@ -20,6 +20,23 @@ func test_rebuilding_an_interaction_does_not_stack_visuals() -> void:
 	assert_eq(stage.sprite_count(), first, "show_interaction must clear before rebuilding")
 
 
+func test_cyclone_agent_uses_the_animated_visual() -> void:
+	var stage := TutorialStage.new()
+	autofree(stage)
+	stage.show_interaction(_row(&"cyclone_fish_algae"))
+	var agent: Node2D = stage.get("_agent")
+	assert_true(agent is CycloneVisual, "the tutorial cyclone must use the game's animated visual")
+	if not (agent is CycloneVisual):
+		return
+	var body := (agent as CycloneVisual).body
+	assert_true(body != null, "the tutorial cyclone funnel is missing")
+	if body != null:
+		assert_true(body.material is ShaderMaterial, "the tutorial funnel must use the swirl shader")
+		if body.material is ShaderMaterial:
+			assert_true((body.material as ShaderMaterial).shader == CycloneVisual.SHADER,
+				"the tutorial funnel must use the cyclone swirl shader")
+
+
 func test_stage_does_not_join_gameplay_groups() -> void:
 	var stage := TutorialStage.new()
 	autofree(stage)

@@ -26,7 +26,7 @@ minacce ──► CO2, buste, cicloni (annunciati prima di entrare)
 ```
 
 - Troppe alghe → soffocano i coralli → coralli a zero → game over
-- Troppi pesci → finiscono le alghe → alghe a zero → game over
+- Troppi pesci o un'ondata di tartarughe → finiscono le alghe → alghe a zero → game over
 - Troppi coralli → i pesci restano bloccati e non arrivano al cibo → muoiono di fame → game over
 - Pochi pesci → bisogna fecondare i nidi in fretta
 
@@ -117,16 +117,17 @@ La visuale **non è isometrica pura**: è quasi dall'alto, in proiezione obliqua
 ### 5.4 Pesce
 - CharacterBody2D, piccolo (raggio 10 unità). **I pesci non si scontrano tra loro**, ma si scontrano con alghe, coralli e muri.
 - **Stati**:
-  - `WANDER`: nuota a caso. Sceglie una direzione, nuota per un po', ne cambia. Se tocca un ostacolo, cambia direzione. **Non feconda.** Quando la fame supera `seek_food_threshold` (50%) passa a `SEEKING_FOOD`.
+  - `WANDER`: nuota a caso. Sceglie una direzione, nuota per un po', ne cambia. Se tocca un ostacolo, cambia direzione. Quando la fame supera `seek_food_threshold` (50%) passa a `SEEKING_FOOD`. Se invece è adulto, non ha fame (fame sotto il 50%), c'è un nido vuoto entro `reproduce_nest_radius` (128 unità) e sono passati almeno `reproduce_cooldown_seconds` (40 s, comunque mai meno del doppio di `nest_hatch_seconds`) dall'ultima fecondazione, passa a `SEEKING_NEST`.
   - `SEEKING_FOOD`: il pesce affamato calcola un percorso verso l'**alga più vicina raggiungibile** (distanza lungo il percorso, non in linea d'aria) e ci va; quando la tocca → `EATING`. Se nessuna alga è raggiungibile (es. chiuso dai coralli) continua a girare e riprova ogni `seek_retry_seconds` (1 s). Se l'alga sparisce prima che arrivi, torna a `WANDER`. Un ordine del giocatore ha sempre la precedenza.
+  - `SEEKING_NEST`: il pesce adulto calcola un percorso verso il **nido vuoto più vicino raggiungibile** entro `reproduce_nest_radius` e ci nuota. All'arrivo sul nido vuoto → `FERTILIZING`. Se il nido viene fecondato da un altro pesce o sparisce prima che arrivi, torna a `WANDER` e riprova dopo `seek_retry_seconds` (1 s). Se la fame arriva al 50% mentre è in viaggio, abbandona il nido e torna a `WANDER`: la fame ha la precedenza. Un ordine del giocatore ha sempre la precedenza.
   - `ORDERED`: il giocatore fa clic sinistro sul pesce per selezionarlo (area di clic più grande del pesce) e poi clic sinistro sul punto di arrivo. Il pesce **calcola un percorso** sulla griglia (A*) che aggira coralli e alghe (i nidi si attraversano) e lo segue. Il percorso viene **semplificato** (si saltano le celle intermedie quando la linea retta è libera, con il raggio del pesce di margine), quindi in acqua libera il pesce va dritto, senza zig-zag sulla griglia. Il pesce **nuota in curva**: la direzione cambia gradualmente con un raggio di virata `fish_turn_radius` (16), che si stringe vicino al punto di arrivo per non girargli intorno; anche nel `WANDER` i cambi di direzione sono curvi. Se sfiora un ostacolo ci scivola lungo; solo un urto frontale conta come blocco (o come arrivo sull'alga da mangiare). Se il punto è dentro un ostacolo o in una zona chiusa, va alla cella raggiungibile più vicina e punta verso il punto finché non tocca l'ostacolo. Se un ostacolo imprevisto blocca il percorso, lo ricalcola una volta; se è ancora bloccato **si ferma**.
 	- Se si è fermato contro un'**alga** → `EATING`.
 	- Se arriva sopra un **nido vuoto** ed è adulto → `FERTILIZING`.
 	- Altrimenti resta fermo `idle_after_order_seconds` (2 s) e poi torna a `WANDER`.
   - `EATING`: dopo `eat_seconds` (3 s) l'alga viene rimossa e la fame si azzera. Poi torna a `WANDER`. *Un pesce circondato dalle alghe può uscirne mangiando.*
-  - `FERTILIZING`: deve restare fermo sul nido `fertilize_seconds` (3 s). Se se ne va prima (nuovo ordine), la fecondazione non avviene. Se va a buon fine, il nido passa a `EGGS` e il pesce torna a `WANDER`, libero di andarsene.
+  - `FERTILIZING`: deve restare fermo sul nido `fertilize_seconds` (3 s). Se se ne va prima (nuovo ordine), la fecondazione non avviene. Se va a buon fine, il nido passa a `EGGS`, il cooldown di riproduzione riparte da capo e il pesce torna a `WANDER`, libero di andarsene. Se la fecondazione viene annullata, il cooldown non riparte.
 - **Fame**: da 0 a `starve_seconds` (45 s). Barra visibile sopra il pesce quando supera il 50%: è piena a fame 0 e si svuota man mano che il pesce si affama, come la barra di sazietà del predatore. Il colore va dal verde (pieno) al rosso (quasi vuoto); sopra il 75% compare un "!" lampeggiante. Al massimo il pesce muore.
-- **Età**: nasce giovane e diventa fecondo dopo `maturity_seconds` (60 s). Il pesce giovane si riconosce a vista (sprite più piccolo).
+- **Età**: nasce giovane e diventa fecondo dopo `maturity_seconds` (60 s). Il pesce giovane si riconosce a vista (sprite più piccolo). Il cooldown di riproduzione parte dalla nascita e riparte quando il pesce diventa adulto: un pesce appena maturato aspetta prima di riprodursi.
 - La velocità è ridotta dalla temperatura.
 
 ### 5.5 Nido
@@ -161,6 +162,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 ### 7.1 CO2
 - Nube (raggio 60 unità), si muove **quasi dritta con curve casuali** (direzione + rumore sull'angolo).
 - Fuori dall'isola (fondale aperto) il rumore è ridotto (`co2_outside_turn_scale`, 10%) e la direzione viene forzata verso il centro dell'isola: la nube attraversa il fondale quasi in linea retta e punta sempre verso la zona giocabile, iniziando a curvare solo una volta dentro.
+- **Attraversa i coralli**: ogni corallo toccato perde ossigeno una volta sola e la nube continua la sua corsa. Con `co2_dies_on_coral = true` (solo per debug) sparisce invece al primo corallo.
 
 ### 7.2 Busta di plastica
 - Lenta, si muove in modo **più casuale** della CO2 (cambi di direzione più ampi e frequenti).
@@ -182,6 +184,7 @@ Tutte le minacce sono **Area2D** che si muovono liberamente (non seguono la grig
 ### 7.5 Tartaruga marina (aiutante)
 - **Feature flag**: `turtle_enabled` in `balance_actors.tres` (default `true`).
 - Arriva ogni `turtle_interval` (90 s), al massimo `turtle_max_count` (1) alla volta, dal bordo dello schermo come le minacce. Non è una minaccia: aiuta il giocatore.
+- **Ondata iniziale (rara)**: con probabilità `turtle_rush_chance` (25%) una piccola ondata di `turtle_rush_count` (2) tartarughe arriva dopo `turtle_rush_seconds` (15 s), una ogni `turtle_rush_spacing_seconds` (1,5 s). Ogni tartaruga dell'ondata se ne va dopo `turtle_rush_max_algae` (4) alghe, anche se `turtle_max_algae` è 0; l'ondata ignora `turtle_max_count`. Arrivano prima che le alghe si siano diffuse: se il giocatore non reagisce (piazza alghe o isola le ultime con i coralli), le alghe possono andare a zero e la barriera collassa con "Le alghe si sono estinte."
 - **Priorità**: prima difende i pesci, poi pulisce. Una minaccia conta solo se è **vicina** (distanza in linea d'aria): un predatore che sta cacciando entro `turtle_predator_aggro_radius` (160 = 5 celle) o una busta di plastica entro `turtle_bag_aggro_radius` (320 = 10 celle). Tra quelle nel proprio raggio va verso la **minaccia raggiungibile più vicina** lungo il percorso; una volta puntata la insegue finché non la elimina, anche se esce dal raggio. Se non ce ne sono, verso l'**alga raggiungibile più vicina**. Ricalcola ogni `turtle_replan_seconds` (0.5 s); mentre mangia un'alga la lascia se compare una minaccia nel suo raggio.
 - **Predatore**: gli va addosso e lo allontana (il predatore smette di cacciare e lascia l'isola). La tartaruga resta.
 - **Busta**: la elimina toccandola, poi **se ne va**.
@@ -197,7 +200,7 @@ Le combinazioni non elencate **non fanno nulla**.
 | Agente | Bersaglio | Effetto |
 |---|---|---|
 | Alga (espansione) | Corallo | Corallo −`algae_coral_damage` (10) ossigeno |
-| CO2 | Corallo | Corallo −`co2_coral_damage` (50) ossigeno al primo contatto (basta toccare una qualsiasi delle sue celle), la nube **sparisce**. Con `co2_dies_on_coral = false` la nube invece prosegue e danneggia ogni corallo una sola volta |
+| CO2 | Corallo | Corallo −`co2_coral_damage` (50) ossigeno al primo contatto (basta toccare una qualsiasi delle sue celle); la nube **prosegue** e danneggia ogni corallo una sola volta. Con `co2_dies_on_coral = true` la nube sparisce al primo corallo |
 | CO2 | Alga | La CO2 viene **assorbita** (sparisce) e l'alga **si espande subito** |
 | CO2 | Nido con uova | Le uova muoiono, il nido torna `EMPTY` |
 | Busta | Pesce | Il pesce **muore**, la busta resta |
@@ -218,7 +221,7 @@ Danni dal più debole al più forte: alga (10) < busta (35) < CO2 (50). Tutti i 
 ## 9. Interfaccia
 - **In alto a destra**: termometro.
 - **In alto al centro**: punteggio / tempo.
-- **In basso**: 4 slot dell'inventario, con il numero della scorciatoia (**1-4**) e il tempo di ricarica mostrato come radiale.
+- **In alto a sinistra**: 4 slot dell'inventario, con il numero della scorciatoia (**1-4**) e il tempo di ricarica mostrato come radiale.
 - **Pausa**: Spazio / Esc. Mentre sei in pausa non puoi piazzare oggetti.
 - **Tutorial**: al primo avvio, dopo Gioca, una schermata mostra tre reazioni animate della barriera (pesce/nido, CO2/alga, alga/corallo) e, accanto, l'elenco completo delle interazioni (§8). Sempre riapribile da "Come si gioca".
 - **Debug overlay** (F3): tutti i valori di bilanciamento in tempo reale, raggi di collisione, stati dei pesci.

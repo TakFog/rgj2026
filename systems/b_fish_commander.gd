@@ -10,6 +10,8 @@ signal fish_ordered
 signal selection_cleared
 
 var selected: Fish = null
+## Touch builds pick fish with a fingertip-sized radius.
+var touch_mode := Platform.is_touch()
 
 
 ## Index of the point nearest to `click` within `radius`, or -1.
@@ -52,7 +54,8 @@ func _fish_at(click: Vector2) -> Fish:
 	var points := PackedVector2Array()
 	for fish in fishes:
 		points.append((fish as Node2D).global_position)
-	var index := pick_nearest(points, click, Game.actors.fish_click_radius)
+	var radius := Game.actors.fish_touch_radius if touch_mode else Game.actors.fish_click_radius
+	var index := pick_nearest(points, click, radius)
 	return null if index < 0 else fishes[index] as Fish
 
 
