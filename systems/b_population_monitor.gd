@@ -79,6 +79,12 @@ func soonest_hatch_seconds() -> float:
 	return soonest_hatch(get_tree().get_nodes_in_group(Groups.NESTS))
 
 
+## Freezes the monitor without a game over. The level timer calls this when it
+## clears, so a collapse countdown already running cannot end a won level.
+func stop() -> void:
+	is_over = true
+
+
 ## Ends the run now, as if `population` had collapsed (debug overlay button).
 func force_game_over(population: StringName = Groups.CORALS) -> void:
 	if not is_over:

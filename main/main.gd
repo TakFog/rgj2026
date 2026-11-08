@@ -1,5 +1,5 @@
 extends Node
-## Builds the node tree described in GDD §10 and loads Level01.
+## Builds the node tree described in GDD §10 and loads the current campaign level.
 ## Main
 ## ├ World   (logical physics world, hidden)
 ## ├ Screen  (Ground + y-sorted View + Camera2D)
@@ -14,6 +14,9 @@ const Ground := preload("res://main/ground.gd")
 
 func _ready() -> void:
 	Game.reset()
+	LevelSession.clamp_current()
+	var level := LevelSession.current()
+	_apply_level_rules(level)
 
 	# Stem-based background music, configured in data/audio_settings.tres.
 	var music := Music.new()
@@ -59,7 +62,7 @@ func _ready() -> void:
 	view.add_child(path_debug)
 
 	_build_walls(world)
-	Level01.populate(Game.factory)
+	level.populate(Game.factory)
 
 	var dev_a := DevASystems.new()
 	dev_a.name = "DevASystems"
@@ -73,6 +76,17 @@ func _ready() -> void:
 	Game.ui.add_child(debug_overlay)
 
 	add_child(ui)
+
+
+## Copies the level's mechanics into the balance feature flags. Systems then
+## gate themselves on Game.eco/actors as usual, and F3 shows the real state.
+func _apply_level_rules(level: LevelDefinition) -> void:
+	Game.eco.temperature_enabled = level.temperature_enabled
+	Game.actors.co2_enabled = level.co2_enabled
+	Game.actors.bag_enabled = level.bag_enabled
+	Game.actors.cyclone_enabled = level.cyclone_enabled
+	Game.actors.predator_enabled = level.predator_enabled
+	Game.actors.turtle_enabled = level.turtle_enabled
 
 
 ## Four static walls just outside the world rectangle.

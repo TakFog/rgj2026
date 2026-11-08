@@ -50,6 +50,10 @@ const COLOR_DIM := Color(0.7, 0.7, 0.7)
 
 ## Italian labels for the F3 panel's debug flags.
 const FLAG_NAMES := {
+	"temperature_enabled": "Temperatura attiva",
+	"co2_enabled": "CO2 attiva",
+	"bag_enabled": "Buste attive",
+	"cyclone_enabled": "Cicloni attivi",
 	"co2_dies_on_coral": "CO2 muore sul corallo",
 	"predator_enabled": "Predatore attivo",
 	"turtle_enabled": "Tartaruga attiva",
@@ -88,6 +92,17 @@ func _ready() -> void:
 	add_child(_slider)
 
 	# Editable feature-flag and debug-view toggle buttons.
+	var temperature := _make_flag_button("temperature_enabled", Game.eco.temperature_enabled)
+	temperature.pressed.connect(_toggle_temperature_enabled)
+	add_child(temperature)
+	_flag_buttons["temperature_enabled"] = temperature
+
+	for flag_name: String in ["co2_enabled", "bag_enabled", "cyclone_enabled"]:
+		var threat_flag := _make_flag_button(flag_name, _flag_value(flag_name))
+		threat_flag.pressed.connect(_toggle_threat_flag.bind(flag_name))
+		add_child(threat_flag)
+		_flag_buttons[flag_name] = threat_flag
+
 	var co2 := _make_flag_button("co2_dies_on_coral", Game.actors.co2_dies_on_coral)
 	co2.pressed.connect(_toggle_co2_dies_on_coral)
 	add_child(co2)
@@ -134,6 +149,11 @@ func _ready() -> void:
 	add_child(spawn_turtle)
 	_spawn_buttons["turtle"] = spawn_turtle
 
+	var unlock := _make_action_button("Sblocca livelli")
+	unlock.pressed.connect(_unlock_levels)
+	add_child(unlock)
+	_spawn_buttons["unlock_levels"] = unlock
+
 	var game_over := _make_action_button("Fine partita")
 	game_over.pressed.connect(_force_game_over)
 	add_child(game_over)
@@ -154,6 +174,22 @@ func _on_debug_mode_changed(value: bool) -> void:
 func _on_temperature_slider_changed(value: float) -> void:
 	Game.debug_temperature_manual = true
 	Game.debug_temperature_value = value
+
+
+## Toggle the temperature feature flag (level 1 keeps it off).
+func _toggle_temperature_enabled() -> void:
+	Game.eco.temperature_enabled = not Game.eco.temperature_enabled
+
+
+## Toggle one of the three threat feature flags (co2_enabled, ...).
+func _toggle_threat_flag(flag_name: String) -> void:
+	match flag_name:
+		"co2_enabled":
+			Game.actors.co2_enabled = not Game.actors.co2_enabled
+		"bag_enabled":
+			Game.actors.bag_enabled = not Game.actors.bag_enabled
+		"cyclone_enabled":
+			Game.actors.cyclone_enabled = not Game.actors.cyclone_enabled
 
 
 ## Toggle the CO2-dies-on-coral feature flag.
@@ -215,6 +251,11 @@ func _spawn_turtle() -> void:
 	rng.randomize()
 	var entry := EdgeEntry.random(rng, Game.visible_world_polygon(), Rect2(Vector2.ZERO, Game.grid.world_size()))
 	Game.factory.spawn_turtle(entry)
+
+
+## Makes every campaign level selectable (progress debug helper).
+func _unlock_levels() -> void:
+	UserSettings.unlock_all(LevelCatalog.COUNT)
 
 
 ## End the run immediately and show the game-over screen.
@@ -394,6 +435,10 @@ func _flag_label(flag_name: String, value: bool) -> String:
 ## Returns the current value of a debug/feature flag by name.
 func _flag_value(flag_name: StringName) -> bool:
 	match flag_name:
+		"temperature_enabled": return Game.eco.temperature_enabled
+		"co2_enabled": return Game.actors.co2_enabled
+		"bag_enabled": return Game.actors.bag_enabled
+		"cyclone_enabled": return Game.actors.cyclone_enabled
 		"co2_dies_on_coral": return Game.actors.co2_dies_on_coral
 		"predator_enabled": return Game.actors.predator_enabled
 		"turtle_enabled": return Game.actors.turtle_enabled

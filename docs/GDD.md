@@ -1,7 +1,7 @@
 # BalanSea — Game Design Document (MVP)
 
 > Game jam, tema **SUBIRE**. Gestionale real-time di una barriera corallina, vista dall'alto 2D, Godot 4.x (GDScript).
-> Obiettivo: mantenere l'equilibrio dell'ecosistema il più a lungo possibile.
+> Obiettivo: mantenere l'equilibrio dell'ecosistema e superare i tre livelli a tempo.
 
 ---
 
@@ -30,9 +30,17 @@ minacce ──► CO2, buste, cicloni (annunciati prima di entrare)
 - Troppi coralli → i pesci restano bloccati e non arrivano al cibo → muoiono di fame → game over
 - Pochi pesci → bisogna fecondare i nidi in fretta
 
-## 3. Condizioni di fine partita e punteggio
+## 3. Campagna, fine partita e punteggio
 
-- **Survival a punteggio, senza vittoria.**
+- **Tre livelli con limite di tempo**, ognuno introduce una pressione nuova:
+
+| # | Livello | Durata | Meccanica introdotta |
+|---|---|---|---|
+| 1 | La barriera | 1:00 | Pesci, coralli, alghe e nidi |
+| 2 | L'acqua si scalda | 1:30 | La temperatura sale; i coralli la rallentano |
+| 3 | Il mare aperto | 2:00 | CO2, buste, cicloni, predatore e tartaruga |
+
+- Si **vince il livello** quando il timer arriva a 0 con le popolazioni vive: compare "Livello completato" e si passa al successivo. Dopo il terzo livello la campagna è completata.
 - Le popolazioni controllate sono quattro, contate **sulla mappa**: **coralli, alghe, pesci, nidi**.
 - **Timeout di collasso**: quando una popolazione arriva a 0 **non** si perde subito. Parte un conto alla rovescia di `collapse_grace_seconds` (**7 s**) solo per quella popolazione.
   - Se la popolazione torna sopra 0 prima della scadenza, il conto alla rovescia si annulla. Se in seguito torna a 0, il conto riparte da capo.
@@ -43,11 +51,12 @@ minacce ──► CO2, buste, cicloni (annunciati prima di entrare)
   - **Pesci**: un nido con uova che si schiudono entro il timeout (*sono morti tutti i pesci, ma le uova stanno per schiudersi → ti salvi*). I pesci non arrivano dall'inventario.
   - **Alghe / coralli / nidi**: piazzandone uno dall'inventario, se c'è o se uno slot si ricarica in tempo.
 - Interfaccia: mentre è attivo un conto alla rovescia, al centro in alto compare un avviso rosso con l'icona della popolazione e i secondi rimasti. Per i pesci, se c'è un nido con uova, l'avviso mostra anche il tempo che manca alla schiusa, così il giocatore capisce subito se si salverà.
-- **Punteggio** = secondi sopravvissuti (MVP). Mostrato nell'interfaccia e nella schermata di game over, che mostra anche la popolazione collassata, i conteggi finali e il miglior tempo salvato.
+- **Sconfitta**: se un conto alla rovescia scade, il livello si perde e si riprova lo stesso livello; i livelli già superati restano sbloccati.
+- **Punteggio** = secondi sopravvissuti nel livello. Ogni livello ha il suo record, salvato in `user://settings.cfg` insieme ai livelli sbloccati. La schermata di game over mostra la popolazione collassata, i conteggi finali e il record del livello.
 
 ## 4. Mappa iniziale
 
-Fissa, non randomica, costruita a mano nella scena `levels/Level01.tscn`:
+Fissa, non randomica, definita a mano in `levels/level_01.gd` e riusata da tutti i livelli; `levels/level_catalog.gd` aggiunge le alghe iniziali e le meccaniche di ogni livello:
 
 - 3 pesci adulti (fecondi)
 - 1 nido vuoto
@@ -220,7 +229,7 @@ Danni dal più debole al più forte: alga (10) < busta (35) < CO2 (50). Tutti i 
 
 ## 9. Interfaccia
 - **In alto a destra**: termometro.
-- **In alto al centro**: punteggio / tempo.
+- **In alto al centro**: livello corrente e tempo rimanente.
 - **In alto a sinistra**: 4 slot dell'inventario, con il numero della scorciatoia (**1-4**) e il tempo di ricarica mostrato come radiale.
 - **Pausa**: Spazio / Esc. Mentre sei in pausa non puoi piazzare oggetti.
 - **Tutorial**: al primo avvio, dopo Gioca, una schermata mostra tre reazioni animate della barriera (pesce/nido, CO2/alga, alga/corallo) e, accanto, l'elenco completo delle interazioni (§8). Sempre riapribile da "Come si gioca".
@@ -243,6 +252,7 @@ balansea/
 │   ├── ThreatSpawner.gd   # spawn dal bordo dello schermo
 │   ├── InventorySystem.gd
 │   ├── PlacementController.gd
+│   ├── LevelDirector.gd   # timer del livello, sconfitta/vittoria, sblocco del successivo
 │   ├── GridModel.gd       # occupazione celle: Dictionary[Vector2i → entità], cell↔world, adiacenti
 │   └── View.gd            # proiezione mondo↔schermo parametrica (Transform2D obliqua)
 ├── entities/
@@ -252,8 +262,11 @@ balansea/
 │   ├── nest/   Nest.tscn   (Area2D, layer NEST)
 │   └── threats/ CO2.tscn  Bag.tscn  Cyclone.tscn  (Area2D, layer THREAT)
 ├── levels/
-│   └── Level01.tscn       # mappa iniziale fissa
-├── ui/  HUD.tscn  Inventory.tscn  Thermometer.tscn  GameOver.tscn
+│   ├── level_01.gd        # mappa iniziale fissa, riusata da tutti i livelli
+│   ├── level_definition.gd  # durata, meccaniche e contenuti di un livello
+│   ├── level_catalog.gd   # i tre livelli della campagna
+│   └── level_session.gd   # livello caricato nella scena corrente
+├── ui/  HUD.tscn  Inventory.tscn  Thermometer.tscn  GameOver.tscn  LevelSelect.tscn  LevelClear.tscn
 └── main/ Main.tscn
 ```
 
@@ -283,4 +296,4 @@ balansea/
 ## 12. Domande aperte
 - I parametri numerici sono solo un punto di partenza da verificare in playtest.
 - `collapse_grace_seconds` (7 s) rispetto a `hatch_seconds` (20 s): con questi valori le uova salvano solo se sono state deposte almeno 13 s prima della morte dell'ultimo pesce. Va verificato in playtest.
-- Il punteggio deve premiare i coralli vivi (es. punti/s = numero di coralli)?
+- Le durate dei tre livelli (60/90/120 s) e i contenuti iniziali vanno verificati in playtest: il primo deve restare una calma introduttiva, il terzo una sfida completa.

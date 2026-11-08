@@ -78,6 +78,18 @@ Details: `docs/android.md`.
    ```
 6. **Never delete feature branches**, even after they have been merged. Keep them for reference.
 
+## Levels
+
+The campaign is three timed levels defined in `levels/level_catalog.gd` (see
+`LevelDefinition`). Each level lists its enabled mechanics; `Main._ready` copies
+them into the balance flags before the systems start, so systems keep gating on
+`Game.actors.*` / `Game.eco.*`. The loaded level is the static
+`LevelSession.current_index` (it survives the `reload_current_scene()` used to
+switch or retry). `LevelDirector` owns the countdown, the clear screen and
+progress saving; a collapse still ends the run and the player retries the same
+level. Progress and per-level records live in `user://settings.cfg`
+(`UserSettings`).
+
 ## Feature flags
 
 Every feature flag must be exposed in the debug overlay (F3, `res://core/debug_overlay.gd`)
@@ -86,4 +98,5 @@ so it can be inspected and toggled at runtime. When adding a new feature flag:
 2. Add a read-only (or toggleable) entry to the "Feature flags" section of `DebugOverlay`.
 3. Gate the feature on `Game.actors.<flag>` (or `Game.eco.<flag>`) in the system that uses it.
 
-Current flags: `co2_dies_on_coral`, `predator_enabled`, `turtle_enabled`.
+Current flags: `temperature_enabled`, `co2_enabled`, `bag_enabled`, `cyclone_enabled`,
+`co2_dies_on_coral`, `predator_enabled`, `turtle_enabled`.

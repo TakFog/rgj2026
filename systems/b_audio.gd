@@ -149,6 +149,13 @@ func _connect_ui() -> void:
 	var game_over := Game.ui.get_node_or_null("GameOver") as GameOverScreen
 	if game_over != null:
 		game_over.restart_pressed.connect(func() -> void: play(&"ui_click"))
+		game_over.menu_pressed.connect(func() -> void: play(&"ui_click"))
+	var level_select := Game.ui.get_node_or_null("LevelSelect") as LevelSelectScreen
+	if level_select != null:
+		level_select.button_pressed.connect(func() -> void: play(&"ui_click"))
+	var level_clear := Game.ui.get_node_or_null("LevelClear") as LevelClearScreen
+	if level_clear != null:
+		level_clear.button_pressed.connect(func() -> void: play(&"ui_click"))
 	var pause := get_parent().get_node_or_null("PauseController") as PauseController
 	if pause != null:
 		pause.pause_toggled.connect(func(_paused: bool) -> void: play(&"ui_click"))

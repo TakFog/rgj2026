@@ -83,7 +83,7 @@ func _ready() -> void:
 	if placement != null:
 		placement.placement_finished.connect(_on_placement_finished)
 	Game.world.child_entered_tree.connect(_on_entity_added)
-	# Existing level entities (systems are created after Level01.populate).
+	# Existing level entities (systems are created after the level is populated).
 	for group in [Groups.FISH, Groups.CORALS, Groups.NESTS, Groups.THREATS, Groups.ALGAE]:
 		for node in get_tree().get_nodes_in_group(group):
 			_on_entity_added(node)

@@ -85,6 +85,13 @@ static func restart_run(tree: SceneTree) -> void:
 	tree.reload_current_scene()
 
 
+## Reloads into the title screen (after a clear, or from the game-over card).
+static func restart_to_menu(tree: SceneTree) -> void:
+	_skip_next_open = false
+	tree.paused = false
+	tree.reload_current_scene()
+
+
 ## Like pressing Play, without the click: deferred so the music node and the
 ## other listeners are in the tree when play_pressed fires.
 func _start_without_menu() -> void:

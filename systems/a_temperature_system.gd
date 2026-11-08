@@ -22,6 +22,11 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	# Level 1 runs on a calm reef: the water stays cold. The debug slider still
+	# works, so a developer can test hot-water behaviour on any level.
+	if not Game.eco.temperature_enabled:
+		Game.temperature = Game.debug_temperature_value if Game.debug_temperature_manual else 0.0
+		return
 	var step := Game.frame_step(delta)
 	_cell_elapsed += step
 	if _cell_elapsed >= CELL_SAMPLE_SECONDS:

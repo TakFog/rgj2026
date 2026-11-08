@@ -11,6 +11,11 @@ const TUTORIAL_SECTION := "tutorial"
 const TUTORIAL_KEY := "seen"
 const SCORE_SECTION := "score"
 const BEST_SECONDS_KEY := "best_seconds"
+const LEVELS_SECTION := "levels"
+## Number of unlocked campaign levels (level 1 is always available).
+const UNLOCKED_KEY := "unlocked"
+## Per-level survival record, stored as "best_<index>" (0-based index).
+const LEVEL_BEST_PREFIX := "best_"
 ## Slider range: -80 dB is silent, 0 dB leaves the designed mix untouched.
 const MIN_DB := -80.0
 const MAX_DB := 0.0
@@ -74,6 +79,54 @@ static func submit_best(seconds: float, path := PATH) -> bool:
 	var config := ConfigFile.new()
 	config.load(path)
 	config.set_value(SCORE_SECTION, BEST_SECONDS_KEY, seconds)
+	config.save(path)
+	return true
+
+
+## How many campaign levels are unlocked. Level 1 is always playable, so the
+## value is at least 1 even on a fresh save.
+static func unlocked_count(path := PATH) -> int:
+	var config := ConfigFile.new()
+	if config.load(path) != OK:
+		return 1
+	return maxi(1, int(config.get_value(LEVELS_SECTION, UNLOCKED_KEY, 1)))
+
+
+## Marks `index` (0-based) as cleared and unlocks the following level, capped at
+## `total`. Keeps every other section of the file.
+static func mark_level_cleared(index: int, total: int, path := PATH) -> void:
+	var config := ConfigFile.new()
+	config.load(path)
+	var unlocked := maxi(1, int(config.get_value(LEVELS_SECTION, UNLOCKED_KEY, 1)))
+	config.set_value(LEVELS_SECTION, UNLOCKED_KEY, maxi(unlocked, mini(index + 2, total)))
+	config.save(path)
+
+
+## Debug helper (F3): makes every level selectable.
+static func unlock_all(total: int, path := PATH) -> void:
+	var config := ConfigFile.new()
+	config.load(path)
+	config.set_value(LEVELS_SECTION, UNLOCKED_KEY, maxi(1, total))
+	config.save(path)
+
+
+## Best survival time on one level, or 0.0 when no run has been recorded.
+static func level_best_seconds(index: int, path := PATH) -> float:
+	var config := ConfigFile.new()
+	if config.load(path) != OK:
+		return 0.0
+	var key := "%s%d" % [LEVEL_BEST_PREFIX, index]
+	return maxf(0.0, float(config.get_value(LEVELS_SECTION, key, 0.0)))
+
+
+## Stores `seconds` when it beats this level's record. Returns true on a record.
+static func submit_level_best(index: int, seconds: float, path := PATH) -> bool:
+	if seconds <= level_best_seconds(index, path):
+		return false
+	var config := ConfigFile.new()
+	config.load(path)
+	var key := "%s%d" % [LEVEL_BEST_PREFIX, index]
+	config.set_value(LEVELS_SECTION, key, seconds)
 	config.save(path)
 	return true
 

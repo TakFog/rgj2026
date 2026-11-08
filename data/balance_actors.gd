@@ -35,6 +35,13 @@ extends Resource
 ## Straight-line distance (world units) within which an empty nest is noticed.
 @export var reproduce_nest_radius := 128.0
 
+@export_group("Level")
+## Threat feature flags, set per level by LevelCatalog before the run starts.
+## The F3 overlay can still toggle them while a level is running.
+@export var co2_enabled := true
+@export var bag_enabled := true
+@export var cyclone_enabled := true
+
 @export_group("Predator")
 ## Feature flag: set to false to turn the carnivorous predator off entirely.
 @export var predator_enabled := true

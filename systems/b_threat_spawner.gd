@@ -14,8 +14,22 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	for kind in _schedule.tick(Game.frame_step(delta), Game.temperature):
+		if not _enabled(kind):
+			continue
 		var island := Rect2(Vector2.ZERO, Game.grid.world_size())
 		spawn(kind, EdgeEntry.random(_rng, Game.visible_world_polygon(), island), _rng)
+
+
+## Level feature flags: a disabled threat never enters, but its timer keeps
+## running, so toggling it on from F3 can produce one straight away.
+static func _enabled(kind: int) -> bool:
+	match kind:
+		ThreatSchedule.Type.CO2:
+			return Game.actors.co2_enabled
+		ThreatSchedule.Type.BAG:
+			return Game.actors.bag_enabled
+		_:
+			return Game.actors.cyclone_enabled
 
 
 ## Creates a threat of `kind` entering at `entry` and adds it to the world.

@@ -11,8 +11,18 @@ indirectly by keeping the whole ecosystem in balance:
 - meanwhile the water keeps warming up and threats (CO2, plastic bags, cyclones) keep arriving.
 
 Coral, algae, fish and nests are all tracked. If any of them drops to zero, a 10-second countdown
-starts; if it runs out, the reef collapses and the game is over. There is no victory: your score is
-how long you survive.
+starts; if it runs out, the reef collapses and you retry the level.
+
+The campaign has three levels, each with a time limit and a new pressure:
+
+| # | Level | Time | New mechanic |
+| --- | --- | --- | --- |
+| 1 | La barriera | 1:00 | The base loop: fish, coral, algae and nests |
+| 2 | L'acqua si scalda | 1:30 | The water warms up; living coral slows it down |
+| 3 | Il mare aperto | 2:00 | CO2, plastic bags, cyclones, the predator and the turtle |
+
+Survive the timer and you clear the level and unlock the next one. Progress and per-level records are
+saved in `user://`, and the level chooser is reachable from **Gioca** on the title screen.
 
 The full game design document (in Italian) is in [`docs/GDD.md`](docs/GDD.md).
 

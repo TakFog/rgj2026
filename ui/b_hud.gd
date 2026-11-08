@@ -18,6 +18,9 @@ const OUTLINE_COLOR := Color(0.01, 0.04, 0.05, 0.75)
 const WARNING_REFRESH_SECONDS := 0.1
 
 var monitor: PopulationMonitor
+## Level countdown (set by DevBSystems). While present, the top-centre label is
+## the time left in the level instead of the elapsed survival time.
+var director: LevelDirector
 var _score_label: Label
 var _warning_label: Label
 var _warning_elapsed := WARNING_REFRESH_SECONDS
@@ -32,6 +35,12 @@ static func display_name(population: StringName) -> String:
 static func format_time(seconds: float) -> String:
 	var whole := floori(seconds)
 	return "%02d:%02d" % [floori(whole / 60.0), whole % 60]
+
+
+## Remaining level time: rounds up, so 59.2 s still reads 01:00 and 00:00
+## appears only on the frame the level clears.
+static func format_countdown(seconds: float) -> String:
+	return format_time(ceili(maxf(0.0, seconds)))
 
 
 ## Collapse warning text. `hatch_seconds` < 0 means "no eggs" (no hint shown).
@@ -49,6 +58,12 @@ func bind(p_monitor: PopulationMonitor) -> void:
 	monitor.score_changed.connect(_on_score_changed)
 
 
+## Connect to the level countdown. Safe to call before the HUD enters the tree.
+func bind_level(p_director: LevelDirector) -> void:
+	director = p_director
+	director.time_changed.connect(_on_level_time_changed)
+
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -59,6 +74,8 @@ func _ready() -> void:
 	_warning_label = _make_centered_label(TOP + SCORE_FONT_SIZE + 8.0, WARNING_FONT_SIZE)
 	_warning_label.add_theme_color_override("font_color", CRITICAL_COLOR)
 	_warning_label.visible = false
+	if director != null:
+		_on_level_time_changed(director.time_left())
 
 
 func _process(delta: float) -> void:
@@ -88,8 +105,18 @@ func _update_warning() -> void:
 		_warning_visible = true
 
 
+## Without a level director the label keeps the old elapsed-time meaning (tests
+## and any future endless mode); with one it shows the level countdown.
 func _on_score_changed(seconds: float) -> void:
-	_score_label.text = format_time(seconds)
+	if director == null:
+		_score_label.text = format_time(seconds)
+
+
+func _on_level_time_changed(seconds_left: float) -> void:
+	if _score_label == null or director == null:
+		return
+	_score_label.text = "Livello %d/%d  ·  %s" % [
+		director.index + 1, LevelCatalog.COUNT, format_countdown(seconds_left)]
 
 
 func _make_centered_label(top: float, font_size: int) -> Label:

@@ -107,7 +107,8 @@ func _build_overlay() -> Control:
 	_resume_btn = _add_button("Riprendi", _on_resume_pressed)
 	SeaStyle.style_highlighted_button(_resume_btn)
 	_add_button("Impostazioni", _on_settings_pressed)
-	_add_button("Ricomincia", _on_restart_pressed)
+	_add_button("Ricomincia livello", _on_restart_pressed)
+	_add_button("Torna al menu", _on_menu_pressed)
 	var exit_btn := _add_button("Esci", _on_exit_pressed)
 	# Web builds cannot quit the host page, so the exit button is hidden there.
 	exit_btn.visible = not OS.has_feature("web")
@@ -143,6 +144,12 @@ func _on_settings_pressed() -> void:
 func _on_restart_pressed() -> void:
 	button_pressed.emit()
 	MainMenuScreen.restart_run(get_tree())
+
+
+## Leaves the run; the title screen (and the level chooser) come back.
+func _on_menu_pressed() -> void:
+	button_pressed.emit()
+	MainMenuScreen.restart_to_menu(get_tree())
 
 
 func _on_exit_pressed() -> void:

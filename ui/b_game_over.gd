@@ -19,7 +19,9 @@ const CAUSES := {
 
 ## Used by the audio system (systems/b_audio.gd).
 signal restart_pressed
+signal menu_pressed
 
+var _level: Label
 var _time: Label
 var _cause: Label
 var _record: Label
@@ -49,6 +51,8 @@ func _ready() -> void:
 	_add_label(box, TITLE, SeaStyle.TITLE_FONT_SIZE, SeaStyle.SAND_COLOR)
 	box.add_child(SeaStyle.divider())
 
+	_level = _add_label(box, "", SeaStyle.BODY_FONT_SIZE, SeaStyle.CAPTION_COLOR)
+	_level.visible = false
 	_cause = _add_label(box, "", SeaStyle.BODY_FONT_SIZE, CRITICAL_COLOR)
 
 	# Caption and time sit tight together, as one block.
@@ -62,27 +66,47 @@ func _ready() -> void:
 	_counts = _add_label(box, "", 16, Color(SeaStyle.CAPTION_COLOR, 0.8))
 	_counts.visible = false
 
-	var restart := SeaStyle.menu_button("Ricomincia")
+	var restart := SeaStyle.menu_button("Riprova livello")
 	restart.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	SeaStyle.style_highlighted_button(restart)
 	restart.pressed.connect(_on_restart_pressed)
 	box.add_child(restart)
 	_restart = restart
 
+	var menu := SeaStyle.menu_button("Torna al menu")
+	menu.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	menu.pressed.connect(_on_menu_pressed)
+	box.add_child(menu)
 
-func show_result(population: StringName, score_seconds: float, counts: Dictionary = {}) -> void:
+
+## `level_index` >= 0 turns on the level label and the per-level record.
+func show_result(population: StringName, score_seconds: float, counts: Dictionary = {},
+		level_index := -1, level_name := "") -> void:
 	_cause.text = cause_text(population)
 	_time.text = Hud.format_time(score_seconds)
-	var is_record := UserSettings.submit_best(score_seconds)
-	var best := UserSettings.best_seconds()
-	_record.text = "Nuovo record!" if is_record else "Record: %s" % Hud.format_time(best)
-	_record.add_theme_color_override("font_color",
-			SeaStyle.SAND_COLOR if is_record else SeaStyle.CAPTION_COLOR)
+	if level_index >= 0:
+		_level.text = "Livello %d/%d — %s" % [
+			level_index + 1, LevelCatalog.COUNT, level_name]
+		_level.visible = true
+		_record.text = _record_text(
+			UserSettings.submit_level_best(level_index, score_seconds),
+			UserSettings.level_best_seconds(level_index))
+	else:
+		_level.visible = false
+		_record.text = _record_text(
+			UserSettings.submit_best(score_seconds), UserSettings.best_seconds())
 	_counts.text = format_counts(counts)
 	_counts.visible = not _counts.text.is_empty()
 	visible = true
 	# Keyboard/gamepad players can restart without the mouse.
 	_restart.grab_focus.call_deferred()
+
+
+## Record line shared by the global and the per-level record.
+func _record_text(is_record: bool, best: float) -> String:
+	_record.add_theme_color_override("font_color",
+			SeaStyle.SAND_COLOR if is_record else SeaStyle.CAPTION_COLOR)
+	return "Nuovo record!" if is_record else "Record: %s" % Hud.format_time(best)
 
 
 ## Player-facing reason for a collapse, keyed by the population at zero.
@@ -115,3 +139,18 @@ func _add_label(parent: Control, text: String, font_size: int, font_color: Color
 func _on_restart_pressed() -> void:
 	restart_pressed.emit()
 	MainMenuScreen.restart_run(get_tree())
+
+
+func _on_menu_pressed() -> void:
+	menu_pressed.emit()
+	MainMenuScreen.restart_to_menu(get_tree())
+
+
+## Esc/Space retry the level, like the primary button (the pause controller
+## ignores keys after game over, so nothing else would handle them).
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event.is_action_pressed(InputActions.CANCEL) or event.is_action_pressed(InputActions.PAUSE):
+		get_viewport().set_input_as_handled()
+		_on_restart_pressed()

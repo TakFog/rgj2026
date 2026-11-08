@@ -9,6 +9,9 @@ const AudioSystem := preload("res://systems/b_audio.gd")
 
 var _main_menu: MainMenuScreen
 var _tutorial: TutorialScreen
+var _level_select: LevelSelectScreen
+var _level_clear: LevelClearScreen
+var _level_director: LevelDirector
 
 
 func _ready() -> void:
@@ -46,9 +49,16 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	monitor.name = "PopulationMonitor"
 	add_child(monitor)
 
+	# Level time limit and clear condition (GDD §3).
+	_level_director = LevelDirector.new()
+	_level_director.name = "LevelDirector"
+	_level_director.monitor = monitor
+	add_child(_level_director)
+
 	var hud := Hud.new()
 	hud.name = "Hud"
 	hud.bind(monitor)
+	hud.bind_level(_level_director)
 	Game.ui.add_child(hud)
 
 	# Touch builds only: on-screen Pausa/Annulla buttons. Added before the
@@ -65,7 +75,27 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	game_over.name = "GameOver"
 	Game.ui.add_child(game_over)
 	monitor.game_over.connect(func(population: StringName, seconds: float) -> void:
-		game_over.show_result(population, seconds, monitor.counts))
+		var level := LevelSession.current()
+		game_over.show_result(population, seconds, monitor.counts,
+			LevelSession.current_index, level.level_name))
+	game_over.menu_pressed.connect(_on_back_to_menu_requested)
+
+	# Shown when the level timer runs out with the reef alive.
+	_level_clear = LevelClearScreen.new()
+	_level_clear.name = "LevelClear"
+	Game.ui.add_child(_level_clear)
+	_level_director.level_cleared.connect(func(index: int, level: LevelDefinition) -> void:
+		_level_clear.show_result(index, level, monitor.counts, _level_director.elapsed()))
+	_level_clear.next_requested.connect(_on_next_level_requested)
+	_level_clear.restart_requested.connect(_on_retry_level_requested)
+	_level_clear.menu_requested.connect(_on_back_to_menu_requested)
+
+	# Level chooser opened by Gioca (one card per campaign level).
+	_level_select = LevelSelectScreen.new()
+	_level_select.name = "LevelSelect"
+	_level_select.level_chosen.connect(_on_level_chosen)
+	_level_select.closed.connect(_on_level_select_closed)
+	Game.ui.add_child(_level_select)
 
 	# Title screen: shown at game start, pauses the run until Play is pressed.
 	# MainMenuScreen opens itself from its own _ready once it is in the tree.
@@ -99,13 +129,13 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 		touch_controls.pause = pause
 
 
-## Play pressed on the title screen: the tutorial comes first on the first run.
+## Play pressed on the title screen: the tutorial comes first on the first run,
+## then the level chooser. The run stays paused until a level is chosen.
 func _on_play_requested() -> void:
+	_main_menu.hide_for_tutorial()
 	if UserSettings.tutorial_seen():
-		_main_menu.close()
-		_start_game_music()
+		_level_select.open()
 	else:
-		_main_menu.hide_for_tutorial()
 		_tutorial.open(TutorialScreen.Mode.START)
 
 
@@ -115,12 +145,12 @@ func _on_tutorial_requested() -> void:
 	_tutorial.open(TutorialScreen.Mode.REVIEW)
 
 
-## The tutorial starts the run (Inizia or Salta).
+## The tutorial is done (Inizia or Salta): now the player picks a level.
 func _on_tutorial_run_started() -> void:
 	UserSettings.mark_tutorial_seen()
 	_tutorial.close()
-	_main_menu.close()
-	_start_game_music()
+	_main_menu.hide_for_tutorial()
+	_level_select.open()
 
 
 ## "Indietro" in the tutorial: back to the still-paused title screen.
@@ -129,9 +159,42 @@ func _on_tutorial_closed() -> void:
 	_main_menu.open()
 
 
-## The run starts directly (restart path: no tutorial).
+## The run starts directly (restart path: no tutorial, no level chooser).
 func _on_run_started() -> void:
 	_start_game_music()
+
+
+## A level card was pressed. The loaded level can start at once; another one
+## needs a scene rebuild so Main populates the new starting reef.
+func _on_level_chosen(index: int) -> void:
+	if LevelSession.select(index):
+		MainMenuScreen.restart_run(get_tree())
+	else:
+		_level_select.close()
+		get_tree().paused = false
+		_start_game_music()
+
+
+## Indietro/Esc in the chooser: back to the still-paused title screen.
+func _on_level_select_closed() -> void:
+	_level_select.close()
+	_main_menu.open()
+
+
+## Clear screen: load the next level.
+func _on_next_level_requested() -> void:
+	if LevelSession.select(LevelSession.current_index + 1):
+		MainMenuScreen.restart_run(get_tree())
+
+
+## Clear/game-over card: retry the same level from a fresh scene.
+func _on_retry_level_requested() -> void:
+	MainMenuScreen.restart_run(get_tree())
+
+
+## Back to the title screen (and the level chooser) from a result card.
+func _on_back_to_menu_requested() -> void:
+	MainMenuScreen.restart_to_menu(get_tree())
 
 
 ## Swaps the intro for the run's music.

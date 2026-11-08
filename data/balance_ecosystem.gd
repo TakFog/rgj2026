@@ -37,6 +37,11 @@ extends Resource
 @export var weight_algae := 40.0
 @export var nest_base_weight := 20.0
 
+@export_group("Level")
+## Feature flag: when false the water never warms up (level 1's calm reef).
+## LevelCatalog sets it per level before the systems enter the tree.
+@export var temperature_enabled := true
+
 @export_group("Temperature")
 ## Normalised temperature per second with no corals: reaches 1.0 in ~8 minutes.
 @export var temp_base_rate := 1.0 / 480.0
