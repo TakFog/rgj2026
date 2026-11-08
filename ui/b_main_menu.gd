@@ -7,6 +7,9 @@ extends ColorRect
 
 ## The painted menu: the master is `video/MENU.png`, this is the web-sized copy.
 const MENU_TEXTURE: Texture2D = preload("res://assets/ui/menu.png")
+## Clips the hover/focus highlight to the pill: the painted buttons are
+## parallelograms, so a plain rectangle would show around them.
+const GLOW_SHADER: Shader = preload("res://ui/menu_glow.gdshader")
 ## How much the hover/focus glow brightens a painted button.
 const GLOW_ALPHA := 0.22
 ## How much further it brightens while the button is held down.
@@ -42,8 +45,6 @@ var _play_button: Button
 var _art_box: Control
 ## Hotspot key (see MenuHotspots.RECTS) -> its invisible Button.
 var _hotspots: Dictionary = {}
-## Shared additive material that makes the glow brighten the painted shape.
-var _glow_material: CanvasItemMaterial
 
 
 func _ready() -> void:
@@ -114,9 +115,6 @@ func _build_menu_panel() -> Control:
 	_art_box.add_child(art)
 	art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	_glow_material = CanvasItemMaterial.new()
-	_glow_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-
 	# One invisible hotspot per painted button, in MenuHotspots focus order.
 	var handlers := {
 		"play": _on_play_pressed,
@@ -136,9 +134,8 @@ func _build_menu_panel() -> Control:
 
 
 ## An invisible button sitting exactly on one painted button. Hover and focus
-## brighten the painted shape by re-drawing its region of the art additively:
-## the art's transparent background stays transparent, so only the pill lights
-## up.
+## brighten the painted shape by re-drawing its part of the art additively,
+## clipped to the pill's slanted corners so no rectangle shows.
 func _build_hotspot(key: String, handler: Callable) -> Button:
 	var button := Button.new()
 	button.name = "Hotspot_" + key
@@ -149,15 +146,22 @@ func _build_hotspot(key: String, handler: Callable) -> Button:
 	button.pressed.connect(handler)
 
 	var glow := TextureRect.new()
-	var region := AtlasTexture.new()
-	region.atlas = MENU_TEXTURE
-	region.region = MenuHotspots.hotspot_region(key)
-	glow.texture = region
+	var glow_material := ShaderMaterial.new()
+	glow_material.shader = GLOW_SHADER
+	var fraction: Rect2 = MenuHotspots.RECTS[key]
+	var corners: Array = MenuHotspots.PILL_CORNERS[key]
+	glow_material.set_shader_parameter("region_position", fraction.position)
+	glow_material.set_shader_parameter("region_size", fraction.size)
+	glow_material.set_shader_parameter("top_left", corners[0])
+	glow_material.set_shader_parameter("top_right", corners[1])
+	glow_material.set_shader_parameter("bottom_right", corners[2])
+	glow_material.set_shader_parameter("bottom_left", corners[3])
+	glow_material.set_shader_parameter("intensity", GLOW_ALPHA)
+	glow.texture = MENU_TEXTURE
 	glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	glow.stretch_mode = TextureRect.STRETCH_SCALE
 	glow.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	glow.material = _glow_material
-	glow.modulate = Color(1, 1, 1, GLOW_ALPHA)
+	glow.material = glow_material
 	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	glow.visible = false
 	button.add_child(glow)
@@ -168,9 +172,9 @@ func _build_hotspot(key: String, handler: Callable) -> Button:
 	button.focus_entered.connect(func() -> void: glow.visible = true)
 	button.focus_exited.connect(func() -> void: glow.visible = false)
 	button.button_down.connect(
-		func() -> void: glow.modulate = Color(1, 1, 1, GLOW_ALPHA_PRESSED))
+		func() -> void: glow_material.set_shader_parameter("intensity", GLOW_ALPHA_PRESSED))
 	button.button_up.connect(
-		func() -> void: glow.modulate = Color(1, 1, 1, GLOW_ALPHA))
+		func() -> void: glow_material.set_shader_parameter("intensity", GLOW_ALPHA))
 	return button
 
 

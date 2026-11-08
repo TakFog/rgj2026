@@ -57,3 +57,31 @@ func test_hotspot_region_is_in_texture_pixels() -> void:
 	var region := MenuHotspots.hotspot_region("play")
 	assert_almost(region.position, fraction.position * MenuHotspots.ART_SIZE)
 	assert_almost(region.size, fraction.size * MenuHotspots.ART_SIZE)
+
+
+func test_every_hotspot_has_a_pill_shape() -> void:
+	assert_eq(MenuHotspots.PILL_CORNERS.keys(), MenuHotspots.RECTS.keys())
+
+
+func test_pill_corners_follow_their_hotspot() -> void:
+	for key: String in MenuHotspots.PILL_CORNERS:
+		var corners: Array = MenuHotspots.PILL_CORNERS[key]
+		assert_eq(corners.size(), 4, key)
+		var top_left: Vector2 = corners[0]
+		var top_right: Vector2 = corners[1]
+		var bottom_right: Vector2 = corners[2]
+		var bottom_left: Vector2 = corners[3]
+		# Top and bottom edges stay on the hotspot's top and bottom.
+		assert_almost(top_left.y, 0.0, 0.001, key)
+		assert_almost(top_right.y, 0.0, 0.001, key)
+		assert_almost(bottom_right.y, 1.0, 0.001, key)
+		assert_almost(bottom_left.y, 1.0, 0.001, key)
+		# The painted pills are parallelograms: both edges have the same
+		# width and are sheared by the same amount.
+		assert_almost(top_right.x - top_left.x, bottom_right.x - bottom_left.x, 0.01, key)
+		assert_almost(top_left.x - bottom_left.x, top_right.x - bottom_right.x, 0.01, key)
+		# A bounding box must contain the pill, not the other way round.
+		assert_true(top_left.x > -0.1 and top_left.x < 0.3, key)
+		assert_true(bottom_left.x > -0.1 and bottom_left.x < 0.3, key)
+		assert_true(top_right.x > 0.9 and top_right.x < 1.1, key)
+		assert_true(bottom_right.x > 0.7 and bottom_right.x < 1.0, key)

@@ -24,18 +24,24 @@ func test_hotspots_sit_on_the_painted_buttons() -> void:
 
 func test_each_hotspot_lights_up_its_painted_shape() -> void:
 	var menu := _built_menu()
+	var uniforms := ["top_left", "top_right", "bottom_right", "bottom_left"]
 	for key: String in MenuHotspots.RECTS:
 		var button: Button = menu._hotspots[key]
 		var glow := button.get_child(0) as TextureRect
 		assert_true(glow != null, key)
-		var region := glow.texture as AtlasTexture
-		assert_true(region != null, key)
-		assert_true(region.atlas == menu.MENU_TEXTURE, key)
-		assert_eq(region.region, MenuHotspots.hotspot_region(key), key)
-		var glow_material := glow.material as CanvasItemMaterial
+		assert_true(glow.texture == menu.MENU_TEXTURE, key)
+		var glow_material := glow.material as ShaderMaterial
 		assert_true(glow_material != null, key)
-		assert_true(
-			glow_material.blend_mode == CanvasItemMaterial.BLEND_MODE_ADD, key)
+		assert_true(glow_material.shader == menu.GLOW_SHADER, key)
+		var fraction: Rect2 = MenuHotspots.RECTS[key]
+		assert_almost(glow_material.get_shader_parameter("region_position"),
+			fraction.position, 0.001, key)
+		assert_almost(glow_material.get_shader_parameter("region_size"),
+			fraction.size, 0.001, key)
+		var corners: Array = MenuHotspots.PILL_CORNERS[key]
+		for i in uniforms.size():
+			assert_almost(glow_material.get_shader_parameter(uniforms[i]),
+				corners[i], 0.001, key)
 		assert_false(glow.visible, key)
 
 

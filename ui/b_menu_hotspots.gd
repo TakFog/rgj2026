@@ -18,6 +18,33 @@ const RECTS := {
 	"credits": Rect2(0.655, 0.862, 0.263, 0.092),
 }
 
+## Hotspot key -> its painted pill's four corners (top-left, top-right,
+## bottom-right, bottom-left), in fractions of the hotspot's rect. The pills
+## are parallelograms, so a rectangular glow would sit visibly outside them;
+## the menu clips its highlight to this shape instead.
+const PILL_CORNERS := {
+	"play": [
+		Vector2(0.204, 0.0), Vector2(1.002, 0.0),
+		Vector2(0.786, 1.0), Vector2(-0.012, 1.0),
+	],
+	"settings": [
+		Vector2(0.100, 0.0), Vector2(0.998, 0.0),
+		Vector2(0.884, 1.0), Vector2(-0.018, 1.0),
+	],
+	"tutorial": [
+		Vector2(0.107, 0.0), Vector2(1.001, 0.0),
+		Vector2(0.881, 1.0), Vector2(-0.012, 1.0),
+	],
+	"exit": [
+		Vector2(0.195, 0.0), Vector2(1.001, 0.0),
+		Vector2(0.786, 1.0), Vector2(-0.020, 1.0),
+	],
+	"credits": [
+		Vector2(0.195, 0.0), Vector2(1.001, 0.0),
+		Vector2(0.786, 1.0), Vector2(-0.020, 1.0),
+	],
+}
+
 
 ## The painting's rectangle on screen: as large as fits, keeping its aspect
 ## ratio, centred. Empty while the viewport has no size yet.
