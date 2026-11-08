@@ -7,7 +7,7 @@ const THEME_PATH := "res://ui/ui_theme.tres"
 const UI_CODEPOINTS: Array[int] = [0x00E8, 0x00E9, 0x00CC, 0x00B0, 0x2082, 0x00B7, 0x2212, 0x2014, 0x2192]
 
 
-func test_project_theme_uses_archivo_black() -> void:
+func test_project_theme_uses_archivo() -> void:
 	assert_eq(ProjectSettings.get_setting("gui/theme/custom"), THEME_PATH)
 	var theme := load(THEME_PATH) as Theme
 	assert_true(theme != null, "ui_theme.tres must load")
@@ -18,7 +18,13 @@ func test_project_theme_uses_archivo_black() -> void:
 	if variation == null:
 		return
 	assert_true(variation.base_font.get_font_name().contains("Archivo"))
-	assert_eq(int(variation.variation_opentype.get("wght", 0)), 900)
+	var tag := TextServerManager.get_primary_interface().name_to_tag("wght")
+	assert_eq(int(variation.variation_opentype.get(tag, 0)), 900,
+			"wght must be set under its OpenType tag, not the 'wght' text")
+	# A key the engine ignores leaves the width at the font's default instance
+	# (SemiBold 600), so compare the active axis against the base font directly.
+	assert_true(variation.get_char_size(0x2082, 16).x > variation.base_font.get_char_size(0x2082, 16).x,
+			"wght 900 must render wider than the font's default instance")
 
 
 func test_theme_font_has_every_ui_glyph() -> void:

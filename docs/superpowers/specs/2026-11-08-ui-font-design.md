@@ -49,7 +49,11 @@ Google Fonts.
 ## Decisions
 
 - **Font:** Google Fonts `Archivo[wdth,wght].ttf` (variable, OFL), wrapped
-  in a `FontVariation` with `wght = 900` — the Archivo Black cut. The static
+  in a `FontVariation` with `wght = 900` — the Archivo Black cut. The axis
+  is set under its numeric OpenType tag (`2003265652`), not the string key
+  `"wght"`: Godot 4.7 resolves variants by `TextServer.tag_to_name()`
+  (`"weight"`), so `"wght"` is silently ignored and leaves the font at its
+  default SemiBold 600. The static
   `ArchivoBlack-Regular.ttf` was rejected because it lacks U+2082 `₂`
   (used by the tutorial's `CO₂`); the variable family has every glyph the
   UI needs, so no separate fallback font is shipped.

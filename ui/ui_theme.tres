@@ -5,7 +5,7 @@
 [sub_resource type="FontVariation" id="FontVariation_archivo"]
 base_font = ExtResource("1")
 variation_opentype = {
-"wght": 900
+2003265652: 900
 }
 
 [resource]
