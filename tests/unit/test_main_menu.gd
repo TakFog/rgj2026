@@ -22,45 +22,6 @@ func test_hotspots_sit_on_the_painted_buttons() -> void:
 		assert_almost(button.size, expected.size, 0.01, key)
 
 
-func test_each_hotspot_shows_its_menu_label() -> void:
-	var menu := _built_menu()
-	var expected := {
-		"play": "INIZIA",
-		"tutorial": "COME SI GIOCA",
-		"settings": "IMPOSTAZIONI",
-		"credits": "CREDITI",
-		"exit": "ESCI",
-	}
-	for key: String in expected:
-		var label := menu._hotspots[key].get_node_or_null("Label") as Label
-		assert_true(label != null, key)
-		assert_eq(label.text, expected[key], key)
-		assert_eq(label.horizontal_alignment, HORIZONTAL_ALIGNMENT_CENTER, key)
-		assert_eq(label.vertical_alignment, VERTICAL_ALIGNMENT_CENTER, key)
-		assert_eq(label.mouse_filter, Control.MOUSE_FILTER_IGNORE, key)
-
-
-func test_menu_labels_scale_with_the_painted_buttons() -> void:
-	var big := _built_menu(Vector2(1280, 720))
-	var small := _built_menu(Vector2(640, 360))
-	var big_label := big._hotspots["play"].get_node("Label") as Label
-	var small_label := small._hotspots["play"].get_node("Label") as Label
-	assert_true(big_label.get_theme_font_size("font_size")
-		> small_label.get_theme_font_size("font_size"))
-
-
-func test_menu_labels_fit_inside_their_hotspots() -> void:
-	var menu := _built_menu()
-	for key: String in MenuHotspots.RECTS:
-		var label := menu._hotspots[key].get_node("Label") as Label
-		var font := ThemeDB.fallback_font
-		var font_size := label.get_theme_font_size("font_size")
-		var text_width := font.get_string_size(
-			label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		var button: Button = menu._hotspots[key]
-		assert_true(text_width <= button.size.x, key)
-
-
 func test_each_hotspot_lights_up_its_painted_shape() -> void:
 	var menu := _built_menu()
 	for key: String in MenuHotspots.RECTS:
@@ -104,10 +65,10 @@ func test_each_hotspot_runs_its_menu_action() -> void:
 
 
 ## A menu screen with its panel built, laid out for VIEWPORT, not in the tree.
-func _built_menu(viewport := VIEWPORT) -> MainMenuScreen:
+func _built_menu() -> MainMenuScreen:
 	var menu := MainMenuScreen.new()
 	autofree(menu)
-	menu.size = viewport
+	menu.size = VIEWPORT
 	menu.add_child(menu._build_menu_panel())
 	menu._layout_art()
 	return menu

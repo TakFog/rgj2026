@@ -2,30 +2,15 @@ class_name MainMenuScreen
 extends ColorRect
 ## Main menu overlay shown at game start (GDD §9, roadmap: title screen).
 ## The whole screen is the artist's painted menu; its five painted buttons are
-## invisible hotspots (MenuHotspots) with code-drawn labels (LABELS), so the art
-## is the interface. Works while the tree is paused; clicking Inizia unpauses
-## and hides the menu.
+## invisible hotspots (MenuHotspots), so the art is the interface. Works while
+## the tree is paused; clicking Gioca unpauses and hides the menu.
 
-## The painted menu: the master is `video/ciccio.png`, this is the web-sized copy.
+## The painted menu: the master is `video/MENU.png`, this is the web-sized copy.
 const MENU_TEXTURE: Texture2D = preload("res://assets/ui/menu.png")
 ## How much the hover/focus glow brightens a painted button.
 const GLOW_ALPHA := 0.22
 ## How much further it brightens while the button is held down.
 const GLOW_ALPHA_PRESSED := 0.4
-## The player-facing label drawn over each painted pill. The art itself is
-## text-free (the placeholder lettering was removed by the artist).
-const LABELS := {
-	"play": "INIZIA",
-	"tutorial": "COME SI GIOCA",
-	"settings": "IMPOSTAZIONI",
-	"credits": "CREDITI",
-	"exit": "ESCI",
-}
-## Label size as a fraction of the hotspot height, and the widest a label may
-## get relative to the hotspot, so every label fits its painted pill.
-const LABEL_HEIGHT_RATIO := 0.46
-const LABEL_WIDTH_RATIO := 0.78
-const LABEL_MIN_FONT_SIZE := 8
 
 ## Player-facing name and credits, kept in one place so the credits panel and
 ## the rest of the UI cannot drift apart.
@@ -178,20 +163,6 @@ func _build_hotspot(key: String, handler: Callable) -> Button:
 	button.add_child(glow)
 	glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	# The painting has no lettering, so the label is drawn over the pill.
-	var label := Label.new()
-	label.name = "Label"
-	label.text = LABELS[key]
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_color_override("font_color", SeaStyle.CAPTION_COLOR)
-	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.45))
-	label.add_theme_constant_override("shadow_offset_x", 2)
-	label.add_theme_constant_override("shadow_offset_y", 2)
-	button.add_child(label)
-	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
 	button.mouse_entered.connect(func() -> void: glow.visible = true)
 	button.mouse_exited.connect(func() -> void: glow.visible = false)
 	button.focus_entered.connect(func() -> void: glow.visible = true)
@@ -213,18 +184,6 @@ func _layout_art() -> void:
 		var button: Button = _hotspots[key]
 		button.position = rect.position - art.position
 		button.size = rect.size
-		_fit_label(button.get_node("Label") as Label, rect.size)
-
-
-## Scale a menu label to its painted pill: start from the pill height, then
-## shrink it if the text would spill out of the pill horizontally.
-func _fit_label(label: Label, hotspot: Vector2) -> void:
-	var base := maxi(int(hotspot.y * LABEL_HEIGHT_RATIO), LABEL_MIN_FONT_SIZE)
-	var text_width := ThemeDB.fallback_font.get_string_size(
-		label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, base).x
-	var fit := minf(1.0, hotspot.x * LABEL_WIDTH_RATIO / maxf(text_width, 1.0))
-	label.add_theme_font_size_override(
-		"font_size", maxi(int(base * fit), LABEL_MIN_FONT_SIZE))
 
 
 func _build_credits_panel() -> Control:

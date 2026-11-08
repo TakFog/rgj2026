@@ -5,7 +5,7 @@
 The title screen currently draws the `assets/ui/logo.png` wordmark plus five
 `SeaStyle` text buttons built in code. The artist delivered a finished menu
 painting (`video/MENU.png`, 5699×3341): the reef illustration on the left and
-five **painted** buttons on the right — INIZIA, COME SI GIOCA, IMPOSTAZIONI,
+five **painted** buttons on the right — GIOCA, IMPOSTAZIONI, COME SI GIOCA,
 ESCI, CREDITI. The title screen should become that painting, with the painted
 buttons acting as the real buttons, so the shipped menu matches the art.
 
@@ -61,7 +61,7 @@ Why: the jam build is judged on its first screen; two competing button styles
 - **Hotspots.** Invisible `Button`s (no theme, no text) with a pointer cursor.
   Hover and keyboard focus brighten the painted shape with an additive re-draw
   of that region of the art, so only the pill lights up; pressed deepens it.
-  Focus order: INIZIA → COME SI GIOCA → IMPOSTAZIONI → CREDITI → ESCI, INIZIA
+  Focus order: GIOCA → IMPOSTAZIONI → COME SI GIOCA → ESCI → CREDITI, GIOCA
   focused when the menu opens.
 - **ESCI is never hidden.** It stays on screen and in focus order on every
   platform, including the web build (the user's call). Consequence: in a
@@ -81,14 +81,3 @@ Why: the jam build is judged on its first screen; two competing button styles
 - Exact hotspot fractions: measured from the painting during the plan; the
   builder only needs them to line up (verify with a screenshot).
 
-## Update: code-drawn button labels
-
-The painted lettering in `video/MENU.png` was a placeholder; the text-free
-master is now `video/ciccio.png`, shipped as `assets/ui/menu.png`.
-`MainMenuScreen` therefore draws a `Label` on each hotspot (`LABELS`: INIZIA, COME SI GIOCA, IMPOSTAZIONI,
-CREDITI, ESCI), sized from the hotspot so it follows the art at every window
-size. The labels use the shared off-white caption colour and sit above the
-additive hover/focus glow. The old anti-goal "labels appearing twice" now only
-means the shipped painting must stay text-free. The menu keeps the shared
-translucent `SeaStyle.OVERLAY_COLOR` backdrop, so the paused reef shows through
-the painting's transparent background and the letterbox bars.

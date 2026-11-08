@@ -5,17 +5,17 @@ extends RefCounted
 ## hotspots follow it at any window size (GDD §9, painted title screen).
 
 ## The painting shipped as `assets/ui/menu.png`: the 5699×3341 master in
-## `video/ciccio.png`, downscaled to 2048 px wide.
+## `video/MENU.png`, downscaled to 2048 px wide.
 const ART_SIZE := Vector2(2048, 1200)
 
 ## Hotspot key -> its rect in fractions of the painting, in keyboard focus
 ## order. Measured from the painted pills' bounding boxes.
 const RECTS := {
-	"play": Rect2(0.652, 0.359, 0.342, 0.194),
-	"tutorial": Rect2(0.574, 0.580, 0.401, 0.125),
-	"settings": Rect2(0.517, 0.727, 0.400, 0.115),
-	"credits": Rect2(0.691, 0.878, 0.263, 0.093),
-	"exit": Rect2(0.360, 0.878, 0.263, 0.093),
+	"play": Rect2(0.610, 0.234, 0.380, 0.222),
+	"settings": Rect2(0.527, 0.527, 0.401, 0.123),
+	"tutorial": Rect2(0.471, 0.674, 0.400, 0.114),
+	"exit": Rect2(0.373, 0.863, 0.263, 0.092),
+	"credits": Rect2(0.655, 0.862, 0.263, 0.092),
 }
 
 

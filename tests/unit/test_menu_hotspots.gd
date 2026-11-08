@@ -40,7 +40,7 @@ func test_hotspots_do_not_overlap() -> void:
 
 func test_focus_order() -> void:
 	assert_eq(MenuHotspots.RECTS.keys(),
-		["play", "tutorial", "settings", "credits", "exit"])
+		["play", "settings", "tutorial", "exit", "credits"])
 
 
 func test_hotspot_rect_follows_the_art_box() -> void:
