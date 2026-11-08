@@ -76,7 +76,8 @@ starts with `test_` is run automatically.
 
 CI (GitHub Actions, `.github/workflows/ci.yml`) runs both scripts on every push and pull request,
 and builds a signed Android APK (downloadable as the `android-apk` artifact of the run). Every push
-to `main` publishes it as a GitHub release tagged `v1`, `v2`, … (see [`docs/android.md`](docs/android.md)).
+to `main` publishes it as a GitHub release tagged `v1`, `v2`, …, which CD then pushes to the itch.io
+`android` channel after the web build (see [`docs/android.md`](docs/android.md)).
 
 ## Audio
 

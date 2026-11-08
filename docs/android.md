@@ -37,6 +37,11 @@ Every push to `main` also publishes a **GitHub release** tagged `v<N>` (`v1`, `v
 the Android version code and the version name, so each release installs over the previous one.
 Branch builds take the number the next release will get, named `<N>-dev.<commit>`.
 
+After the web build is pushed to itch.io, CD (`.github/workflows/cd.yml`, job **Android APK
+itch.io push**) waits for the CI run of the same commit, downloads `balansea-v<N>.apk` from its
+release and pushes it to the itch.io `android` channel (user version `<N>`). It uses the same
+`BUTLER_API_KEY` secret and `ITCH_TARGET` variable as the web push and is skipped without them.
+
 The APK is release-signed with the keystore stored in the repository secrets:
 
 | Secret | Contents |

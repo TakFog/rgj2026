@@ -2,8 +2,10 @@ name: CD
 
 # Runs the full test suite, then builds the Web (single-threaded) export.
 # The export (and the itch.io push) only happen if every test passes.
+# Once the web build is on itch.io, the Android APK that CI released for the
+# same commit (GitHub release v<N>, see ci.yml) is pushed to its own channel.
 #
-# The itch.io push is skipped until both of these exist in the repository settings:
+# The itch.io pushes are skipped until both of these exist in the repository settings:
 #   secrets.BUTLER_API_KEY  - itch.io API key (https://itch.io/user/settings/api-keys)
 #   vars.ITCH_TARGET        - itch.io "user/game" slug, e.g. "someone/balansea"
 
@@ -19,6 +21,7 @@ concurrency:
 env:
   GODOT_VERSION: "4.7.2"
   ITCH_CHANNEL: html5
+  ITCH_ANDROID_CHANNEL: android
 
 jobs:
   deploy:
@@ -45,7 +48,7 @@ jobs:
           curl -fsSL -o /tmp/godot.zip \
             "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
           unzip -q /tmp/godot.zip -d ~/godot
-          mv ~/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 ~/godot/godot
+          mv ~/godot/"Godot_v${GODOT_VERSION}-stable_linux.x86_64" ~/godot/godot
           chmod +x ~/godot/godot
 
       - name: Unit tests
@@ -110,3 +113,74 @@ jobs:
       - name: Note skipped itch.io push
         if: env.BUTLER_API_KEY == '' || env.ITCH_TARGET == ''
         run: echo "::notice::itch.io push skipped - set secret BUTLER_API_KEY and variable ITCH_TARGET to enable it."
+
+  android:
+    name: Android APK itch.io push
+    needs: deploy
+    runs-on: ubuntu-latest
+    # Mostly spent waiting for the CI run of the same commit to finish.
+    timeout-minutes: 40
+    permissions:
+      actions: read
+      contents: read
+    env:
+      BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+      ITCH_TARGET: ${{ vars.ITCH_TARGET }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Note skipped itch.io push
+        if: env.BUTLER_API_KEY == '' || env.ITCH_TARGET == ''
+        run: echo "::notice::itch.io APK push skipped - set secret BUTLER_API_KEY and variable ITCH_TARGET to enable it."
+
+      # CI (ci.yml, job "Android APK") builds, signs and releases the APK for
+      # every push to main. Reuse that exact release instead of rebuilding, so
+      # itch.io gets the same file and version number as the GitHub release.
+      - name: Wait for the CI release of this commit
+        if: env.BUTLER_API_KEY != '' && env.ITCH_TARGET != ''
+        run: |
+          run_id=""
+          for _ in $(seq 60); do
+            run_id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow ci.yml --branch main \
+              --event push --commit "$GITHUB_SHA" --limit 1 --json databaseId -q '.[0].databaseId')
+            [ -n "$run_id" ] && break
+            sleep 10
+          done
+          if [ -z "$run_id" ]; then
+            echo "::error::No CI run found on main for ${GITHUB_SHA}."
+            exit 1
+          fi
+          echo "Waiting for CI run ${run_id}"
+          gh run watch -R "$GITHUB_REPOSITORY" "$run_id" --exit-status --interval 30 > /dev/null
+
+          tag=$(git ls-remote --tags "https://github.com/${GITHUB_REPOSITORY}.git" 'refs/tags/v*' \
+            | awk -v sha="$GITHUB_SHA" '$1 == sha { sub("refs/tags/", "", $2); print $2 }' \
+            | sort -V | tail -1)
+          if [ -z "$tag" ]; then
+            echo "::error::CI run ${run_id} succeeded but no v<N> release tag points at ${GITHUB_SHA}."
+            exit 1
+          fi
+          echo "RELEASE_TAG=$tag" >> "$GITHUB_ENV"
+
+      - name: Download the release APK
+        if: env.BUTLER_API_KEY != '' && env.ITCH_TARGET != ''
+        run: |
+          mkdir -p build/android
+          gh release download "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" \
+            --pattern "balansea-${RELEASE_TAG}.apk" --output build/android/balansea.apk
+          test -s build/android/balansea.apk
+
+      - name: Install butler
+        if: env.BUTLER_API_KEY != '' && env.ITCH_TARGET != ''
+        run: |
+          mkdir -p ~/butler
+          curl -fsSL -o /tmp/butler.zip \
+            https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q /tmp/butler.zip -d ~/butler
+          chmod +x ~/butler/butler
+          ~/butler/butler -V
+
+      - name: Push APK to itch.io
+        if: env.BUTLER_API_KEY != '' && env.ITCH_TARGET != ''
+        run: |
+          ~/butler/butler push build/android/balansea.apk "${ITCH_TARGET}:${ITCH_ANDROID_CHANNEL}" \
+            --userversion "${RELEASE_TAG#v}"
