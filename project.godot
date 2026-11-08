@@ -14,7 +14,7 @@ config/name="BalanSea"
 run/main_scene="res://main/main.tscn"
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="uid://bdkqt67e71etc"
+config/icon="uid://sk0bjk4ev6mt"
 
 [audio]
 
