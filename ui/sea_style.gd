@@ -10,8 +10,6 @@ const RIM_COLOR := InventoryCard.RIM_COLOR
 const SAND_COLOR := InventoryCard.SAND_COLOR
 const CAPTION_COLOR := InventoryCard.CAPTION_COLOR
 const SHADOW_COLOR := InventoryCard.SHADOW_COLOR
-const PRESSED_BG_COLOR := Color(0.05, 0.17, 0.19, 0.95)
-const DISABLED_BG_COLOR := InventoryCard.BG_EMPTY_COLOR
 const HOVER_TEXT_COLOR := Color(1, 1, 1)
 
 const BUTTON_PADDING := Vector2(18, 7)
@@ -98,17 +96,13 @@ static func divider() -> ColorRect:
 	return line
 
 
-## A standard menu button: shared size, font size and stone-frame styling
-## (`flat` keeps the main menu's plain sea-card look instead).
-static func menu_button(text: String, flat := false) -> Button:
+## A standard menu button: shared size, font size and stone-frame styling.
+static func menu_button(text: String) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size = BUTTON_SIZE
 	button.add_theme_font_size_override("font_size", BUTTON_FONT_SIZE)
-	if flat:
-		style_flat_button(button)
-	else:
-		style_button(button)
+	style_button(button)
 	return button
 
 
@@ -128,37 +122,7 @@ static func style_button(button: Button, thin := false) -> void:
 	button.add_theme_constant_override("outline_size", 4)
 
 
-## Restyles a Button as a plain sea card (main menu): soft rim at rest,
-## sea-glass lift on hover, sand rim when pressed.
-static func style_flat_button(button: Button) -> void:
-	var normal := _padded(card_box(0.45, 2))
-	normal.shadow_size = 0
-
-	var hover := _padded(card_box(0.9, 2))
-	hover.shadow_color = Color(RIM_COLOR, 0.2)
-	hover.shadow_size = 8
-	hover.shadow_offset = Vector2.ZERO
-
-	var pressed := _padded(card_box(1.0, 3))
-	pressed.bg_color = PRESSED_BG_COLOR
-	pressed.border_color = SAND_COLOR
-	pressed.shadow_color = Color(SAND_COLOR, 0.3)
-	pressed.shadow_size = 8
-	pressed.shadow_offset = Vector2.ZERO
-
-	var disabled := _padded(card_box(0.18, 2))
-	disabled.bg_color = DISABLED_BG_COLOR
-	disabled.shadow_size = 0
-
-	_apply_button_colors(button)
-	button.add_theme_stylebox_override("normal", normal)
-	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("pressed", pressed)
-	button.add_theme_stylebox_override("hover_pressed", pressed)
-	button.add_theme_stylebox_override("disabled", disabled)
-
-
-## Focus ring, caption colours and cursor shared by both button looks.
+## Focus ring, caption colours and cursor shared by every stone button.
 static func _apply_button_colors(button: Button) -> void:
 	# Keyboard focus: a thin light ring on the existing rim, not a second
 	# outline floating outside the button.
@@ -271,11 +235,3 @@ static func grabber_texture(color: Color) -> ImageTexture:
 			var pixel := color.lerp(ring, clampf(d - (GRABBER_RADIUS - 3.0), 0.0, 1.0))
 			image.set_pixel(x, y, Color(pixel, pixel.a * alpha))
 	return ImageTexture.create_from_image(image)
-
-
-static func _padded(box: StyleBoxFlat) -> StyleBoxFlat:
-	box.content_margin_left = BUTTON_PADDING.x
-	box.content_margin_right = BUTTON_PADDING.x
-	box.content_margin_top = BUTTON_PADDING.y
-	box.content_margin_bottom = BUTTON_PADDING.y
-	return box

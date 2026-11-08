@@ -61,7 +61,6 @@ func _ready() -> void:
 	_credits_panel.visible = false
 	add_child(_credits_panel)
 	_settings_panel = SettingsPanel.new()
-	_settings_panel.flat_buttons = true
 	_settings_panel.visible = false
 	_settings_panel.closed.connect(_on_settings_closed)
 	_settings_panel.button_pressed.connect(func() -> void: button_pressed.emit())
@@ -226,7 +225,7 @@ func _build_credits_panel() -> Control:
 
 
 func _button(text: String) -> Button:
-	return SeaStyle.menu_button(text, true)
+	return SeaStyle.menu_button(text)
 
 
 func _on_play_pressed() -> void:
