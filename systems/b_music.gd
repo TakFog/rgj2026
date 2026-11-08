@@ -1,7 +1,7 @@
 class_name MusicSystem
 extends Node
-## Loop-based music built from stems (GDD §9). The title screen plays the intro
-## track once; pressing Play starts every stem, which loop in sync. The
+## Loop-based music built from stems (GDD §9). The title screen loops the intro
+## track; pressing Play starts every stem, which loop in sync. The
 ## arrangement switches by fading volumes:
 ## - the two drum takes alternate at every loop boundary;
 ## - the arp stays silent with no hostiles, plays the half take with 1..N-1
@@ -101,7 +101,7 @@ func stop_music() -> void:
 		player.stop()
 
 
-## Plays the intro track once while the title screen is up.
+## Loops the intro track while the title screen is up.
 func _start_intro() -> void:
 	_intro = AudioStreamPlayer.new()
 	_intro.name = "Intro"

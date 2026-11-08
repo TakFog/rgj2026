@@ -45,7 +45,7 @@ func _intro(settings: AudioSettings) -> String:
 	if settings.intro_track == null:
 		return "(none, the loop starts right away)"
 	var wav := settings.intro_track as AudioStreamWAV
-	var loop := "loop: NO" if wav == null or wav.loop_mode == AudioStreamWAV.LOOP_DISABLED else "loop: YES (should not loop!)"
+	var loop := "loop: NO (check the .wav.import)" if wav == null or wav.loop_mode == AudioStreamWAV.LOOP_DISABLED else "loop: YES"
 	return "%s (%s, %.1f s)  gain %+.1f dB" % [
 		settings.intro_track.resource_path, loop, settings.intro_track.get_length(),
 		settings.intro_gain_db]

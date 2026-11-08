@@ -230,7 +230,7 @@ gain_db = -17.0
 
 [resource]
 script = ExtResource("1_audio_settings")
-; Title screen: plays once before Play, then the stems take over.
+; Title screen: loops before Play, then the stems take over.
 intro_track = ExtResource("10_intro_track")
 intro_gain_db = -12.0
 ; Stems: every one plays from the start and loops in sync (shared loop point).

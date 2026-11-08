@@ -51,9 +51,12 @@ func test_arp_level_from_hostile_count() -> void:
 	assert_eq(MusicSystem.arp_level(9, 6), 2)
 
 
-func test_shipped_intro_is_set() -> void:
+func test_shipped_intro_is_set_and_loops() -> void:
 	var shipped: AudioSettings = load("res://data/audio_settings.tres")
 	assert_true(shipped.intro_track != null, "no intro track in data/audio_settings.tres")
+	if shipped.intro_track is AudioStreamWAV:
+		assert_eq((shipped.intro_track as AudioStreamWAV).loop_mode, AudioStreamWAV.LOOP_FORWARD,
+				"the title screen intro must loop")
 
 
 func test_shipped_outro_is_set_and_does_not_loop() -> void:
