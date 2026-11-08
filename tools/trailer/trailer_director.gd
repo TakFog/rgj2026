@@ -14,7 +14,7 @@ const SEED := 2026
 const CAPTION_FONT_SIZE := 34
 const CURSOR_SPEED := 900.0 # screen pixels per second
 
-const TAGLINE := "Il corallo non fa niente.\nSubisce."
+const TAGLINE := "Il corallo non agisce.\nSubisce."
 const END_LINE := "Quanto riuscirai a resistere?"
 const JAM_LINE := "Rome Game Jam 2026  ·  tema SUBIRE"
 const TEAM_LINE := "Flavio De Benedictis  ·  Lorenzo Patané  ·  Maria Elena Papale  ·  Mateusz Kulesza"

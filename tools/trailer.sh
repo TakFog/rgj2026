@@ -7,7 +7,10 @@
 #   RES=1280x720 FPS=60 tools/trailer.sh
 #
 # A real (non-headless) window opens while recording; Movie Maker renders
-# frame by frame, so the take is not real-time. Don't click inside it.
+# frame by frame, so the take is not real-time. Don't click inside it, and
+# keep the screen unlocked: macOS stops Godot drawing while the window is
+# hidden (locked screen, display asleep, minimised), and Movie Maker then
+# repeats the last frame. The script detects that and fails.
 set -euo pipefail
 GODOT="${GODOT:-/Applications/Godot.app/Contents/MacOS/Godot}"
 RES="${RES:-1920x1080}"
@@ -30,8 +33,22 @@ printf '[display]\n\nwindow/size/window_width_override=%s\nwindow/size/window_he
 	"${RES%x*}" "${RES#*x}" > override.cfg
 
 "$GODOT" --path . --import >/dev/null 2>&1 || true
-"$GODOT" --path . --fixed-fps "$FPS" --write-movie "$RAW" \
-	-s res://tools/trailer/trailer.gd -- --smoke-play
+LOG="$(mktemp)"
+# caffeinate keeps the display awake; --always-on-top keeps other windows off it.
+caffeinate -d -i "$GODOT" --path . --always-on-top --fixed-fps "$FPS" --write-movie "$RAW" \
+	-s res://tools/trailer/trailer.gd -- --smoke-play 2>&1 | tee "$LOG"
+
+# Godot reports the frames it actually rendered; the AVI holds every frame of
+# the take. Fewer rendered frames means the window was hidden for a while and
+# part of the trailer is a frozen image.
+RENDERED="$(sed -n 's/^\([0-9]*\) frames at .*/\1/p' "$LOG" | tail -1)"
+rm -f "$LOG"
+WRITTEN="$(ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 "$RAW")"
+if [ -z "$RENDERED" ] || [ "$RENDERED" -lt $((WRITTEN * 99 / 100)) ]; then
+	echo "Only ${RENDERED:-?} of $WRITTEN frames were rendered: the Godot window was hidden" >&2
+	echo "(locked screen, display asleep or minimised). Keep it visible and run again." >&2
+	exit 1
+fi
 
 DURATION="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$RAW")"
 FADE_OUT_START="$(awk -v d="$DURATION" 'BEGIN { printf "%.2f", d - 1.5 }')"

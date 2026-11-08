@@ -12,7 +12,10 @@ Requirements: Godot 4.7.2 in `/Applications` (or `GODOT=/path/to/godot`) and
 `ffmpeg` on `PATH`. A game window opens while recording (~30-45 s); Movie Maker
 renders frame by frame, so the take is not real-time. Losing focus is handled
 (the director dismisses the game's focus-loss pause), but don't click inside
-the window. Output goes to `video/` (gitignored): `trailer_raw.avi` (MJPEG +
+the window and **keep the screen unlocked**: macOS stops Godot drawing while
+its window is hidden (locked screen, display asleep, minimised) and Movie
+Maker then repeats the last frame. The script keeps the display awake and the
+window on top, and fails with a clear message if frames were not rendered. Output goes to `video/` (gitignored): `trailer_raw.avi` (MJPEG +
 game audio) and the final `trailer.mp4`.
 
 ## How it works
