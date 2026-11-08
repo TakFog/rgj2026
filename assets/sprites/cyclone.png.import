@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bsbbo3r24yt24"
-path="res://.godot/imported/cyclone.png-bc0de528f3e6f356e11936c4cc493d19.ctex"
+uid="uid://k16ghhj31b2c"
+path="res://.godot/imported/cyclone.png-d95cdebb7ecb43bb7ae3123439bed048.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/temp/cyclone.png"
-dest_files=["res://.godot/imported/cyclone.png-bc0de528f3e6f356e11936c4cc493d19.ctex"]
+source_file="res://assets/sprites/cyclone.png"
+dest_files=["res://.godot/imported/cyclone.png-d95cdebb7ecb43bb7ae3123439bed048.ctex"]
 
 [params]
 

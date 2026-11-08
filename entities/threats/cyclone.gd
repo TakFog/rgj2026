@@ -2,8 +2,8 @@ class_name Cyclone
 extends Threat
 ## Sea cyclone (GDD §7.3): fast and perfectly straight.
 
-## Temporary art, until the designer's sprite is ready.
-const TEXTURE := preload("res://assets/sprites/temp/cyclone.png")
+## The 9-frame funnel spritesheet (frames are laid out horizontally).
+const TEXTURE := preload("res://assets/sprites/cyclone.png")
 ## Funnel tint, shared with the tutorial's reference vignette.
 const COLOR := Color(0.6, 0.9, 1.0, 0.9)
 

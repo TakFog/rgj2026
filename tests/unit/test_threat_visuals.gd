@@ -53,6 +53,14 @@ func test_cyclone_visual_uses_the_swirl_shader() -> void:
 		"the funnel must use the swirl shader")
 
 
+func test_cyclone_sheet_is_nine_web_safe_square_frames() -> void:
+	# CycloneVisual.FRAMES arrives with the animation in the next task; the
+	# sheet's own frame count keeps this task independently testable.
+	assert_eq(Cyclone.TEXTURE.get_width(), Cyclone.TEXTURE.get_height() * 9,
+		"the sheet must be 9 square frames")
+	assert_true(Cyclone.TEXTURE.get_width() <= 4096, "the sheet must fit WebGL2's texture width")
+
+
 func test_bag_without_setup_does_not_crash_when_animating() -> void:
 	var bag := PlasticBag.new()
 	autofree(bag)
