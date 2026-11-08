@@ -320,7 +320,7 @@ func _build_overlay() -> void:
 	_card_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_card_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_card_logo.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	_card_logo.custom_minimum_size = Vector2(720, 330)
+	_card_logo.custom_minimum_size = Vector2(720, 440)
 	_card.add_child(_card_logo)
 	_card_text = Label.new()
 	SeaStyle.style_title(_card_text, SeaStyle.HERO_TITLE_FONT_SIZE)
