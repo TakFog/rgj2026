@@ -3,7 +3,6 @@
 All takes are CC0 from Freesound and were normalised to 44.1 kHz, 16-bit stereo WAV with a -12 dBFS peak.
 
 - `ui_click` / `click_0.wav` — Videogame Menu BUTTON CLICK by Christopherderp (https://freesound.org/people/Christopherderp/sounds/342200/, CC0)
-- `ui_click` / `click_1.wav` — Button click by Kolombooo (https://freesound.org/people/Kolombooo/sounds/629020/, CC0), trimmed to its first click: the source is a double click and made every other button press sound doubled.
 - `ui_cancel` / `cancel.wav` — Fading/whooshing sound effect by Raclure (https://freesound.org/people/Raclure/sounds/405553/, CC0)
 - `ui_denied` / `denied.wav` — Beep_Error_1.wav by JonnyRuss01 (https://freesound.org/people/JonnyRuss01/sounds/478191/, CC0)
 - `fish_select` / `select_0.wav` — water drop 1.aif by beskhu (https://freesound.org/people/beskhu/sounds/273870/, CC0)
