@@ -68,6 +68,41 @@ func test_cyclone_funnel_advances_through_the_frames() -> void:
 	assert_true(sprite.frame != start, "the funnel must advance through the sheet")
 
 
+func test_cyclone_funnel_anchor_comes_from_the_whole_sheet() -> void:
+	var previous := Game.projection
+	Game.projection = ViewProjection.from_settings(Game.VIEW_SETTINGS)
+	var cyclone := Cyclone.new()
+	autofree(cyclone)
+	var visual := cyclone._make_visual()
+	autofree(visual)
+	Game.projection = previous
+	var sprite := cyclone._body as Sprite2D
+	var anchor := sprite.offset
+	# The union bottom keeps the tip on the shadow; per-frame bounds would move
+	# the funnel vertically as the frames change.
+	var used := Cyclone.TEXTURE.get_image().get_used_rect()
+	assert_almost(anchor.y, -(used.end.y - Cyclone.TEXTURE.get_height() * 0.5))
+	for i in CycloneVisual.FRAMES:
+		visual._process(1.0 / CycloneVisual.FRAME_FPS)
+		assert_eq(sprite.offset, anchor, "the funnel must not drift while the frames change")
+
+
+func test_cyclone_start_frames_are_randomised() -> void:
+	var previous := Game.projection
+	Game.projection = ViewProjection.from_settings(Game.VIEW_SETTINGS)
+	var frames := {}
+	for i in 32:
+		var cyclone := Cyclone.new()
+		autofree(cyclone)
+		var visual := cyclone._make_visual()
+		autofree(visual)
+		var sprite := cyclone._body as Sprite2D
+		assert_true(sprite.frame >= 0 and sprite.frame < CycloneVisual.FRAMES)
+		frames[sprite.frame] = true
+	Game.projection = previous
+	assert_true(frames.size() > 1, "cyclones must not all start on the same frame")
+
+
 func test_cyclone_sheet_is_nine_web_safe_square_frames() -> void:
 	# CycloneVisual.FRAMES arrives with the animation in the next task; the
 	# sheet's own frame count keeps this task independently testable.
