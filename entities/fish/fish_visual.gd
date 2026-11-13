@@ -9,7 +9,7 @@ extends Node2D
 ## action still takes.
 
 const TEXTURE := preload("res://assets/sprites/fish.png")
-const OUTLINE_SHADER := preload("res://entities/fish/selection_outline.gdshader")
+const OUTLINE_SHADER := preload("res://core/sprite_rim.gdshader")
 const ACTIVITY_ICON_FOOD := preload("res://assets/sprites/algae.png")
 const ACTIVITY_ICON_EGGS := preload("res://assets/sprites/nest_eggs.png")
 ## Body centre, tail→head angle and body length in the texture (measured on the art).
@@ -25,6 +25,7 @@ const BODY_LENGTH_RADII := 4.0
 ## while the fish is doing nothing in particular.
 const OUTLINE_WIDTH_PX := 2.5
 const OUTLINE_PULSE_SPEED := 4.0
+const OUTLINE_PULSE_MIN := 0.72
 const SELECT_COLOR := Color(0.75, 0.95, 1.0, 0.95)
 const ACTIVITY_COLOR_FOOD := SelectionColors.FOOD
 const ACTIVITY_COLOR_EGGS := SelectionColors.EGGS
@@ -124,7 +125,7 @@ func _process(delta: float) -> void:
 	_time += delta
 	queue_redraw()
 	if selected:
-		_outline_material.set_shader_parameter(&"pulse", _pulse())
+		_update_outline_color()
 
 
 func _draw() -> void:
@@ -276,8 +277,15 @@ func _sync_outline() -> void:
 	_outline.transform = _facing.transform(heading, length)
 	_outline_material.set_shader_parameter(&"rim_width",
 			OUTLINE_WIDTH_PX * FACING_LENGTH / length)
-	_outline_material.set_shader_parameter(&"rim_color", outline_color(activity))
-	_outline_material.set_shader_parameter(&"pulse", _pulse())
+	_update_outline_color()
+
+
+## The breathing selection rim. The shader carries no pulse of its own because
+## the algae and nest reuse it for their own static highlight colours.
+func _update_outline_color() -> void:
+	var color := outline_color(activity)
+	color.a *= OUTLINE_PULSE_MIN + (1.0 - OUTLINE_PULSE_MIN) * _pulse()
+	_outline_material.set_shader_parameter(&"rim_color", color)
 
 
 ## 0..1 breathing used by the rim shader.

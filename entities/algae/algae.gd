@@ -33,6 +33,9 @@ var _rng := RandomNumberGenerator.new()
 var _time_to_grow := 0.0
 var _visual: PlaceholderShape
 var _sprite: Sprite2D
+## Private copy of the sway material carrying the highlight rim; created only
+## when an algae is first highlighted, so the others keep batching.
+var _highlight_material: ShaderMaterial
 
 
 func setup(p_cell: Vector2i) -> void:
@@ -77,6 +80,24 @@ func screen_rect() -> Rect2:
 	if _sprite == null:
 		return Rect2()
 	return _sprite.get_global_transform() * _sprite.get_rect()
+
+
+## Rim along the plant silhouette while the selected fish can eat it (see
+## core/order_highlight.gd). `width_px` is on screen; the sway shader draws the
+## rim from its warped UV, so the border follows the moving fronds.
+func set_highlight(color: Color, width_px: float) -> void:
+	if _highlight_material == null:
+		_highlight_material = _sway_material().duplicate() as ShaderMaterial
+	if _sprite.material != _highlight_material:
+		_sprite.material = _highlight_material
+	_highlight_material.set_shader_parameter(&"rim_color", color)
+	_highlight_material.set_shader_parameter(&"rim_width", width_px / _sprite.scale.x)
+
+
+## Back to the shared sway material without a rim (batching for every algae).
+func clear_highlight() -> void:
+	if _sprite.material != _sway_material():
+		_sprite.material = _sway_material()
 
 
 func _physics_process(delta: float) -> void:

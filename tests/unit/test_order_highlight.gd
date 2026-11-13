@@ -1,13 +1,19 @@
 extends TestCase
-## Hover/click ring for the fish order: it wraps the item's cell, uses the same
-## colours as the fish's activity badge, and widens by one pixel on click.
+## Hover/click rim for the fish order: it hugs the item's sprite silhouette,
+## uses the same colours as the fish's activity badge, and widens by one pixel
+## on click.
 
-func test_ring_wraps_the_whole_cell() -> void:
-	assert_almost(OrderHighlight.ring_radius(32.0), 32.0 * OrderHighlight.RADIUS_CELLS)
-	assert_true(OrderHighlight.RADIUS_CELLS > 0.71, "the cell corners sit ~0.71 cells out")
+func test_kind_of_items() -> void:
+	var algae := Algae.new()
+	autofree(algae)
+	assert_eq(OrderHighlight.kind_of(algae), OrderHighlight.ALGAE)
+	var nest := Nest.new()
+	autofree(nest)
+	assert_eq(OrderHighlight.kind_of(nest), OrderHighlight.NEST)
+	assert_eq(OrderHighlight.kind_of(null), &"")
 
 
-func test_ring_colours_match_the_fish_badge() -> void:
+func test_rim_colours_match_the_fish_badge() -> void:
 	assert_true(OrderHighlight.color_for(OrderHighlight.ALGAE).is_equal_approx(
 			FishVisual.ACTIVITY_COLOR_FOOD))
 	assert_true(OrderHighlight.color_for(OrderHighlight.NEST).is_equal_approx(
@@ -36,7 +42,7 @@ func test_click_flash_fades_out() -> void:
 	assert_true(OrderHighlight.click_alpha(OrderHighlight.CLICK_SECONDS * 0.5) < 1.0)
 
 
-func test_hover_ring_breathes_but_stays_visible() -> void:
+func test_hover_rim_breathes_but_stays_visible() -> void:
 	for sample in [0.0, 0.5, 1.0, 2.5]:
 		var alpha := OrderHighlight.hover_alpha(sample)
 		assert_true(alpha >= OrderHighlight.MIN_ALPHA - 0.001)

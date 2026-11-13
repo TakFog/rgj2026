@@ -15,17 +15,6 @@ func test_pick_none_when_empty() -> void:
 	assert_eq(FishCommander.pick_nearest(PackedVector2Array(), Vector2.ZERO, 24.0), -1)
 
 
-func test_order_targets_keep_their_cell() -> void:
-	var algae := Algae.new()
-	algae.setup(Vector2i(2, 3))
-	autofree(algae)
-	assert_eq(FishCommander.target_cell(algae), Vector2i(2, 3))
-	var nest := Nest.new()
-	nest.setup(Vector2i(5, 6))
-	autofree(nest)
-	assert_eq(FishCommander.target_cell(nest), Vector2i(5, 6))
-
-
 func test_free_algae_is_an_order_target() -> void:
 	var algae := Algae.new()
 	algae.setup(Vector2i(1, 1))
@@ -37,4 +26,3 @@ func test_corals_are_not_order_targets() -> void:
 	var coral := Coral.new()
 	autofree(coral)
 	assert_eq(FishCommander.target_kind(coral, null), &"")
-	assert_eq(FishCommander.target_cell(coral), OrderHighlight.NO_CELL)

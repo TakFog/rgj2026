@@ -25,7 +25,7 @@ var _highlight: OrderHighlight
 func _ready() -> void:
 	_highlight = OrderHighlight.new()
 	_highlight.name = "OrderHighlight"
-	Game.view.add_child(_highlight)
+	add_child(_highlight)
 
 
 ## Index of the point nearest to `click` within `radius`, or -1.
@@ -49,15 +49,6 @@ static func target_kind(entity: Object, fish: Object) -> StringName:
 	if entity is Nest and (entity as Nest).is_empty():
 		return OrderHighlight.NEST
 	return &""
-
-
-## Grid cell of a fish-order target: algae and nests both store theirs.
-static func target_cell(entity: Object) -> Vector2i:
-	if entity is Algae:
-		return (entity as Algae).cell
-	if entity is Nest:
-		return (entity as Nest).cell
-	return OrderHighlight.NO_CELL
 
 
 func _physics_process(_delta: float) -> void:
@@ -85,7 +76,7 @@ func _on_command(click: Vector2) -> void:
 		var target := _interactable_under_pointer()
 		selected.order(click.clamp(Vector2.ZERO, Game.grid.world_size()))
 		if target != null:
-			_highlight.pulse(target_cell(target), target_kind(target, selected))
+			_highlight.pulse(target)
 		fish_ordered.emit()
 		_select(null)
 
@@ -94,13 +85,9 @@ func _on_command(click: Vector2) -> void:
 ## placement in progress.
 func _sync_hover() -> void:
 	if touch_mode or Game.placing or not is_instance_valid(selected):
-		_highlight.set_hover(OrderHighlight.NO_CELL, &"")
+		_highlight.set_hover(null)
 		return
-	var target := _interactable_under_pointer()
-	if target == null:
-		_highlight.set_hover(OrderHighlight.NO_CELL, &"")
-	else:
-		_highlight.set_hover(target_cell(target), target_kind(target, selected))
+	_highlight.set_hover(_interactable_under_pointer())
 
 
 ## The algae or empty nest under the pointer that the selected fish can use.
