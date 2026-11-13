@@ -118,6 +118,15 @@ func eggs_time_left() -> float:
 	return _cycle.eggs_time_left()
 
 
+## Screen-space box of the nest art, for the fish-order hover highlight
+## (FishCommander): the art stands taller than its cell, so the cell alone
+## would miss most of what the player sees.
+func screen_rect() -> Rect2:
+	if _sprite == null:
+		return Rect2()
+	return _sprite.get_global_transform() * _sprite.get_rect()
+
+
 func destroy() -> void:
 	if is_queued_for_deletion():
 		return

@@ -26,8 +26,8 @@ const BODY_LENGTH_RADII := 4.0
 const OUTLINE_WIDTH_PX := 2.5
 const OUTLINE_PULSE_SPEED := 4.0
 const SELECT_COLOR := Color(0.75, 0.95, 1.0, 0.95)
-const ACTIVITY_COLOR_FOOD := Color(0.45, 1.0, 0.5)
-const ACTIVITY_COLOR_EGGS := Color(1.0, 0.85, 0.35)
+const ACTIVITY_COLOR_FOOD := SelectionColors.FOOD
+const ACTIVITY_COLOR_EGGS := SelectionColors.EGGS
 ## A badge for a fish still swimming to its meal or nest is dimmer: only a timed
 ## action shows the progress ring.
 const ACTIVITY_SEEKING_ALPHA := 0.45

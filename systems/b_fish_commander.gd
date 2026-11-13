@@ -3,6 +3,11 @@ extends Node
 ## Player control of fish (GDD §5.4): click a fish to select it, click again to
 ## send it straight there. Right click / Esc deselects. Ignored while placing
 ## (contract #8).
+##
+## While a fish is selected, the algae it could eat or the empty nest it could
+## lay eggs in is ringed on the seabed under the pointer (core/order_highlight.gd),
+## so the player sees what a click will do. Clicking it pulses the ring as the
+## fish takes the order. Touch builds have no hover: they only get the pulse.
 
 ## Used by the audio system (systems/b_audio.gd).
 signal fish_selected
@@ -12,6 +17,15 @@ signal selection_cleared
 var selected: Fish = null
 ## Touch builds pick fish with a fingertip-sized radius.
 var touch_mode := Platform.is_touch()
+
+## Rings around the hovered target and the clicked one.
+var _highlight: OrderHighlight
+
+
+func _ready() -> void:
+	_highlight = OrderHighlight.new()
+	_highlight.name = "OrderHighlight"
+	Game.view.add_child(_highlight)
 
 
 ## Index of the point nearest to `click` within `radius`, or -1.
@@ -24,6 +38,30 @@ static func pick_nearest(points: PackedVector2Array, click: Vector2, radius: flo
 			best = i
 			best_distance = distance
 	return best
+
+
+## Kind of fish-order target `entity` is for `fish`: an algae it can eat (one
+## no other fish has reserved) or an empty nest it can lay eggs in. Empty for
+## everything else (corals, nests with eggs, algae another fish is eating).
+static func target_kind(entity: Object, fish: Object) -> StringName:
+	if entity is Algae:
+		return OrderHighlight.ALGAE if not (entity as Algae).is_taken_by_other(fish) else &""
+	if entity is Nest and (entity as Nest).is_empty():
+		return OrderHighlight.NEST
+	return &""
+
+
+## Grid cell of a fish-order target: algae and nests both store theirs.
+static func target_cell(entity: Object) -> Vector2i:
+	if entity is Algae:
+		return (entity as Algae).cell
+	if entity is Nest:
+		return (entity as Nest).cell
+	return OrderHighlight.NO_CELL
+
+
+func _physics_process(_delta: float) -> void:
+	_sync_hover()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -44,9 +82,55 @@ func _on_command(click: Vector2) -> void:
 		_select(fish)
 		fish_selected.emit()
 	elif is_instance_valid(selected):
+		var target := _interactable_under_pointer()
 		selected.order(click.clamp(Vector2.ZERO, Game.grid.world_size()))
+		if target != null:
+			_highlight.pulse(target_cell(target), target_kind(target, selected))
 		fish_ordered.emit()
 		_select(null)
+
+
+## Hover feedback needs a pointer (touch has none), a selected fish and no
+## placement in progress.
+func _sync_hover() -> void:
+	if touch_mode or Game.placing or not is_instance_valid(selected):
+		_highlight.set_hover(OrderHighlight.NO_CELL, &"")
+		return
+	var target := _interactable_under_pointer()
+	if target == null:
+		_highlight.set_hover(OrderHighlight.NO_CELL, &"")
+	else:
+		_highlight.set_hover(target_cell(target), target_kind(target, selected))
+
+
+## The algae or empty nest under the pointer that the selected fish can use.
+func _interactable_under_pointer() -> Node2D:
+	var pointer := Game.view.get_global_mouse_position()
+	var best: Node2D = null
+	var best_distance := INF
+	for group in [Groups.ALGAE, Groups.NESTS]:
+		for node in get_tree().get_nodes_in_group(group):
+			var item := node as Node2D
+			if item == null or target_kind(item, selected) == &"":
+				continue
+			# The art stands taller than its cell: hover the sprite box.
+			var rect := _screen_rect(item)
+			if not rect.has_point(pointer):
+				continue
+			var distance := rect.get_center().distance_to(pointer)
+			if distance < best_distance:
+				best = item
+				best_distance = distance
+	return best
+
+
+## Screen-space box of an item's art, for the hover hit test.
+static func _screen_rect(item: Node2D) -> Rect2:
+	if item is Algae:
+		return (item as Algae).screen_rect()
+	if item is Nest:
+		return (item as Nest).screen_rect()
+	return Rect2()
 
 
 func _fish_at(click: Vector2) -> Fish:

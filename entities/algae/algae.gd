@@ -31,6 +31,8 @@ var eater: Object = null
 
 var _rng := RandomNumberGenerator.new()
 var _time_to_grow := 0.0
+var _visual: PlaceholderShape
+var _sprite: Sprite2D
 
 
 func setup(p_cell: Vector2i) -> void:
@@ -45,12 +47,12 @@ func _ready() -> void:
 	Game.grid.occupy([cell], self)
 	CellShapes.add_collision(self, [cell], cell)
 	# Faint footprint: the sprite does the reading, the cell only grounds it.
-	var visual := PlaceholderShape.cell(position, Color(0.3, 0.8, 0.35, FOOTPRINT_ALPHA))
-	var sprite := visual.add_sprite(TEXTURE)
-	_fit_on_cell(sprite, visual.polygon)
-	sprite.modulate = SPRITE_TINT
-	sprite.material = _sway_material()
-	_attach_sorted_by_back_edge(visual)
+	_visual = PlaceholderShape.cell(position, Color(0.3, 0.8, 0.35, FOOTPRINT_ALPHA))
+	_sprite = _visual.add_sprite(TEXTURE)
+	_fit_on_cell(_sprite, _visual.polygon)
+	_sprite.modulate = SPRITE_TINT
+	_sprite.material = _sway_material()
+	_attach_sorted_by_back_edge(_visual)
 	_rng.randomize()
 	_reset_timer()
 
@@ -66,6 +68,15 @@ func _attach_sorted_by_back_edge(visual: Node2D) -> void:
 	# Shift the visual back so it still sits on the cell.
 	visual.position = Game.projection.to_screen(position) - Game.projection.to_screen(position + anchor.position)
 	ViewFollower.attach(anchor, visual, true)
+
+
+## Screen-space box of the plant art, for the fish-order hover highlight
+## (FishCommander): the art stands taller than its cell, so the cell alone
+## would miss most of what the player sees.
+func screen_rect() -> Rect2:
+	if _sprite == null:
+		return Rect2()
+	return _sprite.get_global_transform() * _sprite.get_rect()
 
 
 func _physics_process(delta: float) -> void:
