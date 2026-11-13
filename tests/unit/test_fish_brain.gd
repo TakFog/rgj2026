@@ -332,3 +332,27 @@ func test_effective_cooldown_is_twice_hatch_at_least() -> void:
 	cfg2.reproduce_cooldown_seconds = 40.0
 	assert_almost(FishBrain.effective_reproduce_cooldown(cfg2, 25.0), 50.0)
 	assert_almost(FishBrain.effective_reproduce_cooldown(cfg2, 10.0), 40.0)
+
+
+func test_eating_progress_fills_towards_the_meal() -> void:
+	brain.order(Vector2(10, 0))
+	brain.blocked_by_algae(food)
+	assert_almost(brain.state_progress(), 0.0)
+	brain.tick(1.5)
+	assert_almost(brain.state_progress(), 0.5)
+	brain.tick(1.4)
+	assert_true(brain.state_progress() > 0.9)
+
+
+func test_laying_eggs_reports_progress() -> void:
+	brain.order(Vector2(10, 0))
+	brain.arrived(nest)
+	assert_almost(brain.state_progress(), 0.0)
+	brain.tick(1.5)
+	assert_almost(brain.state_progress(), 0.5)
+
+
+func test_states_without_a_timer_have_no_progress() -> void:
+	assert_almost(brain.state_progress(), 0.0)
+	brain.order(Vector2(10, 0))
+	assert_almost(brain.state_progress(), 0.0)

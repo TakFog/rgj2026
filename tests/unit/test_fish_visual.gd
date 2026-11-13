@@ -41,3 +41,39 @@ func test_warning_appears_above_the_bar_threshold() -> void:
 func test_warning_threshold_is_clamped() -> void:
 	assert_almost(FishVisual.warning_threshold(0.9), 1.0)
 	assert_almost(FishVisual.warning_threshold(-0.5), 0.0)
+
+
+func test_selection_outline_is_neutral_while_wandering() -> void:
+	assert_true(FishVisual.outline_color(FishBrain.State.WANDER).is_equal_approx(FishVisual.SELECT_COLOR))
+	assert_true(FishVisual.outline_color(FishBrain.State.ORDERED).is_equal_approx(FishVisual.SELECT_COLOR))
+
+
+func test_selection_outline_colours_eating_and_eggs() -> void:
+	assert_true(FishVisual.outline_color(FishBrain.State.EATING).is_equal_approx(FishVisual.ACTIVITY_COLOR_FOOD))
+	assert_true(FishVisual.outline_color(FishBrain.State.FERTILIZING).is_equal_approx(FishVisual.ACTIVITY_COLOR_EGGS))
+	assert_true(FishVisual.outline_color(FishBrain.State.SEEKING_FOOD).is_equal_approx(FishVisual.ACTIVITY_COLOR_FOOD))
+	assert_true(FishVisual.outline_color(FishBrain.State.SEEKING_NEST).is_equal_approx(FishVisual.ACTIVITY_COLOR_EGGS))
+
+
+func test_badge_appears_only_for_food_and_eggs() -> void:
+	assert_false(FishVisual.shows_activity(FishBrain.State.WANDER))
+	assert_false(FishVisual.shows_activity(FishBrain.State.ORDERED))
+	assert_false(FishVisual.shows_activity(FishBrain.State.IDLE))
+	assert_true(FishVisual.shows_activity(FishBrain.State.EATING))
+	assert_true(FishVisual.shows_activity(FishBrain.State.FERTILIZING))
+	assert_true(FishVisual.shows_activity(FishBrain.State.SEEKING_FOOD))
+	assert_true(FishVisual.shows_activity(FishBrain.State.SEEKING_NEST))
+
+
+func test_progress_ring_only_for_timed_actions() -> void:
+	assert_true(FishVisual.is_activity_timed(FishBrain.State.EATING))
+	assert_true(FishVisual.is_activity_timed(FishBrain.State.FERTILIZING))
+	assert_false(FishVisual.is_activity_timed(FishBrain.State.SEEKING_FOOD))
+	assert_false(FishVisual.is_activity_timed(FishBrain.State.SEEKING_NEST))
+
+
+func test_badge_shows_algae_while_eating_and_eggs_while_laying() -> void:
+	assert_true(FishVisual.activity_texture(FishBrain.State.EATING) == FishVisual.ACTIVITY_ICON_FOOD)
+	assert_true(FishVisual.activity_texture(FishBrain.State.FERTILIZING) == FishVisual.ACTIVITY_ICON_EGGS)
+	assert_true(FishVisual.activity_texture(FishBrain.State.SEEKING_FOOD) == FishVisual.ACTIVITY_ICON_FOOD)
+	assert_true(FishVisual.activity_texture(FishBrain.State.SEEKING_NEST) == FishVisual.ACTIVITY_ICON_EGGS)
