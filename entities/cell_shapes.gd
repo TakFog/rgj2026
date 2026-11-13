@@ -14,3 +14,17 @@ static func add_collision(body: CollisionObject2D, cells: Array[Vector2i], origi
 		shape.shape = rect
 		shape.position = Vector2(cell - origin) * size
 		body.add_child(shape)
+
+
+## Attaches a cell entity's art to the y-sorted screen view, sorting it by the
+## back edge of its cell instead of the cell centre: the art stands up from the
+## cell, so an actor standing on the cell (or anything nearer the camera) must
+## be drawn in front of it, while art behind the cell stays behind. The entity
+## keeps its logical position; the visual is shifted back to stay on the cell.
+static func attach_sorted_by_back_edge(entity: Node2D, visual: Node2D) -> void:
+	var anchor := Marker2D.new()
+	anchor.position = Vector2(0.0, -Game.grid.cell_size * 0.5)
+	entity.add_child(anchor)
+	visual.position = Game.projection.to_screen(entity.position) \
+			- Game.projection.to_screen(entity.position + anchor.position)
+	ViewFollower.attach(anchor, visual, true)
