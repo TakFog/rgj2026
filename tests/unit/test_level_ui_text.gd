@@ -11,19 +11,20 @@ func test_countdown_rounds_up_until_zero() -> void:
 
 func test_unlocked_level_card_shows_mechanic_and_duration() -> void:
 	var level := LevelCatalog.at(0)
-	assert_eq(LevelSelectScreen.row_text(0, level, true, 0.0),
+	assert_eq(LevelSelectScreen.row_text(0, level, true),
 		"1. La barriera — 01:00\nPesci, coralli, alghe e nidi")
 
 
-func test_level_card_shows_the_record() -> void:
+func test_campaign_level_card_never_shows_a_record() -> void:
 	var level := LevelCatalog.at(1)
-	assert_eq(LevelSelectScreen.row_text(1, level, true, 42.0),
-		"2. L'acqua si scalda — 01:30\nLa temperatura sale: i coralli la rallentano  ·  Record 00:42")
+	var text := LevelSelectScreen.row_text(1, level, true)
+	assert_eq(text, "2. L'acqua si scalda — 01:30\nLa temperatura sale: i coralli la rallentano")
+	assert_false(text.contains("Record"), "only the sandbox card shows a record")
 
 
 func test_locked_level_card_hides_the_mechanic() -> void:
 	var level := LevelCatalog.at(2)
-	assert_eq(LevelSelectScreen.row_text(2, level, false, 0.0),
+	assert_eq(LevelSelectScreen.row_text(2, level, false),
 		"3. Il mare aperto — 02:00\nBloccato")
 
 

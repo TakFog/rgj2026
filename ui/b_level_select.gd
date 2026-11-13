@@ -20,15 +20,13 @@ var _buttons: Array[Button] = []
 var _sandbox_button: Button
 
 
-## Text of one level card. Static so the wording is unit-testable.
-static func row_text(index: int, level: LevelDefinition, unlocked: bool, best_seconds: float) -> String:
+## Text of one level card. Static so the wording is unit-testable. Campaign
+## cards never show a record: only the endless Sandbox has one.
+static func row_text(index: int, level: LevelDefinition, unlocked: bool) -> String:
 	var head := "%d. %s — %s" % [index + 1, level.level_name, Hud.format_time(level.duration_seconds)]
 	if not unlocked:
 		return "%s\n%s" % [head, LOCKED_TEXT]
-	var text := "%s\n%s" % [head, level.mechanic_summary]
-	if best_seconds > 0.0:
-		text += "  ·  Record %s" % Hud.format_time(best_seconds)
-	return text
+	return "%s\n%s" % [head, level.mechanic_summary]
 
 
 ## Text of the endless sandbox card. It is always unlocked and shows the global
@@ -118,8 +116,7 @@ func _refresh() -> void:
 	for index in _buttons.size():
 		var button := _buttons[index]
 		var level := levels[index]
-		button.text = row_text(index, level, index < unlocked,
-			UserSettings.level_best_seconds(index))
+		button.text = row_text(index, level, index < unlocked)
 		button.disabled = index >= unlocked
 	# The sandbox has no unlocks and uses the global record of the old run.
 	_sandbox_button.text = sandbox_text(LevelCatalog.sandbox(), UserSettings.best_seconds())
