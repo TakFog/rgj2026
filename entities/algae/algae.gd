@@ -55,22 +55,9 @@ func _ready() -> void:
 	_fit_on_cell(_sprite, _visual.polygon)
 	_sprite.modulate = SPRITE_TINT
 	_sprite.material = _sway_material()
-	_attach_sorted_by_back_edge(_visual)
+	CellShapes.attach_sorted_by_back_edge(self, _visual)
 	_rng.randomize()
 	_reset_timer()
-
-
-## The plant is tall, so it y-sorts with corals and actors (a coral in front of
-## it covers it, and it covers a coral behind it). It sorts by the back edge of
-## its cell, not the centre: an actor anywhere on the cell, like the predator
-## and the turtle swimming over it (GDD §5), is drawn on top of the plant.
-func _attach_sorted_by_back_edge(visual: Node2D) -> void:
-	var anchor := Marker2D.new()
-	anchor.position = Vector2(0.0, -Game.grid.cell_size * 0.5)
-	add_child(anchor)
-	# Shift the visual back so it still sits on the cell.
-	visual.position = Game.projection.to_screen(position) - Game.projection.to_screen(position + anchor.position)
-	ViewFollower.attach(anchor, visual, true)
 
 
 ## Screen-space box of the plant art, for the fish-order hover highlight

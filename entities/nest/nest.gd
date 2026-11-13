@@ -67,9 +67,10 @@ func _ready() -> void:
 	_shown_eggs = has_eggs()
 	_visual.color = EGGS_COLOR if _shown_eggs else EMPTY_COLOR
 	_update_sprite()
-	# Ground cover: drawn below the y-sorted actors (fish, corals, threats) so
-	# they always swim over the nest, even when the nest sprite overlaps them.
-	ViewFollower.attach(self, _visual, true).z_index = -1
+	# The nest art stands up from its cell, so it y-sorts with the actors and
+	# the other cell art: what is behind the nest stays behind it, and a fish
+	# on its cell swims in front (CellShapes.attach_sorted_by_back_edge).
+	CellShapes.attach_sorted_by_back_edge(self, _visual)
 
 
 func _process(delta: float) -> void:
