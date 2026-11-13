@@ -2,6 +2,7 @@ class_name LevelSelectScreen
 extends ColorRect
 ## Level chooser shown by Gioca (GDD §9). One card per campaign level with its
 ## time limit and the mechanic it introduces; cleared levels unlock the next.
+## A final card opens the endless Sandbox, the old run with every mechanic on.
 ## Works while the tree is paused: opening pauses, choosing/closing lets the
 ## caller decide what happens next.
 
@@ -16,6 +17,7 @@ const ROW_MIN_SIZE := Vector2(520, 96)
 const ROW_FONT_SIZE := 19
 
 var _buttons: Array[Button] = []
+var _sandbox_button: Button
 
 
 ## Text of one level card. Static so the wording is unit-testable.
@@ -24,6 +26,15 @@ static func row_text(index: int, level: LevelDefinition, unlocked: bool, best_se
 	if not unlocked:
 		return "%s\n%s" % [head, LOCKED_TEXT]
 	var text := "%s\n%s" % [head, level.mechanic_summary]
+	if best_seconds > 0.0:
+		text += "  ·  Record %s" % Hud.format_time(best_seconds)
+	return text
+
+
+## Text of the endless sandbox card. It is always unlocked and shows the global
+## survival record (the old run's record), not a per-level one.
+static func sandbox_text(level: LevelDefinition, best_seconds: float) -> String:
+	var text := "%s\n%s" % [level.level_name, level.mechanic_summary]
 	if best_seconds > 0.0:
 		text += "  ·  Record %s" % Hud.format_time(best_seconds)
 	return text
@@ -55,7 +66,7 @@ func _ready() -> void:
 	box.add_child(SeaStyle.divider())
 
 	var intro := Label.new()
-	intro.text = "Ogni livello aggiunge una nuova pressione alla barriera."
+	intro.text = "Ogni livello aggiunge una nuova pressione alla barriera.\nLa Sandbox è la sfida libera, senza limite di tempo."
 	SeaStyle.style_body(intro)
 	box.add_child(intro)
 
@@ -69,6 +80,16 @@ func _ready() -> void:
 		button.pressed.connect(_on_level_pressed.bind(index))
 		box.add_child(button)
 		_buttons.append(button)
+
+	# The old endless run, kept as a bonus after the campaign.
+	box.add_child(SeaStyle.divider())
+	_sandbox_button = SeaStyle.menu_button("")
+	_sandbox_button.custom_minimum_size = ROW_MIN_SIZE
+	_sandbox_button.add_theme_font_size_override("font_size", ROW_FONT_SIZE)
+	_sandbox_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_sandbox_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_sandbox_button.pressed.connect(_on_sandbox_pressed)
+	box.add_child(_sandbox_button)
 
 	var back := SeaStyle.menu_button("Indietro")
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -100,6 +121,9 @@ func _refresh() -> void:
 		button.text = row_text(index, level, index < unlocked,
 			UserSettings.level_best_seconds(index))
 		button.disabled = index >= unlocked
+	# The sandbox has no unlocks and uses the global record of the old run.
+	_sandbox_button.text = sandbox_text(LevelCatalog.sandbox(), UserSettings.best_seconds())
+	_sandbox_button.disabled = false
 
 
 func _focus_first_unlocked() -> void:
@@ -112,6 +136,11 @@ func _focus_first_unlocked() -> void:
 func _on_level_pressed(index: int) -> void:
 	button_pressed.emit()
 	level_chosen.emit(index)
+
+
+func _on_sandbox_pressed() -> void:
+	button_pressed.emit()
+	level_chosen.emit(LevelSession.SANDBOX_INDEX)
 
 
 func _on_back_pressed() -> void:

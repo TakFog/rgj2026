@@ -9,6 +9,8 @@ var level_name := ""
 var mechanic_summary := ""
 ## Time limit in seconds. Reaching 0 with the reef alive clears the level.
 var duration_seconds := 60.0
+## Sandbox mode: no countdown and no clear, the run lasts until a collapse.
+var endless := false
 
 ## Mechanics enabled for this level. Main copies them into the balance flags
 ## before the systems enter the tree, so the F3 overlay shows the real state.

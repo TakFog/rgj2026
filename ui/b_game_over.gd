@@ -84,6 +84,7 @@ func show_result(population: StringName, score_seconds: float, counts: Dictionar
 		level_index := -1, level_name := "") -> void:
 	_cause.text = cause_text(population)
 	_time.text = Hud.format_time(score_seconds)
+	_restart.text = restart_label(level_index)
 	if level_index >= 0:
 		_level.text = "Livello %d/%d — %s" % [
 			level_index + 1, LevelCatalog.COUNT, level_name]
@@ -100,6 +101,11 @@ func show_result(population: StringName, score_seconds: float, counts: Dictionar
 	visible = true
 	# Keyboard/gamepad players can restart without the mouse.
 	_restart.grab_focus.call_deferred()
+
+
+## Restart button wording: campaign levels are retried, the sandbox restarted.
+static func restart_label(level_index: int) -> String:
+	return "Riprova livello" if level_index >= 0 else "Ricomincia"
 
 
 ## Record line shared by the global and the per-level record.

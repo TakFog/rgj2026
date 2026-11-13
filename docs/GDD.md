@@ -53,6 +53,7 @@ minacce ──► CO2, buste, cicloni (annunciati prima di entrare)
 - Interfaccia: mentre è attivo un conto alla rovescia, al centro in alto compare un avviso rosso con l'icona della popolazione e i secondi rimasti. Per i pesci, se c'è un nido con uova, l'avviso mostra anche il tempo che manca alla schiusa, così il giocatore capisce subito se si salverà.
 - **Sconfitta**: se un conto alla rovescia scade, il livello si perde e si riprova lo stesso livello; i livelli già superati restano sbloccati.
 - **Punteggio** = secondi sopravvissuti nel livello. Ogni livello ha il suo record, salvato in `user://settings.cfg` insieme ai livelli sbloccati. La schermata di game over mostra la popolazione collassata, i conteggi finali e il record del livello.
+- **Sandbox**: la scheda "Sandbox" nel selettore livelli ripropone la vecchia partita infinita, con tutte le meccaniche attive (temperatura, CO2, buste, cicloni, predatore, tartaruga) e la mappa iniziale originale. Non ha timer né "livello completato": si gioca finché una popolazione non collassa. Il punteggio resta il tempo di sopravvivenza e il record è quello globale storico (`best_seconds`), non quello di un livello.
 
 ## 4. Mappa iniziale
 
@@ -229,7 +230,8 @@ Danni dal più debole al più forte: alga (10) < busta (35) < CO2 (50). Tutti i 
 
 ## 9. Interfaccia
 - **In alto a destra**: termometro.
-- **In alto al centro**: livello corrente e tempo rimanente.
+- **In alto al centro**: livello corrente e tempo rimanente; nella Sandbox solo il tempo di sopravvivenza.
+- **Selettore livelli**: da Gioca, una scheda per ognuno dei tre livelli più una per la Sandbox.
 - **In alto a sinistra**: 4 slot dell'inventario, con il numero della scorciatoia (**1-4**) e il tempo di ricarica mostrato come radiale.
 - **Pausa**: Spazio / Esc. Mentre sei in pausa non puoi piazzare oggetti.
 - **Tutorial**: al primo avvio, dopo Gioca, una schermata mostra tre reazioni animate della barriera (pesce/nido, CO2/alga, alga/corallo) e, accanto, l'elenco completo delle interazioni (§8). Sempre riapribile da "Come si gioca".
@@ -264,7 +266,7 @@ balansea/
 ├── levels/
 │   ├── level_01.gd        # mappa iniziale fissa, riusata da tutti i livelli
 │   ├── level_definition.gd  # durata, meccaniche e contenuti di un livello
-│   ├── level_catalog.gd   # i tre livelli della campagna
+│   ├── level_catalog.gd   # i tre livelli della campagna + la Sandbox
 │   └── level_session.gd   # livello caricato nella scena corrente
 ├── ui/  HUD.tscn  Inventory.tscn  Thermometer.tscn  GameOver.tscn  LevelSelect.tscn  LevelClear.tscn
 └── main/ Main.tscn

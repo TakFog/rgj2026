@@ -88,7 +88,9 @@ them into the balance flags before the systems start, so systems keep gating on
 switch or retry). `LevelDirector` owns the countdown, the clear screen and
 progress saving; a collapse still ends the run and the player retries the same
 level. Progress and per-level records live in `user://settings.cfg`
-(`UserSettings`).
+(`UserSettings`). The level chooser also offers a **Sandbox**: the old endless
+run with every mechanic on, no timer and the global survival record
+(`LevelSession.SANDBOX_INDEX`, outside `LevelCatalog.COUNT`).
 
 ## Feature flags
 

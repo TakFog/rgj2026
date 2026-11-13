@@ -24,6 +24,9 @@ The campaign has three levels, each with a time limit and a new pressure:
 Survive the timer and you clear the level and unlock the next one. Progress and per-level records are
 saved in `user://`, and the level chooser is reachable from **Gioca** on the title screen.
 
+The chooser also offers **Sandbox**, the original endless run: every mechanic on, no time limit, and
+the global survival record.
+
 The full game design document (in Italian) is in [`docs/GDD.md`](docs/GDD.md).
 
 ## Controls

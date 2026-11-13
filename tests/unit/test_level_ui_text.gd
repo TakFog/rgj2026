@@ -27,6 +27,14 @@ func test_locked_level_card_hides_the_mechanic() -> void:
 		"3. Il mare aperto — 02:00\nBloccato")
 
 
+func test_sandbox_card_shows_the_mechanics_and_the_global_record() -> void:
+	var sandbox := LevelCatalog.sandbox()
+	assert_eq(LevelSelectScreen.sandbox_text(sandbox, 0.0),
+		"Sandbox\nTutte le meccaniche, senza limite di tempo")
+	assert_eq(LevelSelectScreen.sandbox_text(sandbox, 125.0),
+		"Sandbox\nTutte le meccaniche, senza limite di tempo  ·  Record 02:05")
+
+
 func test_clear_screen_wording() -> void:
 	assert_eq(LevelClearScreen.title_for(false), "Livello completato")
 	assert_eq(LevelClearScreen.title_for(true), "Campagna completata")

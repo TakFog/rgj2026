@@ -3,6 +3,8 @@ extends RefCounted
 ## The three campaign levels, easiest first. Each one adds a pressure on top of
 ## the previous: the calm base reef, then temperature, then the full sea.
 ## Starting contents reuse Level01 (the hand-built map) unless a level adds to it.
+## The endless sandbox lives outside the campaign (see `sandbox`), so COUNT and
+## the unlock progression only ever describe the three timed levels.
 
 const COUNT := 3
 
@@ -19,6 +21,25 @@ static func all() -> Array[LevelDefinition]:
 static func at(index: int) -> LevelDefinition:
 	var levels := all()
 	return levels[clampi(index, 0, levels.size() - 1)]
+
+
+## The old endless run, offered as a bonus in the level chooser: every mechanic
+## on, no time limit, and the global survival record (not a per-level one).
+## Not part of COUNT, so it never affects unlocking or level numbering.
+static func sandbox() -> LevelDefinition:
+	var level := LevelDefinition.new()
+	level.level_name = "Sandbox"
+	level.mechanic_summary = "Tutte le meccaniche, senza limite di tempo"
+	level.duration_seconds = 0.0
+	level.endless = true
+	level.temperature_enabled = true
+	level.co2_enabled = true
+	level.bag_enabled = true
+	level.cyclone_enabled = true
+	level.predator_enabled = true
+	level.turtle_enabled = true
+	_base_contents(level)
+	return level
 
 
 ## The base reef every level starts from.

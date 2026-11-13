@@ -49,16 +49,20 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	monitor.name = "PopulationMonitor"
 	add_child(monitor)
 
-	# Level time limit and clear condition (GDD §3).
-	_level_director = LevelDirector.new()
-	_level_director.name = "LevelDirector"
-	_level_director.monitor = monitor
-	add_child(_level_director)
+	# Campaign levels run on a countdown and clear when it ends (GDD §3). The
+	# sandbox is the old endless run, so it has no director and no clear card;
+	# the HUD then keeps its elapsed-survival-time meaning.
+	if not LevelSession.is_sandbox():
+		_level_director = LevelDirector.new()
+		_level_director.name = "LevelDirector"
+		_level_director.monitor = monitor
+		add_child(_level_director)
 
 	var hud := Hud.new()
 	hud.name = "Hud"
 	hud.bind(monitor)
-	hud.bind_level(_level_director)
+	if _level_director != null:
+		hud.bind_level(_level_director)
 	Game.ui.add_child(hud)
 
 	# Touch builds only: on-screen Pausa/Annulla buttons. Added before the
@@ -75,22 +79,27 @@ func _setup_population_and_hud(commander: FishCommander) -> void:
 	game_over.name = "GameOver"
 	Game.ui.add_child(game_over)
 	monitor.game_over.connect(func(population: StringName, seconds: float) -> void:
-		var level := LevelSession.current()
-		game_over.show_result(population, seconds, monitor.counts,
-			LevelSession.current_index, level.level_name))
+		if LevelSession.is_sandbox():
+			# Old run: no level label and the global survival record.
+			game_over.show_result(population, seconds, monitor.counts)
+		else:
+			var level := LevelSession.current()
+			game_over.show_result(population, seconds, monitor.counts,
+				LevelSession.current_index, level.level_name))
 	game_over.menu_pressed.connect(_on_back_to_menu_requested)
 
 	# Shown when the level timer runs out with the reef alive.
-	_level_clear = LevelClearScreen.new()
-	_level_clear.name = "LevelClear"
-	Game.ui.add_child(_level_clear)
-	_level_director.level_cleared.connect(func(index: int, level: LevelDefinition) -> void:
-		_level_clear.show_result(index, level, monitor.counts, _level_director.elapsed()))
-	_level_clear.next_requested.connect(_on_next_level_requested)
-	_level_clear.restart_requested.connect(_on_retry_level_requested)
-	_level_clear.menu_requested.connect(_on_back_to_menu_requested)
+	if _level_director != null:
+		_level_clear = LevelClearScreen.new()
+		_level_clear.name = "LevelClear"
+		Game.ui.add_child(_level_clear)
+		_level_director.level_cleared.connect(func(index: int, level: LevelDefinition) -> void:
+			_level_clear.show_result(index, level, monitor.counts, _level_director.elapsed()))
+		_level_clear.next_requested.connect(_on_next_level_requested)
+		_level_clear.restart_requested.connect(_on_retry_level_requested)
+		_level_clear.menu_requested.connect(_on_back_to_menu_requested)
 
-	# Level chooser opened by Gioca (one card per campaign level).
+	# Level chooser opened by Gioca (campaign levels plus the Sandbox).
 	_level_select = LevelSelectScreen.new()
 	_level_select.name = "LevelSelect"
 	_level_select.level_chosen.connect(_on_level_chosen)
@@ -164,10 +173,16 @@ func _on_run_started() -> void:
 	_start_game_music()
 
 
-## A level card was pressed. The loaded level can start at once; another one
-## needs a scene rebuild so Main populates the new starting reef.
+## A level (or the Sandbox) card was pressed. The loaded mode can start at
+## once; another one needs a scene rebuild so Main populates the new reef and
+## the systems pick up its mechanics.
 func _on_level_chosen(index: int) -> void:
-	if LevelSession.select(index):
+	var changed := false
+	if index == LevelSession.SANDBOX_INDEX:
+		changed = LevelSession.select_sandbox()
+	else:
+		changed = LevelSession.select(index)
+	if changed:
 		MainMenuScreen.restart_run(get_tree())
 	else:
 		_level_select.close()

@@ -67,3 +67,25 @@ func test_every_level_starts_with_the_base_reef() -> void:
 func test_at_clamps_out_of_range_indices() -> void:
 	assert_eq(LevelCatalog.at(-5).level_name, levels[0].level_name)
 	assert_eq(LevelCatalog.at(99).level_name, levels[2].level_name)
+
+
+func test_sandbox_is_the_old_endless_full_sea() -> void:
+	var sandbox := LevelCatalog.sandbox()
+	assert_eq(sandbox.level_name, "Sandbox")
+	assert_true(sandbox.endless)
+	assert_almost(sandbox.duration_seconds, 0.0)
+	assert_true(sandbox.temperature_enabled)
+	assert_true(sandbox.co2_enabled)
+	assert_true(sandbox.bag_enabled)
+	assert_true(sandbox.cyclone_enabled)
+	assert_true(sandbox.predator_enabled)
+	assert_true(sandbox.turtle_enabled)
+
+
+func test_sandbox_uses_the_original_reef_and_stays_out_of_the_campaign() -> void:
+	var sandbox := LevelCatalog.sandbox()
+	assert_eq(sandbox.corals.size(), Level01.CORALS.size())
+	assert_eq(sandbox.algae.size(), Level01.ALGAE.size())
+	assert_eq(sandbox.nests.size(), Level01.NESTS.size())
+	assert_eq(sandbox.fish.size(), Level01.FISH.size())
+	assert_eq(LevelCatalog.COUNT, levels.size())

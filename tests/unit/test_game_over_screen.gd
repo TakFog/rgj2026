@@ -20,3 +20,8 @@ func test_counts_are_summarised_in_a_stable_order() -> void:
 
 func test_empty_counts_are_empty() -> void:
 	assert_eq(GameOverScreen.format_counts({}), "")
+
+
+func test_restart_label_depends_on_the_mode() -> void:
+	assert_eq(GameOverScreen.restart_label(0), "Riprova livello")
+	assert_eq(GameOverScreen.restart_label(-1), "Ricomincia")
