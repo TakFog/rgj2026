@@ -88,6 +88,8 @@ func _physics_process(delta: float) -> void:
 		FishBrain.State.ORDERED, FishBrain.State.SEEKING_FOOD, FishBrain.State.SEEKING_NEST:
 			_follow_path(_speed() * delta)
 	_visual.hunger_ratio = brain.hunger_ratio()
+	_visual.activity = brain.state
+	_visual.activity_ratio = brain.state_progress()
 	_visual.heading = Game.projection.to_screen(_heading) - Game.projection.to_screen(Vector2.ZERO)
 
 

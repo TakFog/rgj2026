@@ -8,6 +8,13 @@ shader_type canvas_item;
 // The phase comes from the sprite's canvas position, so neighbouring plants
 // do not move in lockstep while all algae share one material (batching).
 // Web-safe: Compatibility renderer / WebGL2, no screen texture.
+//
+// The same pass draws the fish-order highlight rim (core/silhouette_rim
+// .gdshaderinc) from the warped UV, so the border follows the swaying fronds.
+// The shared material keeps `rim_width` at 0: only a highlighted algae gets a
+// private copy with a rim.
+
+#include "res://core/silhouette_rim.gdshaderinc"
 
 // Whole-plant lean at the tip, as a fraction of the texture width.
 uniform float lean_strength : hint_range(0.0, 0.2) = 0.1;
@@ -52,5 +59,22 @@ void fragment() {
 
 	vec2 uv = UV;
 	uv.x = clamp(uv.x + offset, 0.0, 1.0);
-	COLOR = texture(TEXTURE, uv) * COLOR;
+	vec4 body = texture(TEXTURE, uv) * COLOR;
+	if (rim_width <= 0.0) {
+		COLOR = body;
+	} else {
+		// Highlight rim, from the warped UV so the band follows the fronds.
+		// Same loop as core/sprite_rim.gdshader.
+		float own = texture(TEXTURE, uv).a;
+		float neighbour = 0.0;
+		for (int ring = 1; ring <= RINGS; ring++) {
+			float radius = rim_width * float(ring) / float(RINGS);
+			for (int tap = 0; tap < RING_TAPS; tap++) {
+				float angle = TAU * float(tap) / float(RING_TAPS);
+				vec2 rim_offset = vec2(cos(angle), sin(angle)) * TEXTURE_PIXEL_SIZE * radius;
+				neighbour = max(neighbour, texture(TEXTURE, uv + rim_offset).a);
+			}
+		}
+		COLOR = mix(body, vec4(rim_color.rgb, rim_color.a), clamp(neighbour - own, 0.0, 1.0));
+	}
 }

@@ -17,6 +17,8 @@ const EGGS_COLOR := Color(1.0, 0.55, 0.2, FOOTPRINT_ALPHA)
 ## Designer's nest sprites: empty and full of eggs.
 const EMPTY_TEXTURE := preload("res://assets/sprites/nest_empty.png")
 const EGGS_TEXTURE := preload("res://assets/sprites/nest_eggs.png")
+## Rim drawn along the nest silhouette for the fish-order highlight.
+const RIM_SHADER := preload("res://core/sprite_rim.gdshader")
 ## Row (texture px, measured on the art) where each nest touches the ground.
 ## Used to keep the base consistent when the state swaps the texture.
 const EMPTY_FOOT_Y := 158.0
@@ -35,6 +37,8 @@ var state: int:
 var _cycle: NestCycle
 var _visual: PlaceholderShape
 var _sprite: Sprite2D
+## Sprite material carrying the fish-order highlight rim (rim_width 0 when off).
+var _rim_material: ShaderMaterial
 ## Last state drawn: the nest only redraws when eggs appear, hatch or die.
 var _shown_eggs := false
 
@@ -57,6 +61,9 @@ func _ready() -> void:
 	_cycle.eggs_died.connect(func() -> void: eggs_died.emit())
 	_visual = PlaceholderShape.cell(position, EMPTY_COLOR)
 	_sprite = _visual.add_sprite(EMPTY_TEXTURE, SPRITE_HEIGHT_CELLS)
+	_rim_material = ShaderMaterial.new()
+	_rim_material.shader = RIM_SHADER
+	_sprite.material = _rim_material
 	_shown_eggs = has_eggs()
 	_visual.color = EGGS_COLOR if _shown_eggs else EMPTY_COLOR
 	_update_sprite()
@@ -116,6 +123,26 @@ func kill_eggs() -> void:
 ## Seconds until the eggs hatch, or -1.0 if there are no eggs.
 func eggs_time_left() -> float:
 	return _cycle.eggs_time_left()
+
+
+## Screen-space box of the nest art, for the fish-order hover highlight
+## (FishCommander): the art stands taller than its cell, so the cell alone
+## would miss most of what the player sees.
+func screen_rect() -> Rect2:
+	if _sprite == null:
+		return Rect2()
+	return _sprite.get_global_transform() * _sprite.get_rect()
+
+
+## Rim along the nest silhouette while the selected fish can lay eggs in it
+## (see core/order_highlight.gd). `width_px` is on screen.
+func set_highlight(color: Color, width_px: float) -> void:
+	_rim_material.set_shader_parameter(&"rim_color", color)
+	_rim_material.set_shader_parameter(&"rim_width", width_px / _sprite.scale.x)
+
+
+func clear_highlight() -> void:
+	_rim_material.set_shader_parameter(&"rim_width", 0.0)
 
 
 func destroy() -> void:

@@ -59,6 +59,25 @@ func hunger_ratio() -> float:
 	return clampf(hunger / _cfg.starve_seconds, 0.0, 1.0)
 
 
+## Progress (0..1) of the timed action the fish is doing: eating, laying eggs or
+## resting after an order. 0.0 for states that do not run on a timer, so the
+## fish visual can fill a badge only when there is something to fill.
+func state_progress() -> float:
+	var total := 0.0
+	match state:
+		State.EATING:
+			total = _cfg.eat_seconds
+		State.FERTILIZING:
+			total = _cfg.fertilize_seconds
+		State.IDLE:
+			total = _cfg.idle_after_order_seconds
+		_:
+			return 0.0
+	if total <= 0.0:
+		return 1.0
+	return clampf(1.0 - _timer / total, 0.0, 1.0)
+
+
 ## True when the node should move this frame (wandering, following an order
 ## or swimming to food).
 func wants_to_move() -> bool:
