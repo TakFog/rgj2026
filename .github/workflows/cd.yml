@@ -3,7 +3,7 @@ name: CD
 # Runs the full test suite, then builds the Web (single-threaded) export.
 # The export (and the itch.io push) only happen if every test passes.
 # Once the web build is on itch.io, the Android APK that CI released for the
-# same commit (GitHub release v<N>, see ci.yml) is pushed to its own channel,
+# same commit (GitHub release v0.<N>, see ci.yml) is pushed to its own channel,
 # and the Windows, macOS and Linux desktop builds are exported and pushed to theirs.
 #
 # The itch.io pushes are skipped until both of these exist in the repository settings:
@@ -157,7 +157,7 @@ jobs:
             | awk -v sha="$GITHUB_SHA" '$1 == sha { sub("refs/tags/", "", $2); print $2 }' \
             | sort -V | tail -1)
           if [ -z "$tag" ]; then
-            echo "::error::CI run ${run_id} succeeded but no v<N> release tag points at ${GITHUB_SHA}."
+            echo "::error::CI run ${run_id} succeeded but no v0.<N> release tag points at ${GITHUB_SHA}."
             exit 1
           fi
           echo "RELEASE_TAG=$tag" >> "$GITHUB_ENV"

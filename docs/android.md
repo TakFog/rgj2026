@@ -32,14 +32,15 @@ every texture is lossless, so nothing is actually re-compressed).
 `.github/workflows/ci.yml` (job **Android APK**, after the tests pass) exports the preset on every
 push and uploads `balansea.apk` as the `android-apk` artifact.
 
-Every push to `main` also publishes a **GitHub release** tagged `v<N>` (`v1`, `v2`, …), with
-`balansea-v<N>.apk` attached: N is the highest existing `v<N>` tag plus one, and is used as both
-the Android version code and the version name, so each release installs over the previous one.
-Branch builds take the number the next release will get, named `<N>-dev.<commit>`.
+Every push to `main` also publishes a **GitHub release** tagged `v0.<N>` (`v0.1`, `v0.2`, …), with
+`balansea-v0.<N>.apk` attached: N is the highest existing `v0.<N>` tag plus one, and is used as
+the Android version code, while the version name is published as `0.<N>`, so each release
+installs over the previous one. Branch builds take the number the next release will get, named
+`0.<N>-dev.<commit>`.
 
 After the web build is pushed to itch.io, CD (`.github/workflows/cd.yml`, job **Android APK
-itch.io push**) waits for the CI run of the same commit, downloads `balansea-v<N>.apk` from its
-release and pushes it to the itch.io `android` channel (user version `<N>`). It uses the same
+itch.io push**) waits for the CI run of the same commit, downloads `balansea-v0.<N>.apk` from its
+release and pushes it to the itch.io `android` channel (user version `0.<N>`). It uses the same
 `BUTLER_API_KEY` secret and `ITCH_TARGET` variable as the web push and is skipped without them.
 
 The APK is release-signed with the keystore stored in the repository secrets:
