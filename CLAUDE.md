@@ -16,6 +16,26 @@ The game design document is `docs/GDD.md`.
   verified branch.
 - Always write commit messages (and PR titles/descriptions) in **English**.
 
+### Skipping CI for commits unrelated to the game
+
+GitHub skips `push` and `pull_request` runs when the message of the **pushed head
+commit** contains `[skip ci]` (also `[ci skip]`, `[no ci]`, `[skip actions]`,
+`[actions skip]`, case-insensitive). It reads the whole message, subject *and*
+body, so a commit that merely documents the marker skips its own run: never
+quote it in a commit message unless you mean to skip.
+
+- Use it only for commits that cannot affect the game: documentation, CI/CD
+  workflows, `tools/` scripts, repository housekeeping. Anything touching
+  scripts, scenes, assets, `data/`, `project.godot` or `export_presets.cfg` must
+  go through CI.
+- It skips **every** push workflow, so a skipped `main` push publishes neither
+  the Web build (CD) nor the Android release (CI).
+- When several commits are pushed together only the head commit counts: a marker
+  there skips the whole push, while one on an earlier commit does nothing.
+- A skipped push creates no workflow run at all, so it cannot be retried from the
+  Actions list; re-run it with `gh workflow run CI --ref <branch>`
+  (`workflow_dispatch` ignores commit messages).
+
 ### Project files shared with CI/CD
 
 `project.godot` and `export_presets.cfg` are read by CI (`.github/workflows/ci.yml`)
