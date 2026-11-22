@@ -7,12 +7,11 @@ extends Node2D
 ## says what the fish is doing; a badge above the fish then shows whether it is
 ## eating (green, algae icon) or laying eggs (gold, eggs icon) and how long that
 ## action still takes.
-## While eating, the headless body replaces the full fish and shakes by pivoting
-## on the neck (the head end, which is the part going into the algae being eaten).
-## While laying eggs, the fish is hidden: the nest shows the fish-in-nest art.
+## While eating, the full fish shakes by pivoting on the neck (the head end, the
+## part going into the algae being eaten). While laying eggs, the fish is hidden:
+## the nest shows the fish-in-nest art.
 
 const TEXTURE := preload("res://assets/sprites/fish.png")
-const BODY_TEXTURE := preload("res://assets/sprites/fish_body.png")
 const OUTLINE_SHADER := preload("res://core/sprite_rim.gdshader")
 const ACTIVITY_ICON_FOOD := preload("res://assets/sprites/algae.png")
 const ACTIVITY_ICON_EGGS := preload("res://assets/sprites/nest_eggs.png")
@@ -53,10 +52,10 @@ const WARNING_PULSE_SPEED := 6.0
 const WARNING_BOB := 2.0
 const JUVENILE_SCALE := 0.6
 const SEGMENTS := 16
-## While EATING: the headless body (`fish_body`) replaces the full fish, shaken
-## by pivoting on the neck (the head end, which is the part going into the algae).
-const SHAKE_SPEED := 7.0
-const SHAKE_AMPLITUDE := 0.12
+## While EATING: the full fish shakes by pivoting on the neck (the head end, the
+## part going into the algae). The shake is a small tail bob.
+const SHAKE_SPEED := 10.0
+const SHAKE_AMPLITUDE := 0.06
 
 static var _facing := SpriteFacing.new(FACING_CENTER, deg_to_rad(FACING_AXIS_DEG), FACING_LENGTH, deg_to_rad(MAX_TILT_DEG))
 
@@ -146,7 +145,7 @@ func _draw() -> void:
 		draw_transform = draw_transform * _neck_pivot(_neck_local(), shake)
 	draw_set_transform_matrix(draw_transform)
 	if activity != FishBrain.State.FERTILIZING:
-		draw_texture(_eating_texture(), Vector2.ZERO)
+		draw_texture(TEXTURE, Vector2.ZERO)
 	draw_set_transform_matrix(Transform2D.IDENTITY)
 
 	var top := minf(-length * SPRITE_HALF_HEIGHT, _top(radius))
@@ -216,12 +215,6 @@ func _draw_activity(center: Vector2) -> void:
 	draw_arc(center, ACTIVITY_BADGE_RADIUS, -PI * 0.5,
 			-PI * 0.5 + TAU * clampf(activity_ratio, 0.0, 1.0), 24, color,
 			ACTIVITY_RING_WIDTH, true)
-
-
-## Texture drawn as the fish body: the headless body while it is eating, the
-## full fish in every other state.
-func _eating_texture() -> Texture2D:
-	return BODY_TEXTURE if activity == FishBrain.State.EATING else TEXTURE
 
 
 ## Rotation applied while the fish eats: pivot on the neck (the head end, the
