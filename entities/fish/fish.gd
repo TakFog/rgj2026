@@ -34,6 +34,9 @@ var _path := PackedVector2Array()
 var _replans_left := 0
 ## Current swimming direction (unit vector); turns gradually.
 var _heading := Vector2.RIGHT
+## Nest currently being fertilized (the nest swaps its art while the fish is
+## inside it, see Nest.is_breeding).
+var _fertilizing_nest: Object = null
 
 
 func setup(world_position: Vector2, p_adult: bool) -> void:
@@ -87,6 +90,7 @@ func _physics_process(delta: float) -> void:
 				_swim_wander(delta)
 		FishBrain.State.ORDERED, FishBrain.State.SEEKING_FOOD, FishBrain.State.SEEKING_NEST:
 			_follow_path(_speed() * delta)
+	_track_breeding()
 	_visual.hunger_ratio = brain.hunger_ratio()
 	_visual.activity = brain.state
 	_visual.activity_ratio = brain.state_progress()
@@ -111,6 +115,14 @@ func holds(algae: Object) -> bool:
 	if brain == null or brain.dead or is_queued_for_deletion() or brain.food != algae:
 		return false
 	return brain.state == FishBrain.State.EATING or brain.state == FishBrain.State.SEEKING_FOOD
+
+
+## True while this fish is the one fertilizing `nest` (used by the nest to swap
+## its art to the fish-in-nest sprite while the fish is inside it).
+func holds_nest(nest: Object) -> bool:
+	if brain == null or brain.dead or is_queued_for_deletion() or brain.nest != nest:
+		return false
+	return brain.state == FishBrain.State.FERTILIZING
 
 
 ## Debug view only: the remaining planned route, in world units. Empty while
@@ -271,6 +283,18 @@ func _empty_nest_under() -> Nest:
 		if nest != null and nest.is_empty():
 			return nest
 	return null
+
+
+## Publishes the nest being fertilized (and forgets it when the fish leaves the
+## FERTILIZING state, when the eggs are laid or the order is cancelled).
+func _track_breeding() -> void:
+	if brain.state == FishBrain.State.FERTILIZING:
+		if brain.nest is Nest:
+			_fertilizing_nest = brain.nest
+			(brain.nest as Nest).breeder = self
+	elif _fertilizing_nest != null:
+		(_fertilizing_nest as Nest).breeder = null
+		_fertilizing_nest = null
 
 
 func _check_targets_still_exist() -> void:

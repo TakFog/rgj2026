@@ -17,12 +17,18 @@ const EGGS_COLOR := Color(1.0, 0.55, 0.2, FOOTPRINT_ALPHA)
 ## Designer's nest sprites: empty and full of eggs.
 const EMPTY_TEXTURE := preload("res://assets/sprites/nest_empty.png")
 const EGGS_TEXTURE := preload("res://assets/sprites/nest_eggs.png")
+## Designer's nest sprite with a fish inside (the fertilizing state): the shell
+## is still empty, the head of the fish being born is in it.
+const FISH_IN_NEST_TEXTURE := preload("res://assets/sprites/nest_fish.png")
 ## Rim drawn along the nest silhouette for the fish-order highlight.
 const RIM_SHADER := preload("res://core/sprite_rim.gdshader")
 ## Row (texture px, measured on the art) where each nest touches the ground.
 ## Used to keep the base consistent when the state swaps the texture.
 const EMPTY_FOOT_Y := 158.0
 const EGGS_FOOT_Y := 158.0
+## Foot row of the fish-in-nest art, measured on its own texture (cropped to its
+## used rect, like the empty shell).
+const FISH_FOOT_Y := 606.0
 ## Height every nest texture is drawn at, in grid cells. Both textures are
 ## wider than tall, so the sprite is rescaled when the state swaps the texture.
 const SPRITE_HEIGHT_CELLS := 0.9
@@ -39,8 +45,13 @@ var _visual: PlaceholderShape
 var _sprite: Sprite2D
 ## Sprite material carrying the fish-order highlight rim (rim_width 0 when off).
 var _rim_material: ShaderMaterial
-## Last state drawn: the nest only redraws when eggs appear, hatch or die.
+## Last state drawn: the nest only redraws when eggs appear, a fish breeds in it
+## or the eggs hatch and die.
 var _shown_eggs := false
+var _shown_fish := false
+## The fish currently laying eggs in this nest, or null. Set by the fish that
+## entered FERTILIZING and cleared when it leaves (or dies).
+var breeder: Object = null
 
 
 func setup(p_cell: Vector2i) -> void:
@@ -81,19 +92,27 @@ func _process(delta: float) -> void:
 		hazard = NestCycle.hazard_from_chance(death_chance, _cycle.hatch_seconds)
 	_cycle.tick(delta, hazard)
 	var eggs := has_eggs()
-	if eggs != _shown_eggs:
+	var breeding := is_breeding()
+	if eggs != _shown_eggs or breeding != _shown_fish:
 		_shown_eggs = eggs
+		_shown_fish = breeding
 		_visual.color = EGGS_COLOR if eggs else EMPTY_COLOR
 		_update_sprite()
 
 
 func _update_sprite() -> void:
-	var eggs := has_eggs()
-	_sprite.texture = EGGS_TEXTURE if eggs else EMPTY_TEXTURE
+	var texture := EMPTY_TEXTURE
+	var foot_y := EMPTY_FOOT_Y
+	if has_eggs():
+		texture = EGGS_TEXTURE
+		foot_y = EGGS_FOOT_Y
+	elif is_breeding():
+		texture = FISH_IN_NEST_TEXTURE
+		foot_y = FISH_FOOT_Y
+	_sprite.texture = texture
 	var world_height := Game.grid.cell_size * SPRITE_HEIGHT_CELLS * Game.VIEW_SETTINGS.pixels_per_unit
-	_sprite.scale = Vector2.ONE * world_height / _sprite.texture.get_height()
-	var foot_y := EGGS_FOOT_Y if eggs else EMPTY_FOOT_Y
-	var half_height := _sprite.texture.get_height() * 0.5
+	_sprite.scale = Vector2.ONE * world_height / texture.get_height()
+	var half_height := texture.get_height() * 0.5
 	_sprite.offset = Vector2(0.0, half_height - foot_y)
 	# Centre the texture on the base cell, so the nest sits on the footprint
 	# instead of hanging above it with only the cell centre under its base.
@@ -106,6 +125,13 @@ func is_empty() -> bool:
 
 func has_eggs() -> bool:
 	return _cycle.state == NestCycle.State.EGGS
+
+
+## True while a live fish is inside this nest, still in its FERTILIZING state:
+## the nest art swaps to the fish-in-nest sprite while the fish is breeding in
+## it (the empty shell is hidden by the fish, not by the player).
+func is_breeding() -> bool:
+	return is_instance_valid(breeder) and breeder.holds_nest(self)
 
 
 ## Called by a fish that stayed on the nest for fertilize_seconds.

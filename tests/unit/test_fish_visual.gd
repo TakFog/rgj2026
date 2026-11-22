@@ -77,3 +77,22 @@ func test_badge_shows_algae_while_eating_and_eggs_while_laying() -> void:
 	assert_true(FishVisual.activity_texture(FishBrain.State.FERTILIZING) == FishVisual.ACTIVITY_ICON_EGGS)
 	assert_true(FishVisual.activity_texture(FishBrain.State.SEEKING_FOOD) == FishVisual.ACTIVITY_ICON_FOOD)
 	assert_true(FishVisual.activity_texture(FishBrain.State.SEEKING_NEST) == FishVisual.ACTIVITY_ICON_EGGS)
+
+
+func test_eating_uses_the_headless_body() -> void:
+	var visual := FishVisual.new()
+	autofree(visual)
+	assert_eq(visual._eating_texture(), FishVisual.TEXTURE)
+	visual.activity = FishBrain.State.EATING
+	assert_eq(visual._eating_texture(), FishVisual.BODY_TEXTURE)
+
+
+func test_eat_shake_is_quiet_outside_eating() -> void:
+	var visual := FishVisual.new()
+	autofree(visual)
+	assert_eq(visual._eat_shake(), 0.0)
+	visual.activity = FishBrain.State.EATING
+	visual._time = 0.25
+	var shake := visual._eat_shake()
+	assert_true(shake > -FishVisual.SHAKE_AMPLITUDE)
+	assert_true(shake <= FishVisual.SHAKE_AMPLITUDE)
