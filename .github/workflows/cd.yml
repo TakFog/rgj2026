@@ -262,10 +262,23 @@ jobs:
           unzip -j -q /tmp/templates.tpz $TEMPLATES -d "$dest"
           rm /tmp/templates.tpz
 
+      # The version number doubles as the Android version code, so every
+      # release installs over the previous one. Version names carry a leading
+      # "0." (0.X), matching CI's release tags (v0.28, v0.29, ...).
+      - name: Compute version
+        run: |
+          last=$(git ls-remote --tags origin 'refs/tags/v*' \
+            | sed -n 's#.*refs/tags/v\(0\.\)\?\([0-9][0-9]*\)$#\2#p' | sort -n | tail -1)
+          next=$(( ${last:-0} + 1 ))
+          echo "VERSION_CODE=$next" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=0.$next" >> "$GITHUB_ENV"
+
       - name: Export ${{ matrix.name }} build
         env:
           PRESET: ${{ matrix.preset }}
         run: |
+          sed -i -e "s/^version\/code=.*/version\/code=${VERSION_CODE}/" \
+            -e "s/^version\/name=.*/version\/name=\"${VERSION_NAME}\"/" export_presets.cfg
           mkdir -p "$DIR"
           ~/godot/godot --headless --import || true
           ~/godot/godot --headless --export-release "$PRESET" "$OUTPUT"
