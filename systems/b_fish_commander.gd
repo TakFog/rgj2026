@@ -46,7 +46,7 @@ static func pick_nearest(points: PackedVector2Array, click: Vector2, radius: flo
 static func target_kind(entity: Object, fish: Object) -> StringName:
 	if entity is Algae:
 		return OrderHighlight.ALGAE if not (entity as Algae).is_taken_by_other(fish) else &""
-	if entity is Nest and (entity as Nest).is_empty():
+	if entity is Nest and (entity as Nest).is_empty() and not (entity as Nest).is_breeding():
 		return OrderHighlight.NEST
 	return &""
 

@@ -26,3 +26,25 @@ func test_corals_are_not_order_targets() -> void:
 	var coral := Coral.new()
 	autofree(coral)
 	assert_eq(FishCommander.target_kind(coral, null), &"")
+
+
+func test_empty_nest_is_an_order_target() -> void:
+	var nest := Nest.new()
+	autofree(nest)
+	nest.setup(Vector2i(1, 1))
+	nest._cycle = NestCycle.new(Game.eco.nest_hatch_seconds, Game.eco.nest_hatch_count)
+	assert_eq(FishCommander.target_kind(nest, null), OrderHighlight.NEST)
+
+
+func test_busy_nest_is_not_an_order_target() -> void:
+	var nest := Nest.new()
+	autofree(nest)
+	nest.setup(Vector2i(1, 1))
+	nest._cycle = NestCycle.new(Game.eco.nest_hatch_seconds, Game.eco.nest_hatch_count)
+	var fish := Fish.new()
+	autofree(fish)
+	fish.brain = FishBrain.new(Game.actors, true, -1.0)
+	fish.brain.state = FishBrain.State.FERTILIZING
+	fish.brain.nest = nest
+	nest.breeder = fish
+	assert_eq(FishCommander.target_kind(nest, fish), &"")

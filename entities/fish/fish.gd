@@ -280,7 +280,7 @@ func _empty_nest_under() -> Nest:
 	query.collide_with_bodies = false
 	for hit in get_world_2d().direct_space_state.intersect_point(query, 4):
 		var nest := hit["collider"] as Nest
-		if nest != null and nest.is_empty():
+		if nest != null and nest.is_empty() and not nest.is_breeding():
 			return nest
 	return null
 
@@ -340,7 +340,7 @@ func _is_free_algae(occupant: Object) -> bool:
 
 
 func _is_empty_nest(occupant: Object) -> bool:
-	return occupant is Nest and (occupant as Nest).is_empty()
+	return occupant is Nest and (occupant as Nest).is_empty() and not (occupant as Nest).is_breeding()
 
 
 ## True if `entity` still exists and still belongs to `group` (destroy() leaves
